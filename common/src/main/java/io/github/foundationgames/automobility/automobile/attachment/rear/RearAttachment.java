@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.automobile.attachment.rear;
 import io.github.foundationgames.automobility.automobile.attachment.BaseAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.RearAttachmentType;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -107,11 +108,11 @@ public abstract class RearAttachment extends BaseAttachment<RearAttachmentType<?
         return null;
     }
 
-    public void writeNbt(CompoundTag nbt) {
+    public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         nbt.putFloat("yaw", this.yaw());
     }
 
-    public void readNbt(CompoundTag nbt) {
+    public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         this.setYaw(nbt.getFloat("yaw"));
     }
 

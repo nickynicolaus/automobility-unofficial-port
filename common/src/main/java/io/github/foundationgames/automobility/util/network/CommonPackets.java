@@ -5,26 +5,29 @@ import io.github.foundationgames.automobility.automobile.attachment.rear.BannerP
 import io.github.foundationgames.automobility.automobile.attachment.rear.ExtendableRearAttachment;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.platform.Platform;
+import io.github.foundationgames.automobility.util.TriCons;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum CommonPackets {;
+    public static final Map<ResourceLocation, TriCons<MinecraftServer, ServerPlayer, FriendlyByteBuf>> SERVERBOUND_HANDLERS = new HashMap<>();
+
+    public static void registerReceiver(ResourceLocation rl, TriCons<MinecraftServer, ServerPlayer, FriendlyByteBuf> run) {
+        SERVERBOUND_HANDLERS.put(rl, run);
+    }
+
     public static void sendSyncAutomobileDataPacket(AutomobileEntity entity, ServerPlayer player) {
         var buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeInt(entity.getId());
         entity.writeSyncToClientData(buf);
         Platform.get().serverSendPacket(player, Automobility.rl("sync_automobile_data"), buf);
-    }
-
-    public static void sendSyncAutomobileComponentsPacket(AutomobileEntity entity, ServerPlayer player) {
-        var buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeInt(entity.getId());
-        buf.writeUtf(entity.getFrame().id().toString());
-        buf.writeUtf(entity.getWheels().id().toString());
-        buf.writeUtf(entity.getEngine().id().toString());
-        Platform.get().serverSendPacket(player, Automobility.rl("sync_automobile_components"), buf);
     }
 
     public static void sendSyncAutomobileAttachmentsPacket(AutomobileEntity entity, ServerPlayer player) {
@@ -56,7 +59,7 @@ public enum CommonPackets {;
     }
 
     public static void init() {
-        Platform.get().serverReceivePacket(Automobility.rl("sync_automobile_inputs"), (server, player, buf) -> {
+        CommonPackets.registerReceiver(Automobility.rl("sync_automobile_inputs"), (server, player, buf) -> {
             boolean fwd = buf.readBoolean();
             boolean back = buf.readBoolean();
             boolean left = buf.readBoolean();
@@ -70,11 +73,10 @@ public enum CommonPackets {;
                 }
             });
         });
-        Platform.get().serverReceivePacket(Automobility.rl("request_sync_automobile_components"), (server, player, buf) -> {
+        CommonPackets.registerReceiver(Automobility.rl("request_sync_automobile_components"), (server, player, buf) -> {
             int entityId = buf.readInt();
             server.execute(() -> {
                 if (player.level().getEntity(entityId) instanceof AutomobileEntity automobile) {
-                    sendSyncAutomobileComponentsPacket(automobile, player);
                     sendSyncAutomobileAttachmentsPacket(automobile, player);
 
                     var fAtt = automobile.getFrontAttachment();

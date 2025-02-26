@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.automobile.attachment;
 
+import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.automobile.DisplayStat;
@@ -23,9 +24,10 @@ public record RearAttachmentType<T extends RearAttachment>(
 ) implements AutomobileComponent<RearAttachmentType<?>> {
     public static final ResourceLocation ID = Automobility.rl("rear_attachment");
     public static final SimpleMapContentRegistry<RearAttachmentType<?>> REGISTRY = new SimpleMapContentRegistry<>();
+    public static final Codec<RearAttachmentType<?>> CODEC = REGISTRY.codec();
 
     public static final RearAttachmentType<EmptyRearAttachment> EMPTY = register(new RearAttachmentType<>(
-            Automobility.rl("empty"), EmptyRearAttachment::new, new RearAttachmentModel(new ResourceLocation("empty"), Automobility.rl("empty"), 0)
+            Automobility.rl("empty"), EmptyRearAttachment::new, new RearAttachmentModel(ResourceLocation.parse("empty"), Automobility.rl("empty"), 0)
     ));
 
     public static final RearAttachmentType<PassengerSeatRearAttachment> PASSENGER_SEAT = register(new RearAttachmentType<>(

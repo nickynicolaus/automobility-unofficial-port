@@ -1,6 +1,7 @@
 package io.github.foundationgames.automobility.entity;
 
 import io.github.foundationgames.automobility.Automobility;
+import io.github.foundationgames.automobility.automobile.AutomobileData;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
 import io.github.foundationgames.automobility.automobile.AutomobileStats;
@@ -30,6 +31,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Cursor3D;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
@@ -39,6 +41,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -85,9 +88,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private static final EntityDataAccessor<Float> REAR_ATTACHMENT_ANIMATION = SynchedEntityData.defineId(AutomobileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> FRONT_ATTACHMENT_ANIMATION = SynchedEntityData.defineId(AutomobileEntity.class, EntityDataSerializers.FLOAT);
 
-    private AutomobileFrame frame = AutomobileFrame.REGISTRY.getOrDefault(null);
-    private AutomobileWheel wheels = AutomobileWheel.REGISTRY.getOrDefault(null);
-    private AutomobileEngine engine = AutomobileEngine.REGISTRY.getOrDefault(null);
+    private static final EntityDataAccessor<Holder<AutomobileFrame>> FRAME_TYPE = SynchedEntityData.defineId(AutomobileEntity.class, AutomobileFrame.SERIALIZER);
+    private static final EntityDataAccessor<Holder<AutomobileWheel>> WHEEL_TYPE = SynchedEntityData.defineId(AutomobileEntity.class, AutomobileWheel.SERIALIZER);
+    private static final EntityDataAccessor<Holder<AutomobileEngine>> ENGINE_TYPE = SynchedEntityData.defineId(AutomobileEntity.class, AutomobileEngine.SERIALIZER);
+
     private RearAttachment rearAttachment;
     private FrontAttachment frontAttachment;
 
@@ -196,19 +200,23 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
+        var reg = this.registryAccess();
         setComponents(
-                AutomobileFrame.REGISTRY.getOrDefault(ResourceLocation.tryParse(nbt.getString("frame"))),
-                AutomobileWheel.REGISTRY.getOrDefault(ResourceLocation.tryParse(nbt.getString("wheels"))),
-                AutomobileEngine.REGISTRY.getOrDefault(ResourceLocation.tryParse(nbt.getString("engine")))
+                reg.registryOrThrow(AutomobileFrame.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("frame")))
+                        .map(r -> (Holder<AutomobileFrame>)r).orElseGet(() -> Holder.direct(AutomobileFrame.EMPTY)),
+                reg.registryOrThrow(AutomobileWheel.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("wheels")))
+                        .map(r -> (Holder<AutomobileWheel>)r).orElseGet(() -> Holder.direct(AutomobileWheel.EMPTY)),
+                reg.registryOrThrow(AutomobileEngine.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("engine")))
+                        .map(r -> (Holder<AutomobileEngine>)r).orElseGet(() -> Holder.direct(AutomobileEngine.EMPTY))
         );
 
         var rAtt = nbt.getCompound("rearAttachment");
         setRearAttachment(RearAttachment.fromNbt(rAtt));
-        rearAttachment.readNbt(rAtt);
+        rearAttachment.readNbt(rAtt, this.level().registryAccess());
 
         var fAtt = nbt.getCompound("frontAttachment");
         setFrontAttachment(FrontAttachment.fromNbt(fAtt));
-        frontAttachment.readNbt(fAtt);
+        frontAttachment.readNbt(fAtt, this.level().registryAccess());
 
         engineSpeed = nbt.getFloat("engineSpeed");
         boostSpeed = nbt.getFloat("boostSpeed");
@@ -239,9 +247,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
-        nbt.putString("frame", frame.getId().toString());
-        nbt.putString("wheels", wheels.getId().toString());
-        nbt.putString("engine", engine.getId().toString());
+        this.entityData.get(FRAME_TYPE).unwrapKey().ifPresent(k -> nbt.putString("frame", k.location().toString()));
+        this.entityData.get(WHEEL_TYPE).unwrapKey().ifPresent(k -> nbt.putString("wheels", k.location().toString()));
+        this.entityData.get(ENGINE_TYPE).unwrapKey().ifPresent(k -> nbt.putString("engine", k.location().toString()));
         nbt.put("rearAttachment", rearAttachment.toNbt());
         nbt.put("frontAttachment", frontAttachment.toNbt());
         nbt.putFloat("engineSpeed", engineSpeed);
@@ -326,17 +334,17 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public AutomobileFrame getFrame() {
-        return frame;
+        return this.entityData.get(FRAME_TYPE).value();
     }
 
     @Override
     public AutomobileWheel getWheels() {
-        return wheels;
+        return this.entityData.get(WHEEL_TYPE).value();
     }
 
     @Override
     public AutomobileEngine getEngine() {
-        return engine;
+        return this.entityData.get(ENGINE_TYPE).value();
     }
 
     @Override
@@ -483,14 +491,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
     }
 
-    public void setComponents(AutomobileFrame frame, AutomobileWheel wheel, AutomobileEngine engine) {
-        this.frame = frame;
-        this.wheels = wheel;
-        this.engine = engine;
-        this.setMaxUpStep(wheels.size());
-        this.stats.from(frame, wheel, engine);
-        this.displacement.applyWheelbase(frame.model().wheelBase());
-        if (!level().isClientSide()) syncComponents();
+    public void setComponents(Holder<AutomobileFrame> frame, Holder<AutomobileWheel> wheel, Holder<AutomobileEngine> engine) {
+        this.entityData.set(FRAME_TYPE, frame);
+        this.entityData.set(WHEEL_TYPE, wheel);
+        this.entityData.set(ENGINE_TYPE, engine);
+        this.stats.from(getFrame(), getWheels(), getEngine());
+    }
+
+    @Override
+    public float maxUpStep() {
+        return this.getWheels().size();
     }
 
     public void forNearbyPlayers(int radius, boolean ignoreDriver, Consumer<ServerPlayer> action) {
@@ -645,21 +655,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         forNearbyPlayers(200, true, player -> CommonPackets.sendSyncAutomobileDataPacket(this, player));
     }
 
-    private void syncComponents() {
-        forNearbyPlayers(200, false, player -> CommonPackets.sendSyncAutomobileComponentsPacket(this, player));
-    }
-
     private void syncAttachments() {
         forNearbyPlayers(200, false, player -> CommonPackets.sendSyncAutomobileAttachmentsPacket(this, player));
     }
 
     public ItemStack asPrefabItem() {
-        var stack = new ItemStack(AutomobilityItems.AUTOMOBILE.require());
-        var automobile = stack.getOrCreateTagElement("Automobile");
-        automobile.putString("frame", frame.getId().toString());
-        automobile.putString("wheels", wheels.getId().toString());
-        automobile.putString("engine", engine.getId().toString());
-        return stack;
+        return new AutomobileData(null,
+                this.entityData.get(FRAME_TYPE).unwrapKey().orElse(AutomobileFrame.EMPTY_KEY),
+                this.entityData.get(WHEEL_TYPE).unwrapKey().orElse(AutomobileWheel.EMPTY_KEY),
+                this.entityData.get(ENGINE_TYPE).unwrapKey().orElse(AutomobileEngine.EMPTY_KEY)
+        ).asStack();
     }
 
     @Nullable
@@ -869,7 +874,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         // Turn the wheels
-        float wheelCircumference = (float)(2 * (wheels.model().radius() / 16) * Math.PI);
+        float wheelCircumference = (float)(2 * (getWheels().model().radius() / 16) * Math.PI);
         if (hSpeed > 0) markDirty();
         wheelAngle += 300 * (hSpeed / wheelCircumference) + (hSpeed > 0 ? ((1 - grip) * 15) : 0); // made it a bit slower intentionally, also make it spin more when on slippery surface
 
@@ -958,7 +963,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         float newAngularSpeed = this.angularSpeed;
         if (this.burningOut()) {
             float speed = (float) this.addedVelocity.length();
-            float acc = (1.7f / (1 + this.frame.weight())) + (4 * speed);
+            float acc = (1.7f / (1 + this.getFrame().weight())) + (4 * speed);
             float lim = 9 + (4 * speed);
             if (this.steering != 0) {
                 newAngularSpeed = Mth.clamp(newAngularSpeed + (acc * this.steering), -lim, lim);
@@ -1051,7 +1056,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             }
 
             if (level().getBlockState(this.blockPosition()).getBlock() instanceof AutomobileAssemblerBlock) {
-                this.displacement.lastVertical = this.displacement.verticalTarget = (-this.wheels.model().radius() / 16);
+                this.displacement.lastVertical = this.displacement.verticalTarget = (-this.getWheels().model().radius() / 16);
             }
         }
     }
@@ -1102,7 +1107,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.automobileOnGround |= otherColliders.stream().anyMatch(col -> col.boxIntersects(groundBox));
     }
 
-    public void lerpTo(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate) {
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int interpolationSteps) {
         this.trackedX = x;
         this.trackedY = y;
         this.trackedZ = z;
@@ -1250,7 +1256,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public void createDriftParticles() {
         var origin = this.position().add(0, this.displacement.verticalTarget, 0);
-        for (var wheel : this.getFrame().model().wheelBase().wheels) {
+        for (var wheel : this.getFrame().model().wheelBase().wheels()) {
             if (wheel.end() == WheelBase.WheelEnd.BACK) {
                 var pos = new Vec3(wheel.right() + ((wheel.right() > 0 ? 1 : -1) * this.getWheels().model().width() * wheel.scale()), 0, wheel.forward())
                         .xRot((float) Math.toRadians(this.displacement.currAngularX))
@@ -1315,12 +1321,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     private void dropParts(Vec3 pos) {
-        level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, AutomobilityItems.AUTOMOBILE_FRAME.require().createStack(this.getFrame())));
-        level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, AutomobilityItems.AUTOMOBILE_ENGINE.require().createStack(this.getEngine())));
+        this.entityData.get(FRAME_TYPE).unwrapKey().ifPresent(key ->
+                level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, AutomobilityItems.AUTOMOBILE_FRAME.require().createStack(key))));
+        this.entityData.get(ENGINE_TYPE).unwrapKey().ifPresent(key ->
+                level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, AutomobilityItems.AUTOMOBILE_ENGINE.require().createStack(key))));
 
-        var wheelStack = AutomobilityItems.AUTOMOBILE_WHEEL.require().createStack(this.getWheels());
-        wheelStack.setCount(this.getFrame().model().wheelBase().wheelCount);
-        level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, wheelStack));
+        this.entityData.get(WHEEL_TYPE).unwrapKey().ifPresent(key -> {
+            var wheelStack = AutomobilityItems.AUTOMOBILE_WHEEL.require().createStack(key);
+            wheelStack.setCount(this.getFrame().model().wheelBase().wheelCount());
+            level().addFreshEntity(new ItemEntity(level(), pos.x, pos.y, pos.z, wheelStack));
+        });
     }
 
     public void destroyRearAttachment(boolean drop) {
@@ -1413,16 +1423,17 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return InteractionResult.PASS;
     }
 
-    @Override
-    public double getPassengersRidingOffset() {
-        return ((wheels.model().radius() + frame.model().seatHeight() - 4) / 16);
+    public Vec3 getPassengersRidingOffset() {
+        return getFrame().model().driverSeatPos().add(0, getWheels().model().radius(), 0).scale(1.0 / 16);
     }
 
     @Override
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunc) {
+        var myRidingOffset = passenger.getVehicleAttachmentPoint(this).reverse();
         if (passenger == this.getFirstPassenger()) {
-            var pos = this.position().add(0, this.displacement.verticalTarget + passenger.getMyRidingOffset(), 0)
-                    .add(new Vec3(0, this.getPassengersRidingOffset(), 0)
+            var pos = this.position().add(myRidingOffset)
+                    .add(0, this.displacement.verticalTarget, 0)
+                    .add(this.getPassengersRidingOffset()
                         .xRot((float) Math.toRadians(-this.displacement.currAngularX))
                         .zRot((float) Math.toRadians(-this.displacement.currAngularZ)));
 
@@ -1430,7 +1441,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         } else if (this.hasPassenger(passenger)) {
             var pos = this.position().add(
                     new Vec3(0, this.displacement.verticalTarget, this.getFrame().model().rearAttachmentPos() * 0.0625)
-                        .yRot((float) Math.toRadians(180 - this.getYRot())).add(0, this.rearAttachment.getPassengerHeightOffset() + passenger.getMyRidingOffset() - 0.14, 0)
+                            .add(myRidingOffset)
+                        .yRot((float) Math.toRadians(180 - this.getYRot()))
+                        .add(0, this.rearAttachment.getPassengerHeightOffset() - 0.14, 0)
                         .add(this.rearAttachment.scaledYawVec())
                         .xRot((float) Math.toRadians(-this.displacement.currAngularX))
                         .zRot((float) Math.toRadians(-this.displacement.currAngularZ)));
@@ -1460,9 +1473,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(REAR_ATTACHMENT_YAW, 0f);
-        this.entityData.define(REAR_ATTACHMENT_ANIMATION, 0f);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(REAR_ATTACHMENT_YAW, 0f);
+        builder.define(REAR_ATTACHMENT_ANIMATION, 0f);
+        builder.define(FRONT_ATTACHMENT_ANIMATION, 0f);
+
+        builder.define(FRAME_TYPE, Holder.direct(AutomobileFrame.EMPTY));
+        builder.define(WHEEL_TYPE, Holder.direct(AutomobileWheel.EMPTY));
+        builder.define(ENGINE_TYPE, Holder.direct(AutomobileEngine.EMPTY));
     }
 
     @Override
@@ -1475,12 +1493,18 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.rearAttachment.onTrackedAnimationUpdated(getTrackedRearAttachmentAnimation());
         } else if (FRONT_ATTACHMENT_ANIMATION.equals(data)) {
             this.frontAttachment.onTrackedAnimationUpdated(getTrackedFrontAttachmentAnimation());
+        } else if (FRAME_TYPE.equals(data)) {
+            this.displacement.applyWheelbase(getFrame().model().wheelBase());
+        }
+
+        if (FRAME_TYPE.equals(data) || WHEEL_TYPE.equals(data) || ENGINE_TYPE.equals(data)) {
+            this.stats.from(getFrame(), getWheels(), getEngine());
         }
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, entity);
     }
 
     public void setTrackedRearAttachmentYaw(float value) {
@@ -1688,7 +1712,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         public void applyWheelbase(WheelBase wheelBase) {
             this.scanPoints.clear();
-            for (WheelBase.WheelPos pos : wheelBase.wheels) {
+            for (WheelBase.WheelPos pos : wheelBase.wheels()) {
                 this.scanPoints.add(new Vec3(pos.right() / 16, 0, pos.forward() / 16));
             }
         }

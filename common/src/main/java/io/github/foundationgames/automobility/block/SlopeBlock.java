@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.block;
 
+import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.item.SlopePlacementContext;
 import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.core.BlockPos;
@@ -35,24 +36,19 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
     public static final VoxelShape EAST_TOP_SHAPE;
     public static final VoxelShape WEST_TOP_SHAPE;
 
-    public static final VoxelShape OLD_NORTH_BOTTOM_SHAPE;
-    public static final VoxelShape OLD_SOUTH_BOTTOM_SHAPE;
-    public static final VoxelShape OLD_EAST_BOTTOM_SHAPE;
-    public static final VoxelShape OLD_WEST_BOTTOM_SHAPE;
-    public static final VoxelShape OLD_NORTH_TOP_SHAPE;
-    public static final VoxelShape OLD_SOUTH_TOP_SHAPE;
-    public static final VoxelShape OLD_EAST_TOP_SHAPE;
-    public static final VoxelShape OLD_WEST_TOP_SHAPE;
-
     public static final EnumProperty<Half> HALF = BlockStateProperties.HALF;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    protected final boolean old;
+    public static final MapCodec<SlopeBlock> CODEC = Block.simpleCodec(SlopeBlock::new);
 
-    public SlopeBlock(Properties settings, boolean old) {
+    public SlopeBlock(Properties settings) {
         super(settings);
-        this.old = old;
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(HALF, Half.BOTTOM).setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     @Nullable
@@ -83,43 +79,23 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if (old) {
-            return switch (state.getValue(HALF)) {
-                case BOTTOM -> switch (state.getValue(FACING)) {
-                    case NORTH -> OLD_NORTH_BOTTOM_SHAPE;
-                    case SOUTH -> OLD_SOUTH_BOTTOM_SHAPE;
-                    case WEST -> OLD_WEST_BOTTOM_SHAPE;
-                    case EAST -> OLD_EAST_BOTTOM_SHAPE;
-                    default -> Shapes.empty();
-                };
-                case TOP -> switch (state.getValue(FACING)) {
-                    case NORTH -> OLD_NORTH_TOP_SHAPE;
-                    case SOUTH -> OLD_SOUTH_TOP_SHAPE;
-                    case WEST -> OLD_WEST_TOP_SHAPE;
-                    case EAST -> OLD_EAST_TOP_SHAPE;
-                    default -> Shapes.empty();
-                };
+        return switch (state.getValue(HALF)) {
+            case BOTTOM -> switch (state.getValue(FACING)) {
+                case NORTH -> NORTH_BOTTOM_SHAPE;
+                case SOUTH -> SOUTH_BOTTOM_SHAPE;
+                case WEST -> WEST_BOTTOM_SHAPE;
+                case EAST -> EAST_BOTTOM_SHAPE;
                 default -> Shapes.empty();
             };
-        } else {
-            return switch (state.getValue(HALF)) {
-                case BOTTOM -> switch (state.getValue(FACING)) {
-                    case NORTH -> NORTH_BOTTOM_SHAPE;
-                    case SOUTH -> SOUTH_BOTTOM_SHAPE;
-                    case WEST -> WEST_BOTTOM_SHAPE;
-                    case EAST -> EAST_BOTTOM_SHAPE;
-                    default -> Shapes.empty();
-                };
-                case TOP -> switch (state.getValue(FACING)) {
-                    case NORTH -> NORTH_TOP_SHAPE;
-                    case SOUTH -> SOUTH_TOP_SHAPE;
-                    case WEST -> WEST_TOP_SHAPE;
-                    case EAST -> EAST_TOP_SHAPE;
-                    default -> Shapes.empty();
-                };
+            case TOP -> switch (state.getValue(FACING)) {
+                case NORTH -> NORTH_TOP_SHAPE;
+                case SOUTH -> SOUTH_TOP_SHAPE;
+                case WEST -> WEST_TOP_SHAPE;
+                case EAST -> EAST_TOP_SHAPE;
                 default -> Shapes.empty();
             };
-        }
+            default -> Shapes.empty();
+        };
     }
 
     public static VoxelShape slopeStep(Direction dir, double height) {
@@ -161,43 +137,5 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
         EAST_TOP_SHAPE = shapes.get(5);
         WEST_BOTTOM_SHAPE = shapes.get(6);
         WEST_TOP_SHAPE = shapes.get(7);
-
-        // OLD SLOPE SHAPES
-        shapes.clear();
-        for (var dir : AUtils.HORIZONTAL_DIRS) {
-            for (int i = 0; i < 2; i++) {
-                double ox = switch (dir) {
-                    case WEST -> 0.5;
-                    case EAST -> -0.5;
-                    default -> 0;
-                };
-                double oz = switch (dir) {
-                    case NORTH -> 0.5;
-                    case SOUTH -> -0.5;
-                    default -> 0;
-                };
-                var shape = switch (dir) {
-                    case NORTH -> Block.box(0, -1.5, 0, 16, 0.5, 0.5);
-                    case SOUTH -> Block.box(0, -1.5, 15.5, 16, 0.5, 16);
-                    case EAST -> Block.box(15.5, -1.5, 0, 16, 0.5, 16);
-                    case WEST -> Block.box(0, -1.5, 0, 0.5, 0.5, 16);
-                    default -> Shapes.empty();
-                };
-                shape = shape.move(0, i * 0.5, 0);
-                var finalShape = shape;
-                for (int j = 1; j < 32; j++) {
-                    finalShape = Shapes.or(finalShape, shape.move((ox * j) / 16, (0.25 * j) / 16, (oz * j) / 16));
-                }
-                shapes.add(finalShape);
-            }
-        }
-        OLD_NORTH_BOTTOM_SHAPE = shapes.get(0);
-        OLD_NORTH_TOP_SHAPE = shapes.get(1);
-        OLD_SOUTH_BOTTOM_SHAPE = shapes.get(2);
-        OLD_SOUTH_TOP_SHAPE = shapes.get(3);
-        OLD_EAST_BOTTOM_SHAPE = shapes.get(4);
-        OLD_EAST_TOP_SHAPE = shapes.get(5);
-        OLD_WEST_BOTTOM_SHAPE = shapes.get(6);
-        OLD_WEST_TOP_SHAPE = shapes.get(7);
     }
 }

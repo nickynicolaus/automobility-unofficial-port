@@ -3,7 +3,6 @@ package io.github.foundationgames.automobility.automobile;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public interface StatContainer<C extends StatContainer<C>> {
@@ -16,7 +15,7 @@ public interface StatContainer<C extends StatContainer<C>> {
 
     void forEachStat(Consumer<DisplayStat<C>> action);
 
-    default void appendTexts(List<Component> texts, C container) {
-        this.forEachStat(stat -> stat.appendTooltip(texts, container));
+    default void appendTexts(Consumer<Component> tooltipAdder, C container) {
+        this.forEachStat(stat -> stat.appendTooltip(tooltipAdder, container));
     }
 }

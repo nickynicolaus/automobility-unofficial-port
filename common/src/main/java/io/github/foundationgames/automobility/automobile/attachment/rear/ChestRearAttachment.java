@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.automobile.attachment.rear;
 
 import io.github.foundationgames.automobility.automobile.attachment.RearAttachmentType;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -115,16 +116,16 @@ public class ChestRearAttachment extends BaseChestRearAttachment implements Cont
     }
 
     @Override
-    public void writeNbt(CompoundTag nbt) {
-        super.writeNbt(nbt);
+    public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.writeNbt(nbt, registry);
 
-        nbt.put("Items", ContainerHelper.saveAllItems(new CompoundTag(), this.inventory));
+        nbt.put("Items", ContainerHelper.saveAllItems(new CompoundTag(), this.inventory, registry));
     }
 
     @Override
-    public void readNbt(CompoundTag nbt) {
-        super.readNbt(nbt);
+    public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.readNbt(nbt, registry);
 
-        ContainerHelper.loadAllItems(nbt.getCompound("Items"), this.inventory);
+        ContainerHelper.loadAllItems(nbt.getCompound("Items"), this.inventory, registry);
     }
 }

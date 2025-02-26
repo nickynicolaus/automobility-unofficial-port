@@ -6,17 +6,17 @@
   "refmap": "automobility-refmap.json",
   "mixins": [
     "AABBMixin",
-    "PlayerEnderChestContainerMixin",
+    "AbstractContainerMenuMixin",
     "EntityMixin",
     "ItemCombinerMenuMixin",
-    "AbstractContainerMenuMixin",
+    "PlayerEnderChestContainerMixin",
     "ServerGamePacketListenerImplMixin",
     "ShovelItemAccess"
   ],
   "client": [
+    "EntityRenderersMixin",
     "LocalPlayerMixin",
-    "MultiPlayerGameModeMixin",
-    "EntityRenderersMixin"
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

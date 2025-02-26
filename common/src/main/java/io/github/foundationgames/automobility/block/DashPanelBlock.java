@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.block;
 
+import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.entity.AutomobilityEntities;
 import net.minecraft.core.BlockPos;
@@ -36,11 +37,18 @@ public class DashPanelBlock extends HorizontalDirectionalBlock implements Simple
 
     public static final VoxelShape SHAPE = box(0, 0, 0, 16, 1, 16);
 
+    public static final MapCodec<DashPanelBlock> CODEC = Block.simpleCodec(DashPanelBlock::new);
+
     public DashPanelBlock(Properties settings) {
         super(settings);
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH)
                 .setValue(LEFT, false).setValue(RIGHT, false)
                 .setValue(POWERED, false).setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     @Override

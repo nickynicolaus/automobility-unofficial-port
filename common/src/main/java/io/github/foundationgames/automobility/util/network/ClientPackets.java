@@ -1,9 +1,6 @@
 package io.github.foundationgames.automobility.util.network;
 
 import io.github.foundationgames.automobility.Automobility;
-import io.github.foundationgames.automobility.automobile.AutomobileEngine;
-import io.github.foundationgames.automobility.automobile.AutomobileFrame;
-import io.github.foundationgames.automobility.automobile.AutomobileWheel;
 import io.github.foundationgames.automobility.automobile.attachment.FrontAttachmentType;
 import io.github.foundationgames.automobility.automobile.attachment.RearAttachmentType;
 import io.github.foundationgames.automobility.automobile.attachment.rear.BannerPostRearAttachment;
@@ -11,10 +8,21 @@ import io.github.foundationgames.automobility.automobile.attachment.rear.Extenda
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
 public enum ClientPackets {;
+    public static final Map<ResourceLocation, BiConsumer<Minecraft, FriendlyByteBuf>> CLIENTBOUND_HANDLERS = new HashMap<>();
+
+    public static void registerReceiver(ResourceLocation rl, BiConsumer<Minecraft, FriendlyByteBuf> run) {
+        CLIENTBOUND_HANDLERS.put(rl, run);
+    }
+
     public static void sendSyncAutomobileInputPacket(AutomobileEntity entity, boolean fwd, boolean back, boolean left, boolean right, boolean space) {
         var buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeBoolean(fwd);
@@ -33,7 +41,7 @@ public enum ClientPackets {;
     }
 
     public static void initClient() {
-        Platform.get().clientReceivePacket(Automobility.rl("sync_automobile_data"), (client, buf) -> {
+        ClientPackets.registerReceiver(Automobility.rl("sync_automobile_data"), (client, buf) -> {
             FriendlyByteBuf dup = new FriendlyByteBuf(buf.copy());
             int entityId = dup.readInt();
             client.execute(() -> {
@@ -42,18 +50,7 @@ public enum ClientPackets {;
                 }
             });
         });
-        Platform.get().clientReceivePacket(Automobility.rl("sync_automobile_components"), (client, buf) -> {
-            int entityId = buf.readInt();
-            var frame = AutomobileFrame.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
-            var wheel = AutomobileWheel.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
-            var engine = AutomobileEngine.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
-            client.execute(() -> {
-                if (client.player.level().getEntity(entityId) instanceof AutomobileEntity automobile) {
-                    automobile.setComponents(frame, wheel, engine);
-                }
-            });
-        });
-        Platform.get().clientReceivePacket(Automobility.rl("sync_automobile_attachments"), (client, buf) -> {
+        ClientPackets.registerReceiver(Automobility.rl("sync_automobile_attachments"), (client, buf) -> {
             int entityId = buf.readInt();
             var rearAtt = RearAttachmentType.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
             var frontAtt = FrontAttachmentType.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
@@ -64,7 +61,7 @@ public enum ClientPackets {;
                 }
             });
         });
-        Platform.get().clientReceivePacket(Automobility.rl("update_banner_post"), (client, buf) -> {
+        ClientPackets.registerReceiver(Automobility.rl("update_banner_post"), (client, buf) -> {
             int entityId = buf.readInt();
             var banner = buf.readNbt();
             client.execute(() -> {
@@ -74,7 +71,7 @@ public enum ClientPackets {;
                 }
             });
         });
-        Platform.get().clientReceivePacket(Automobility.rl("update_extendable_attachment"), (client, buf) -> {
+        ClientPackets.registerReceiver(Automobility.rl("update_extendable_attachment"), (client, buf) -> {
             int entityId = buf.readInt();
             boolean extended = buf.readBoolean();
             client.execute(() -> {

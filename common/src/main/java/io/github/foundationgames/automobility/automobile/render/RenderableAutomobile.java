@@ -48,7 +48,7 @@ public interface RenderableAutomobile {
     boolean engineRunning();
 
     default int getWheelCount() {
-        return this.getFrame().model().wheelBase().wheelCount;
+        return this.getFrame().model().wheelBase().wheelCount();
     }
 
     int getBoostTimer();

@@ -7,9 +7,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-public class FrontAttachmentItem extends AutomobileComponentItem<FrontAttachmentType<?>> implements AutomobileInteractable {
+public class FrontAttachmentItem extends AutomobileComponentItem.Builtin<FrontAttachmentType<?>> implements AutomobileInteractable {
     public FrontAttachmentItem(Properties settings) {
-        super(settings, "attachment", "attachment.front", FrontAttachmentType.REGISTRY);
+        super(settings, "attachment.front", FrontAttachmentType.REGISTRY);
     }
 
     @Override
@@ -19,7 +19,7 @@ public class FrontAttachmentItem extends AutomobileComponentItem<FrontAttachment
                 return InteractionResult.SUCCESS;
             }
 
-            automobile.setFrontAttachment(getComponent(stack));
+            automobile.setFrontAttachment(getComponent(stack, player.level().registryAccess()));
             automobile.playHitSound(automobile.getHeadPos());
             if (!player.isCreative()) {
                 stack.shrink(1);

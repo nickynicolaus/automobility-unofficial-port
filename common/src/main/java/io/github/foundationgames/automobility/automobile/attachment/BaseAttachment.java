@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.automobile.attachment;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -50,9 +51,9 @@ public abstract class BaseAttachment<T extends AutomobileComponent<T>> {
     public void onRemoved() {
     }
 
-    public abstract void writeNbt(CompoundTag nbt);
+    public abstract void writeNbt(CompoundTag nbt, HolderLookup.Provider registry);
 
-    public abstract void readNbt(CompoundTag nbt);
+    public abstract void readNbt(CompoundTag nbt, HolderLookup.Provider reg);
 
     public void updatePacketRequested(ServerPlayer player) {
     }
@@ -73,7 +74,7 @@ public abstract class BaseAttachment<T extends AutomobileComponent<T>> {
     public final CompoundTag toNbt() {
         var nbt = new CompoundTag();
         nbt.putString("type", this.type.getId().toString());
-        this.writeNbt(nbt);
+        this.writeNbt(nbt, this.world().registryAccess());
         return nbt;
     }
 }

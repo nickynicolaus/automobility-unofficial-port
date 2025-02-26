@@ -4,6 +4,7 @@ import io.github.foundationgames.automobility.automobile.attachment.BaseAttachme
 import io.github.foundationgames.automobility.automobile.attachment.FrontAttachmentType;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.AUtils;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
@@ -33,11 +34,11 @@ public abstract class FrontAttachment extends BaseAttachment<FrontAttachmentType
     }
 
     @Override
-    public void writeNbt(CompoundTag nbt) {
+    public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
     }
 
     @Override
-    public void readNbt(CompoundTag nbt) {
+    public void readNbt(CompoundTag nbt, HolderLookup.Provider reg) {
     }
 
     public void dropOrTransfer(ItemStack stack, Vec3 dropPos) {

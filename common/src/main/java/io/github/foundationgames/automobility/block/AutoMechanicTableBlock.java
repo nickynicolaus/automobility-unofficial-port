@@ -3,7 +3,6 @@ package io.github.foundationgames.automobility.block;
 import io.github.foundationgames.automobility.screen.AutoMechanicTableScreenHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
@@ -23,7 +22,7 @@ public class AutoMechanicTableBlock extends Block {
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (world.isClientSide()) {
             return InteractionResult.SUCCESS;
         } else {

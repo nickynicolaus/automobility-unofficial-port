@@ -9,6 +9,7 @@ import io.github.foundationgames.automobility.automobile.render.attachment.front
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.RearAttachmentRenderModel;
 import io.github.foundationgames.automobility.automobile.render.wheel.WheelContextReceiver;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -48,18 +49,17 @@ public enum AutomobileRenderer {;
         var frameTexture = frame.model().texture();
         var engineTexture = engine.model().texture();
         if (!frame.isEmpty() && frameModel != null) {
-            frameModel.renderToBuffer(pose, buffers.getBuffer(frameModel.renderType(frameTexture)), light, overlay, 1, 1, 1, 1);
+            frameModel.renderToBuffer(pose, buffers.getBuffer(frameModel.renderType(frameTexture)), light, overlay, 0xFFFFFFFF);
             if (frameModel instanceof BaseModel base) {
                 base.doOtherLayerRender(pose, buffers, light, overlay);
             }
         }
 
-        float eBack = frame.model().enginePosBack() / 16;
-        float eUp = frame.model().enginePosUp() / 16;
-        pose.translate(0, -eUp, eBack);
+        var ePos = frame.model().enginePos().scale(1.0 / 16);
+        pose.translate(ePos.x(), -ePos.y(), -ePos.z());
         pose.mulPose(Axis.YP.rotationDegrees(180));
         if (!engine.isEmpty() && engineModel != null) {
-            engineModel.renderToBuffer(pose, buffers.getBuffer(engineModel.renderType(engineTexture)), light, overlay, 1, 1, 1, 1);
+            engineModel.renderToBuffer(pose, buffers.getBuffer(engineModel.renderType(engineTexture)), light, overlay, 0xFFFFFFFF);
             if (engineModel instanceof BaseModel base) {
                 base.doOtherLayerRender(pose, buffers, light, overlay);
             }
@@ -83,7 +83,7 @@ public enum AutomobileRenderer {;
                 pose.translate(exhaust.x() / 16, -exhaust.y() / 16, exhaust.z() / 16);
                 pose.mulPose(Axis.YP.rotationDegrees(exhaust.yaw()));
                 pose.mulPose(Axis.XP.rotationDegrees(exhaust.pitch()));
-                exhaustFumesModel.renderToBuffer(pose, exhaustBuffer, light, overlay, 1, 1, 1, 1);
+                exhaustFumesModel.renderToBuffer(pose, exhaustBuffer, light, overlay, 0xFFFFFFFF);
 
                 pose.popPose();
             }
@@ -101,7 +101,7 @@ public enum AutomobileRenderer {;
             if (rearAttachmentModel instanceof RearAttachmentRenderModel rm) {
                 rm.setRenderState(automobile.getRearAttachment(), (float) Math.toRadians(automobile.getWheelAngle(tickDelta)), tickDelta);
             }
-            rearAttachmentModel.renderToBuffer(pose, buffers.getBuffer(rearAttachmentModel.renderType(rearAtt.model().texture())), light, overlay, 1, 1, 1, 1);
+            rearAttachmentModel.renderToBuffer(pose, buffers.getBuffer(rearAttachmentModel.renderType(rearAtt.model().texture())), light, overlay, 0xFFFFFFFF);
             if (rearAttachmentModel instanceof BaseModel base) {
                 base.doOtherLayerRender(pose, buffers, light, overlay);
             }
@@ -117,7 +117,7 @@ public enum AutomobileRenderer {;
             if (frontAttachmentModel instanceof FrontAttachmentRenderModel fm) {
                 fm.setRenderState(automobile.getFrontAttachment(), chassisRaise, tickDelta);
             }
-            frontAttachmentModel.renderToBuffer(pose, buffers.getBuffer(frontAttachmentModel.renderType(frontAtt.model().texture())), light, overlay, 1, 1, 1, 1);
+            frontAttachmentModel.renderToBuffer(pose, buffers.getBuffer(frontAttachmentModel.renderType(frontAtt.model().texture())), light, overlay, 0xFFFFFFFF);
             if (frontAttachmentModel instanceof BaseModel base) {
                 base.doOtherLayerRender(pose, buffers, light, overlay);
             }
@@ -125,7 +125,7 @@ public enum AutomobileRenderer {;
         }
 
         // WHEELS ----------------------------------------
-        var wPoses = frame.model().wheelBase().wheels;
+        var wPoses = frame.model().wheelBase().wheels();
 
         if (!wheels.isEmpty()) {
             var wheelBuffer = buffers.getBuffer(wheelModel.renderType(wheels.model().texture()));
@@ -153,7 +153,7 @@ public enum AutomobileRenderer {;
 
                 pose.mulPose(Axis.YP.rotationDegrees(180 + pos.yaw()));
 
-                wheelModel.renderToBuffer(pose, wheelBuffer, light, overlay, 1, 1, 1, 1);
+                wheelModel.renderToBuffer(pose, wheelBuffer, light, overlay, 0xFFFFFFFF);
                 if (wheelModel instanceof BaseModel base) {
                     base.doOtherLayerRender(pose, buffers, light, overlay);
                 }
@@ -196,7 +196,7 @@ public enum AutomobileRenderer {;
                     pose.pushPose();
                     pose.translate((pos.right() / 16) + (wheelWidth * (pos.side() == WheelBase.WheelSide.RIGHT ? 1 : -1)), heightOffset / 16, (-pos.forward() / 16) + back);
                     pose.scale(pos.side() == WheelBase.WheelSide.LEFT ? -1 : 1, 1, -1);
-                    skidEffectModel.renderToBuffer(pose, skidEffectBuffer, light, overlay, r, g, b, 0.6f);
+                    skidEffectModel.renderToBuffer(pose, skidEffectBuffer, light, overlay, AUtils.colorToInt(0.6f, r, g, b));
                     pose.popPose();
                 }
             }

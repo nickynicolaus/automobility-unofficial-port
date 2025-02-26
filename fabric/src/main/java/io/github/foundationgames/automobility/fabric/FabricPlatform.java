@@ -1,26 +1,29 @@
 package io.github.foundationgames.automobility.fabric;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.controller.AutomobileController;
 import io.github.foundationgames.automobility.fabric.controller.controlify.ControlifyController;
-import io.github.foundationgames.automobility.fabric.controller.midnightcontrols.MidnightController;
 import io.github.foundationgames.automobility.platform.Platform;
+import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.HexCons;
-import io.github.foundationgames.automobility.util.TriCons;
 import io.github.foundationgames.automobility.util.TriFunc;
+import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
 import io.github.foundationgames.jsonem.JsonEM;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,11 +35,12 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -57,7 +61,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -112,24 +115,12 @@ public class FabricPlatform implements Platform {
 
     @Override
     public void serverSendPacket(ServerPlayer player, ResourceLocation rl, FriendlyByteBuf buf) {
-        ServerPlayNetworking.send(player, rl, buf);
+        ServerPlayNetworking.send(player, new AutomobilityPacketPayload(rl, AUtils.arrayOf(buf)));
     }
 
     @Override
     public void clientSendPacket(ResourceLocation rl, FriendlyByteBuf buf) {
-        ClientPlayNetworking.send(rl, buf);
-    }
-
-    @Override
-    public void serverReceivePacket(ResourceLocation rl, TriCons<MinecraftServer, ServerPlayer, FriendlyByteBuf> run) {
-        ServerPlayNetworking.registerGlobalReceiver(rl, (server, player, handler, buf, responseSender) ->
-                run.accept(server, player, buf));
-    }
-
-    @Override
-    public void clientReceivePacket(ResourceLocation rl, BiConsumer<Minecraft, FriendlyByteBuf> run) {
-        ClientPlayNetworking.registerGlobalReceiver(rl, (client, handler, buf, responseSender) ->
-                run.accept(client, buf));
+        ClientPlayNetworking.send(new AutomobilityPacketPayload(rl, AUtils.arrayOf(buf)));
     }
 
     @Override
@@ -148,6 +139,12 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
+    public <T> void registerSyncedRegistry(ResourceKey<? extends Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults) {
+        DynamicRegistries.registerSynced(key, codec, codec);
+        DynamicRegistrySetupCallback.EVENT.register(reg -> reg.asDynamicRegistryManager().registry(key).ifPresent(defaults::bootstrap));
+    }
+
+    @Override
     public SimpleParticleType simpleParticleType(boolean z) {
         return FabricParticleTypes.simple(z);
     }
@@ -157,8 +154,6 @@ public class FabricPlatform implements Platform {
         if (automobileController == null) {
             if (FabricLoader.getInstance().isModLoaded("controlify")) {
                 automobileController = new ControlifyController();
-            } else if (FabricLoader.getInstance().isModLoaded("midnightcontrols")) {
-                automobileController = new MidnightController();
             } else {
                 automobileController = AutomobileController.INCOMPATIBLE;
             }

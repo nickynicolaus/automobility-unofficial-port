@@ -1,7 +1,9 @@
 package io.github.foundationgames.automobility;
 
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
-import io.github.foundationgames.automobility.automobile.AutomobileData;
+import io.github.foundationgames.automobility.automobile.AutomobileEngine;
+import io.github.foundationgames.automobility.automobile.AutomobileFrame;
+import io.github.foundationgames.automobility.automobile.AutomobileWheel;
 import io.github.foundationgames.automobility.automobile.render.AutomobileModels;
 import io.github.foundationgames.automobility.automobile.render.AutomobileRenderer;
 import io.github.foundationgames.automobility.automobile.render.ExhaustFumesModel;
@@ -28,7 +30,7 @@ import io.github.foundationgames.automobility.automobile.render.frame.RickshawFr
 import io.github.foundationgames.automobility.automobile.render.frame.ShoppingCartFrameModel;
 import io.github.foundationgames.automobility.automobile.render.frame.StandardFrameModel;
 import io.github.foundationgames.automobility.automobile.render.frame.TractorFrameModel;
-import io.github.foundationgames.automobility.automobile.render.item.ItemRenderableAutomobile;
+import io.github.foundationgames.automobility.automobile.render.item.SimpleRenderableAutomobile;
 import io.github.foundationgames.automobility.automobile.render.wheel.CarriageWheelModel;
 import io.github.foundationgames.automobility.automobile.render.wheel.OffRoadWheelModel;
 import io.github.foundationgames.automobility.automobile.render.wheel.StandardWheelModel;
@@ -80,16 +82,22 @@ public class AutomobilityClient {
     }
 
     public static void initItems() {
-        var automobileReader = new AutomobileData();
-        var itemAutomobile = new ItemRenderableAutomobile(automobileReader);
-
         Platform.get().builtinItemRenderer(AutomobilityItems.AUTOMOBILE.require(), (stack, type, pose, buffers, light, overlay) -> {
-            automobileReader.read(stack.getOrCreateTagElement("Automobile"));
-            float wheelDist = automobileReader.getFrame().model().lengthPx() / 16;
+            var data = stack.get(AutomobilityItems.COMPONENT_AUTOMOBILE_DATA.require());
+            if (data == null) return;
+
+            var lvl = Minecraft.getInstance().level;
+            if (lvl == null) return;
+
+            var frame = lvl.registryAccess().registryOrThrow(AutomobileFrame.REGISTRY).get(data.frame());
+            var wheel = lvl.registryAccess().registryOrThrow(AutomobileWheel.REGISTRY).get(data.wheel());
+            var engine = lvl.registryAccess().registryOrThrow(AutomobileEngine.REGISTRY).get(data.engine());
+
+            float wheelDist = frame.model().lengthPx() / 16;
             float scale = 1;
             scale /= wheelDist * 0.77f;
             pose.scale(scale, scale, scale);
-            AutomobileRenderer.render(pose, buffers, light, overlay, Minecraft.getInstance().getFrameTime(), itemAutomobile);
+            AutomobileRenderer.render(pose, buffers, light, overlay, 0f, new SimpleRenderableAutomobile(frame, engine, wheel));
         });
         componentItemRenderer(AutomobilityItems.AUTOMOBILE_FRAME.require(),
                 t -> AutomobileModels.getModel(t.model().modelId()),
@@ -113,15 +121,18 @@ public class AutomobilityClient {
         );
     }
 
-    public static <T extends AutomobileComponent<T>> void componentItemRenderer(AutomobileComponentItem<T> item, Function<T, Model> modelProvider, Function<T, ResourceLocation> textureProvider, FloatFunc<T> scaleProvider) {
+    public static <T extends AutomobileComponent<T>, V> void componentItemRenderer(AutomobileComponentItem<T, V> item, Function<T, Model> modelProvider, Function<T, ResourceLocation> textureProvider, FloatFunc<T> scaleProvider) {
         Platform.get().builtinItemRenderer(item, (stack, mode, matrices, vertexConsumers, light, overlay) -> {
-            var component = item.getComponent(stack);
+            var lvl = Minecraft.getInstance().level;
+            if (lvl == null) return;
+
+            var component = item.getComponent(stack, lvl.registryAccess());
             if (item.isVisible(component)) {
                 var model = modelProvider.apply(component);
                 float scale = scaleProvider.apply(component);
                 matrices.translate(0.5, 0, 0.5);
                 matrices.scale(scale, -scale, -scale);
-                model.renderToBuffer(matrices, vertexConsumers.getBuffer(model.renderType(textureProvider.apply(component))), light, overlay, 1, 1, 1, 1);
+                model.renderToBuffer(matrices, vertexConsumers.getBuffer(model.renderType(textureProvider.apply(component))), light, overlay, 0xFFFFFFFF);
             }
         });
     }

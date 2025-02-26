@@ -1,13 +1,13 @@
 package io.github.foundationgames.automobility.automobile.attachment.rear;
 
-import com.mojang.datafixers.util.Pair;
 import io.github.foundationgames.automobility.automobile.attachment.RearAttachmentType;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.screen.SingleSlotScreenHandler;
 import io.github.foundationgames.automobility.util.network.CommonPackets;
-import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -17,22 +17,16 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.BannerItem;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BannerBlockEntity;
-import net.minecraft.world.level.block.entity.BannerPattern;
+import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class BannerPostRearAttachment extends RearAttachment {
     private static final Component UI_TITLE = Component.translatable("container.automobility.banner_post");
 
     private @Nullable DyeColor baseColor = null;
-
-    private ListTag patternNbt = new ListTag();
-    private List<Pair<Holder<BannerPattern>, DyeColor>> patterns;
+    private BannerPatternLayers patterns = null;
 
     public final Container inventory = new SimpleContainer(1) {
         @Override
@@ -71,8 +65,8 @@ public class BannerPostRearAttachment extends RearAttachment {
             nbt.putInt("Color", this.baseColor.getId());
         }
 
-        if (this.patternNbt != null) {
-            nbt.put("Patterns", this.patternNbt);
+        if (this.patterns != null) {
+            nbt.put("Patterns", BannerPatternLayers.CODEC.encode(this.patterns, NbtOps.INSTANCE, new CompoundTag()).getOrThrow());
         }
     }
 
@@ -84,11 +78,10 @@ public class BannerPostRearAttachment extends RearAttachment {
         }
 
         if (nbt.contains("Patterns", 9)) {
-            this.patternNbt = nbt.getList("Patterns", 10);
+            this.patterns = BannerPatternLayers.CODEC.decode(NbtOps.INSTANCE, nbt.get("Patterns")).getOrThrow().getFirst();
         } else {
-            this.patternNbt = new ListTag();
+            this.patterns = null;
         }
-        this.patterns = null;
     }
 
     public void setFromItem(ItemStack stack) {
@@ -99,13 +92,7 @@ public class BannerPostRearAttachment extends RearAttachment {
             return;
         }
 
-        var nbt = BlockItem.getBlockEntityData(stack);
-        if (nbt != null && nbt.contains("Patterns", 9)) {
-            this.patternNbt = nbt.getList("Patterns", 10);
-        } else {
-            this.patternNbt = new ListTag();
-        }
-        this.patterns = null;
+        this.patterns = stack.get(DataComponents.BANNER_PATTERNS);
 
         if (!this.world().isClientSide()) {
             this.sendPacket();
@@ -124,11 +111,7 @@ public class BannerPostRearAttachment extends RearAttachment {
         return this.baseColor;
     }
 
-    public List<Pair<Holder<BannerPattern>, DyeColor>> getPatterns() {
-        if (this.patterns == null) {
-            this.patterns = BannerBlockEntity.createPatterns(this.baseColor, this.patternNbt);
-        }
-
+    public BannerPatternLayers getPatterns() {
         return this.patterns;
     }
 
@@ -141,22 +124,22 @@ public class BannerPostRearAttachment extends RearAttachment {
     }
 
     @Override
-    public void writeNbt(CompoundTag nbt) {
-        super.writeNbt(nbt);
+    public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.writeNbt(nbt, registry);
         this.putToNbt(nbt);
 
         var item = new CompoundTag();
-        this.inventory.getItem(0).save(item);
+        ItemStack.CODEC.encode(this.inventory.getItem(0), NbtOps.INSTANCE, item);
 
         nbt.put("Banner", item);
     }
 
     @Override
-    public void readNbt(CompoundTag nbt) {
-        super.readNbt(nbt);
+    public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.readNbt(nbt, registry);
         this.setFromNbt(nbt);
 
-        this.inventory.setItem(0, ItemStack.of(nbt.getCompound("Banner")));
+        this.inventory.setItem(0, ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("Banner")).getOrThrow().getFirst());
     }
 
     @Override

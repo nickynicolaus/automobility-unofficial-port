@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.util;
 
+import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 
@@ -32,6 +33,10 @@ public class SimpleMapContentRegistry<V extends SimpleMapContentRegistry.Identif
 
     public void forEach(Consumer<V> action) {
         orderedKeys.forEach(k -> action.accept(entries.get(k)));
+    }
+
+    public Codec<V> codec() {
+        return ResourceLocation.CODEC.xmap(this::get, Identifiable::getId);
     }
 
     public interface Identifiable {

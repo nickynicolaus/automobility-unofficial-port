@@ -1,68 +1,53 @@
 package io.github.foundationgames.automobility.item;
 
+import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
+import io.github.foundationgames.automobility.util.Eventual;
 import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class AutomobileComponentItem<T extends AutomobileComponent<T>> extends Item implements CustomCreativeOutput {
-    protected final String nbtKey;
+public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, V> extends Item implements CustomCreativeOutput {
     protected final String translationKey;
-    protected final SimpleMapContentRegistry<T> registry;
 
-    public AutomobileComponentItem(Properties settings, String nbtKey, String translationKey, SimpleMapContentRegistry<T> registry) {
+    public AutomobileComponentItem(Properties settings, String translationKey) {
         super(settings);
-        this.nbtKey = nbtKey;
         this.translationKey = translationKey;
-        this.registry = registry;
     }
 
-    public ItemStack createStack(T component) {
-        if (component.isEmpty()) {
-            return ItemStack.EMPTY;
-        }
-
+    public ItemStack createStack(V componentDescription) {
         var stack = new ItemStack(this);
-        this.setComponent(stack, component.getId());
+        this.setComponent(stack, componentDescription);
         return stack;
     }
 
-    public void setComponent(ItemStack stack, ResourceLocation component) {
-        stack.getOrCreateTag().putString(this.nbtKey, component.toString());
-    }
+    public abstract void setComponent(ItemStack stack, V desc);
 
-    public T getComponent(ItemStack stack) {
-        if (stack.hasTag() && stack.getTag().contains(this.nbtKey)) {
-            return this.registry.getOrDefault(ResourceLocation.tryParse(stack.getTag().getString(this.nbtKey)));
-        }
-        return this.registry.getOrDefault(null);
-    }
+    public abstract T getComponent(ItemStack stack, HolderLookup.Provider registries);
+
+    public abstract ResourceLocation getComponentId(ItemStack stack, T component);
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
-        super.appendHoverText(stack, world, tooltip, context);
-        var component = this.getComponent(stack);
-        var id = component.getId();
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltip, tooltipFlag);
+        var component = this.getComponent(stack, context.registries());
+        var id = this.getComponentId(stack, component);
         var compKey = id.getNamespace()+"."+id.getPath();
         tooltip.add(Component.translatable(this.translationKey+"."+compKey).withStyle(ChatFormatting.BLUE));
 
-        component.appendTexts(tooltip, component);
-    }
-
-    @Override
-    public void provideCreativeOutput(CreativeModeTab.Output output) {
-        this.registry.forEach(component -> {
-            if (addToCreative(component)) output.accept(this.createStack(component));
-        });
+        component.appendTexts(tooltip::add, component);
     }
 
     public boolean isVisible(T component) {
@@ -71,5 +56,90 @@ public class AutomobileComponentItem<T extends AutomobileComponent<T>> extends I
 
     protected boolean addToCreative(T component) {
         return !component.isEmpty();
+    }
+
+    public static class Dynamic<T extends AutomobileComponent<T>> extends AutomobileComponentItem<T, ResourceKey<T>> {
+        public final ResourceKey<Registry<T>> registryKey;
+        public final Eventual<DataComponentType<ResourceKey<T>>> dataComponent;
+        public final T defaultComponent;
+
+        public Dynamic(Properties settings, String translationKey, ResourceKey<Registry<T>> registryKey, Eventual<DataComponentType<ResourceKey<T>>> dataComponent, T defaultComponent) {
+            super(settings, translationKey);
+            this.registryKey = registryKey;
+            this.dataComponent = dataComponent;
+            this.defaultComponent = defaultComponent;
+        }
+
+        @Override
+        public void setComponent(ItemStack stack, ResourceKey<T> component) {
+            stack.set(dataComponent.require(), component);
+        }
+
+        @Override
+        public T getComponent(ItemStack stack, HolderLookup.Provider registries) {
+            var component = stack.get(dataComponent.require());
+            if (component == null) {
+                return defaultComponent;
+            }
+
+            return registries.lookupOrThrow(registryKey).get(component).map(Holder.Reference::value).orElse(defaultComponent);
+        }
+
+        @Override
+        public ResourceLocation getComponentId(ItemStack stack, T component) {
+            var key = stack.get(dataComponent.require());
+            if (key == null) return Automobility.rl("empty");
+
+            return key.location();
+        }
+
+        public Holder<T> lookupComponent(ItemStack stack, HolderLookup.Provider registries) {
+            var component = stack.get(dataComponent.require());
+            if (component == null) {
+                return Holder.direct(defaultComponent);
+            }
+
+            return registries.lookupOrThrow(registryKey).get(component).map(r -> (Holder<T>)r).orElse(Holder.direct(defaultComponent));
+        }
+
+        @Override
+        public void provideCreativeOutput(CreativeModeTab.Output output, HolderLookup.Provider registries) {
+            registries.lookupOrThrow(registryKey).listElements().forEach(ref ->
+                    ref.unwrapKey().ifPresent(key -> {
+                        var component = ref.value();
+                        if (addToCreative(component)) output.accept(this.createStack(key));
+                    }));
+        }
+    }
+
+    public static class Builtin<T extends AutomobileComponent<T>> extends AutomobileComponentItem<T, T> {
+        protected final SimpleMapContentRegistry<T> registry;
+
+        public Builtin(Properties settings, String translationKey, SimpleMapContentRegistry<T> registry) {
+            super(settings, translationKey);
+
+            this.registry = registry;
+        }
+
+        @Override
+        public void setComponent(ItemStack stack, T component) {
+            stack.set(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require(), component.getId());
+        }
+
+        public T getComponent(ItemStack stack, HolderLookup.Provider registries) {
+            return this.registry.getOrDefault(stack.get(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require()));
+        }
+
+        @Override
+        public ResourceLocation getComponentId(ItemStack stack, T component) {
+            return component.getId();
+        }
+
+        @Override
+        public void provideCreativeOutput(CreativeModeTab.Output output, HolderLookup.Provider registries) {
+            this.registry.forEach(component -> {
+                if (addToCreative(component)) output.accept(this.createStack(component));
+            });
+        }
     }
 }

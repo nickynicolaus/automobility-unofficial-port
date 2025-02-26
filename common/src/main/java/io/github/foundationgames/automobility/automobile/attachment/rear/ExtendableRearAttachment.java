@@ -4,6 +4,7 @@ import io.github.foundationgames.automobility.automobile.attachment.RearAttachme
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.AUtils;
 import io.github.foundationgames.automobility.util.network.CommonPackets;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -52,15 +53,15 @@ public abstract class ExtendableRearAttachment extends DeployableRearAttachment 
     }
 
     @Override
-    public void writeNbt(CompoundTag nbt) {
-        super.writeNbt(nbt);
+    public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.writeNbt(nbt, registry);
 
         nbt.putBoolean("extended", this.extended());
     }
 
     @Override
-    public void readNbt(CompoundTag nbt) {
-        super.readNbt(nbt);
+    public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
+        super.readNbt(nbt, registry);
 
         this.setExtended(nbt.getBoolean("extended"));
     }

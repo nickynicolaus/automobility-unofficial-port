@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.block;
 
+import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.item.SlopePlacementContext;
 import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.core.BlockPos;
@@ -29,18 +30,11 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
     public static final VoxelShape EAST_SHAPE;
     public static final VoxelShape WEST_SHAPE;
 
-    public static final VoxelShape OLD_NORTH_SHAPE;
-    public static final VoxelShape OLD_SOUTH_SHAPE;
-    public static final VoxelShape OLD_EAST_SHAPE;
-    public static final VoxelShape OLD_WEST_SHAPE;
-
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final MapCodec<SteepSlopeBlock> CODEC = Block.simpleCodec(SteepSlopeBlock::new);
 
-    protected final boolean old;
-
-    public SteepSlopeBlock(Properties settings, boolean old) {
+    public SteepSlopeBlock(Properties settings) {
         super(settings.noOcclusion());
-        this.old = old;
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
     }
 
@@ -70,23 +64,13 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        if (old) {
-            return switch (state.getValue(FACING)) {
-                case NORTH -> OLD_NORTH_SHAPE;
-                case SOUTH -> OLD_SOUTH_SHAPE;
-                case WEST -> OLD_WEST_SHAPE;
-                case EAST -> OLD_EAST_SHAPE;
-                default -> Shapes.empty();
-            };
-        } else {
-            return switch (state.getValue(FACING)) {
-                case NORTH -> NORTH_SHAPE;
-                case SOUTH -> SOUTH_SHAPE;
-                case WEST -> WEST_SHAPE;
-                case EAST -> EAST_SHAPE;
-                default -> Shapes.empty();
-            };
-        }
+        return switch (state.getValue(FACING)) {
+            case NORTH -> NORTH_SHAPE;
+            case SOUTH -> SOUTH_SHAPE;
+            case WEST -> WEST_SHAPE;
+            case EAST -> EAST_SHAPE;
+            default -> Shapes.empty();
+        };
     }
 
     static {
@@ -139,9 +123,10 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
             }
             shapes.add(finalShape);
         }
-        OLD_NORTH_SHAPE = shapes.get(0);
-        OLD_SOUTH_SHAPE = shapes.get(1);
-        OLD_EAST_SHAPE = shapes.get(2);
-        OLD_WEST_SHAPE = shapes.get(3);
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 }

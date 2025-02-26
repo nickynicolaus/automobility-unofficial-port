@@ -1,77 +1,72 @@
 package io.github.foundationgames.automobility.recipe;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import io.github.foundationgames.automobility.item.AutomobileComponentItem;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.foundationgames.automobility.item.AutomobilityItems;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 
 public class AutoMechanicTableRecipeSerializer implements RecipeSerializer<AutoMechanicTableRecipe> {
     public static final AutoMechanicTableRecipeSerializer INSTANCE = new AutoMechanicTableRecipeSerializer();
 
-    public static ItemStack autoComponentStackFromJson(JsonObject obj) throws JsonSyntaxException, IllegalStateException {
-        var id = ResourceLocation.tryParse(obj.get("item").getAsString());
-        int count = obj.has("count") ? obj.get("count").getAsInt() : 1;
-        var stack = BuiltInRegistries.ITEM.getOptional(id).map(i -> new ItemStack(i, count)).orElse(ItemStack.EMPTY);
-
-        if (obj.has("component") && stack.getItem() instanceof AutomobileComponentItem<?> item) {
-            var component = ResourceLocation.tryParse(obj.get("component").getAsString());
-            if (component != null) {
-                item.setComponent(stack, component);
-            }
-        }
-
+    public static final Codec<ItemStack> AUTO_COMPONENT_STACK = RecordCodecBuilder.create(inst -> inst.group(
+            ItemStack.ITEM_NON_AIR_CODEC.fieldOf("item").forGetter(ItemStack::getItemHolder),
+            Codec.INT.fieldOf("count").forGetter(ItemStack::getCount),
+            ResourceLocation.CODEC.fieldOf("component").forGetter(s -> s.get(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require()))
+    ).apply(inst, (i, c, p) -> {
+        var stack = i.value().getDefaultInstance();
+        stack.setCount(c);
+        stack.set(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require(), p);
         return stack;
-    }
+    }));
 
-    @Override
-    public AutoMechanicTableRecipe fromJson(ResourceLocation id, JsonObject json) {
-        try {
-            var category = ResourceLocation.tryParse(json.get("category").getAsString());
-            var ingredients = new LinkedHashSet<Ingredient>();
-            for (var ele : json.get("ingredients").getAsJsonArray()) {
-                ingredients.add(Ingredient.fromJson(ele));
-            }
-            var result = autoComponentStackFromJson(json.get("result").getAsJsonObject());
-            int sortNum = 0;
-            if (json.has("sortnum")) {
-                sortNum = json.get("sortnum").getAsInt();
-            }
+    public static final MapCodec<AutoMechanicTableRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+            ResourceLocation.CODEC.fieldOf("category").forGetter(AutoMechanicTableRecipe::getCategory),
+            Codec.list(Ingredient.CODEC).fieldOf("ingredients").forGetter(r -> r.ingredients),
+            AUTO_COMPONENT_STACK.fieldOf("result").forGetter(AutoMechanicTableRecipe::getResultItem),
+            Codec.INT.fieldOf("sortnum").forGetter(r -> r.sortNum)
+    ).apply(inst, AutoMechanicTableRecipe::new));
 
-            return new AutoMechanicTableRecipe(id, category, ingredients, result, sortNum);
-        } catch (IllegalStateException ex) {
-            throw new JsonSyntaxException("Error parsing Auto Mechanic Table recipe - " + ex.getMessage());
-        }
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, AutoMechanicTableRecipe> STREAM_CODEC =
+            StreamCodec.of(AutoMechanicTableRecipeSerializer::toNetwork, AutoMechanicTableRecipeSerializer::fromNetwork);
 
-    @Override
-    public AutoMechanicTableRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
+    public static AutoMechanicTableRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
         var category = ResourceLocation.tryParse(buf.readUtf());
 
         int size = buf.readByte();
-        var ingredients = new LinkedHashSet<Ingredient>();
+        var ingredients = new ArrayList<Ingredient>();
         for (int i = 0; i < size; i++) {
-            ingredients.add(Ingredient.fromNetwork(buf));
+            ingredients.add(Ingredient.CONTENTS_STREAM_CODEC.decode(buf));
         }
 
-        var result = buf.readItem();
+        var result = ItemStack.STREAM_CODEC.decode(buf);
         int sortNum = buf.readInt();
 
-        return new AutoMechanicTableRecipe(id, category, ingredients, result, sortNum);
+        return new AutoMechanicTableRecipe(category, ingredients, result, sortNum);
+    }
+
+    public static void toNetwork(RegistryFriendlyByteBuf buf, AutoMechanicTableRecipe recipe) {
+        buf.writeUtf(recipe.category.toString());
+        buf.writeByte(recipe.ingredients.size());
+        recipe.ingredients.forEach(ing -> Ingredient.CONTENTS_STREAM_CODEC.encode(buf, ing));
+        ItemStack.STREAM_CODEC.encode(buf, recipe.result);
+        buf.writeInt(recipe.sortNum);
     }
 
     @Override
-    public void toNetwork(FriendlyByteBuf buf, AutoMechanicTableRecipe recipe) {
-        buf.writeUtf(recipe.category.toString());
-        buf.writeByte(recipe.ingredients.size());
-        recipe.ingredients.forEach(ing -> ing.toNetwork(buf));
-        buf.writeItem(recipe.result);
-        buf.writeInt(recipe.sortNum);
+    public MapCodec<AutoMechanicTableRecipe> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public StreamCodec<RegistryFriendlyByteBuf, AutoMechanicTableRecipe> streamCodec() {
+        return STREAM_CODEC;
     }
 }

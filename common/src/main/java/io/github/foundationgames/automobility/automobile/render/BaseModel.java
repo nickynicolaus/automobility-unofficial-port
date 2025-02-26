@@ -24,11 +24,11 @@ public class BaseModel extends Model {
     }
 
     @Override
-    public final void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+    public final void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
         matrices.pushPose();
         this.prepare(matrices);
-        this.root.render(matrices, vertices, light, overlay, red, green, blue, alpha);
-        renderExtra(matrices, vertices, light, overlay, red, green, blue, alpha);
+        this.root.render(matrices, vertices, light, overlay, color);
+        renderExtra(matrices, vertices, light, overlay, color);
         matrices.popPose();
     }
 
@@ -39,7 +39,7 @@ public class BaseModel extends Model {
         matrices.popPose();
     }
 
-    public void renderExtra(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+    public void renderExtra(PoseStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
     }
 
     public void renderOtherLayer(PoseStack matrices, MultiBufferSource consumers, int light, int overlay) {

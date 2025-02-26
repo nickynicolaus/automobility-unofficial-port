@@ -24,7 +24,7 @@ public class CreativeTabQueue implements CreativeModeTab.DisplayItemsGenerator {
     public void accept(CreativeModeTab.ItemDisplayParameters params, CreativeModeTab.Output output) {
         items.forEach(i -> {
             if (i.require() instanceof CustomCreativeOutput outputItem) {
-                outputItem.provideCreativeOutput(output);
+                outputItem.provideCreativeOutput(output, params.holders());
             } else {
                 output.accept(i.require());
             }

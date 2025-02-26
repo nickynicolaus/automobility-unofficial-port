@@ -1,70 +1,113 @@
 package io.github.foundationgames.automobility.automobile;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.foundationgames.automobility.Automobility;
-import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
+import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.DefaultRegistrar;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public record AutomobileFrame(
-        ResourceLocation id,
+        boolean empty,
         float weight,
         FrameModel model
 ) implements AutomobileComponent<AutomobileFrame> {
     public static final ResourceLocation ID = Automobility.rl("frame");
-    public static final SimpleMapContentRegistry<AutomobileFrame> REGISTRY = new SimpleMapContentRegistry<>();
 
-    public static final AutomobileFrame EMPTY = REGISTRY.register(
-            new AutomobileFrame(
+    public static final ResourceKey<Registry<AutomobileFrame>> REGISTRY = ResourceKey.createRegistryKey(Automobility.rl("automobile_frame"));
+    public static final DefaultRegistrar<AutomobileFrame> BOOTSTRAP = new DefaultRegistrar<>(REGISTRY);
+
+    public static final Codec<AutomobileFrame> DIRECT_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+            Codec.BOOL.optionalFieldOf("_empty", false).forGetter(AutomobileFrame::empty),
+            Codec.FLOAT.fieldOf("weight").forGetter(AutomobileFrame::weight),
+            FrameModel.CODEC.fieldOf("display").forGetter(AutomobileFrame::model)
+    ).apply(inst, AutomobileFrame::new));
+    public static final Codec<Holder<AutomobileFrame>> HOLDER_CODEC = RegistryFileCodec.create(REGISTRY, DIRECT_CODEC);
+    public static final Codec<ResourceKey<AutomobileFrame>> CODEC = ResourceKey.codec(REGISTRY);
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, AutomobileFrame> DIRECT_STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.BOOL, AutomobileFrame::empty,
+            ByteBufCodecs.FLOAT, AutomobileFrame::weight,
+            FrameModel.STREAM_CODEC, AutomobileFrame::model,
+            AutomobileFrame::new
+    );
+    public static final StreamCodec<RegistryFriendlyByteBuf, Holder<AutomobileFrame>> STREAM_CODEC = ByteBufCodecs.holder(REGISTRY, DIRECT_STREAM_CODEC);
+    public static final EntityDataSerializer<Holder<AutomobileFrame>> SERIALIZER = EntityDataSerializer.forValueType(STREAM_CODEC);
+
+    public static final AutomobileFrame EMPTY = new AutomobileFrame(
+            true,
+            0.25f,
+            FrameModel.legacy(
+                    ResourceLocation.parse("empty"),
                     Automobility.rl("empty"),
-                    0.25f,
-                    new FrameModel(
-                            new ResourceLocation("empty"),
-                            Automobility.rl("empty"),
-                            WheelBase.basic(16, 16),
-                            16, 8, 8, 4, 8, 8
-                    )
+                    WheelBase.basic(16, 16),
+                    16, 8, 8, 4, 8, 8
             )
     );
 
-    public static final AutomobileFrame WOODEN_MOTORCAR = REGISTRY.register(motorcar("wooden", 0.3f));
-    public static final AutomobileFrame COPPER_MOTORCAR = REGISTRY.register(motorcar("copper", 0.4f));
-    public static final AutomobileFrame STEEL_MOTORCAR = REGISTRY.register(motorcar("steel", 0.475f));
-    public static final AutomobileFrame GOLDEN_MOTORCAR = REGISTRY.register(motorcar("golden", 0.525f));
-    public static final AutomobileFrame BEJEWELED_MOTORCAR = REGISTRY.register(motorcar("bejeweled", 0.555f));
+    public static final ResourceKey<AutomobileFrame> EMPTY_KEY = BOOTSTRAP.register(
+            Automobility.rl("empty"), EMPTY
+    );
 
-    public static final AutomobileFrame STANDARD_WHITE = REGISTRY.register(standard("white"));
-    public static final AutomobileFrame STANDARD_ORANGE = REGISTRY.register(standard("orange"));
-    public static final AutomobileFrame STANDARD_MAGENTA = REGISTRY.register(standard("magenta"));
-    public static final AutomobileFrame STANDARD_LIGHT_BLUE = REGISTRY.register(standard("light_blue"));
-    public static final AutomobileFrame STANDARD_YELLOW = REGISTRY.register(standard("yellow"));
-    public static final AutomobileFrame STANDARD_LIME = REGISTRY.register(standard("lime"));
-    public static final AutomobileFrame STANDARD_PINK = REGISTRY.register(standard("pink"));
-    public static final AutomobileFrame STANDARD_GRAY = REGISTRY.register(standard("gray"));
-    public static final AutomobileFrame STANDARD_LIGHT_GRAY = REGISTRY.register(standard("light_gray"));
-    public static final AutomobileFrame STANDARD_CYAN = REGISTRY.register(standard("cyan"));
-    public static final AutomobileFrame STANDARD_PURPLE = REGISTRY.register(standard("purple"));
-    public static final AutomobileFrame STANDARD_BLUE = REGISTRY.register(standard("blue"));
-    public static final AutomobileFrame STANDARD_BROWN = REGISTRY.register(standard("brown"));
-    public static final AutomobileFrame STANDARD_GREEN = REGISTRY.register(standard("green"));
-    public static final AutomobileFrame STANDARD_RED = REGISTRY.register(standard("red"));
-    public static final AutomobileFrame STANDARD_BLACK = REGISTRY.register(standard("black"));
+    public static AutomobileFrame of(float weight, FrameModel model) {
+        return new AutomobileFrame(false, weight, model);
+    }
 
-    public static final AutomobileFrame AMETHYST_RICKSHAW = REGISTRY.register(rickshaw("amethyst", 0.2f));
-    public static final AutomobileFrame QUARTZ_RICKSHAW = REGISTRY.register(rickshaw("quartz", 0.25f));
-    public static final AutomobileFrame PRISMARINE_RICKSHAW = REGISTRY.register(rickshaw("prismarine", 0.14f));
-    public static final AutomobileFrame ECHO_RICKSHAW = REGISTRY.register(rickshaw("echo", 0.1f));
+    public static AutomobileFrame get(ResourceKey<AutomobileFrame> key, HolderLookup.Provider registries) {
+        return registries.lookupOrThrow(REGISTRY).get(key).map(Holder.Reference::value).orElse(EMPTY);
+    }
 
-    public static final AutomobileFrame RED_TRACTOR = REGISTRY.register(tractor("red"));
-    public static final AutomobileFrame YELLOW_TRACTOR = REGISTRY.register(tractor("yellow"));
-    public static final AutomobileFrame GREEN_TRACTOR = REGISTRY.register(tractor("green"));
-    public static final AutomobileFrame BLUE_TRACTOR = REGISTRY.register(tractor("blue"));
+    public static final ResourceKey<AutomobileFrame> WOODEN_MOTORCAR = BOOTSTRAP.register(motorcar("wooden", 0.3f));
+    public static final ResourceKey<AutomobileFrame> COPPER_MOTORCAR = BOOTSTRAP.register(motorcar("copper", 0.4f));
+    public static final ResourceKey<AutomobileFrame> STEEL_MOTORCAR = BOOTSTRAP.register(motorcar("steel", 0.475f));
+    public static final ResourceKey<AutomobileFrame> GOLDEN_MOTORCAR = BOOTSTRAP.register(motorcar("golden", 0.525f));
+    public static final ResourceKey<AutomobileFrame> BEJEWELED_MOTORCAR = BOOTSTRAP.register(motorcar("bejeweled", 0.555f));
 
-    public static final AutomobileFrame SHOPPING_CART = REGISTRY.register(
-            new AutomobileFrame(
-                    Automobility.rl("shopping_cart"),
+    public static final ResourceKey<AutomobileFrame> STANDARD_WHITE = BOOTSTRAP.register(standard("white"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_ORANGE = BOOTSTRAP.register(standard("orange"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_MAGENTA = BOOTSTRAP.register(standard("magenta"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_BLUE = BOOTSTRAP.register(standard("light_blue"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_YELLOW = BOOTSTRAP.register(standard("yellow"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIME = BOOTSTRAP.register(standard("lime"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_PINK = BOOTSTRAP.register(standard("pink"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_GRAY = BOOTSTRAP.register(standard("gray"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_GRAY = BOOTSTRAP.register(standard("light_gray"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_CYAN = BOOTSTRAP.register(standard("cyan"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_PURPLE = BOOTSTRAP.register(standard("purple"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BLUE = BOOTSTRAP.register(standard("blue"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BROWN = BOOTSTRAP.register(standard("brown"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_GREEN = BOOTSTRAP.register(standard("green"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_RED = BOOTSTRAP.register(standard("red"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BLACK = BOOTSTRAP.register(standard("black"));
+
+    public static final ResourceKey<AutomobileFrame> AMETHYST_RICKSHAW = BOOTSTRAP.register(rickshaw("amethyst", 0.2f));
+    public static final ResourceKey<AutomobileFrame> QUARTZ_RICKSHAW = BOOTSTRAP.register(rickshaw("quartz", 0.25f));
+    public static final ResourceKey<AutomobileFrame> PRISMARINE_RICKSHAW = BOOTSTRAP.register(rickshaw("prismarine", 0.14f));
+    public static final ResourceKey<AutomobileFrame> ECHO_RICKSHAW = BOOTSTRAP.register(rickshaw("echo", 0.1f));
+
+    public static final ResourceKey<AutomobileFrame> RED_TRACTOR = BOOTSTRAP.register(tractor("red"));
+    public static final ResourceKey<AutomobileFrame> YELLOW_TRACTOR = BOOTSTRAP.register(tractor("yellow"));
+    public static final ResourceKey<AutomobileFrame> GREEN_TRACTOR = BOOTSTRAP.register(tractor("green"));
+    public static final ResourceKey<AutomobileFrame> BLUE_TRACTOR = BOOTSTRAP.register(tractor("blue"));
+
+    public static final ResourceKey<AutomobileFrame> SHOPPING_CART = BOOTSTRAP.register(
+            Automobility.rl("shopping_cart"),
+            of(
                     0.25f,
-                    new FrameModel(
+                    FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/shopping_cart.png"),
                             Automobility.rl("frame_shopping_cart"),
                             WheelBase.basic(17, 12.05f),
@@ -78,11 +121,11 @@ public record AutomobileFrame(
             )
     );
 
-    public static final AutomobileFrame C_ARR = REGISTRY.register(
-            new AutomobileFrame(
-                    Automobility.rl("c_arr"),
+    public static final ResourceKey<AutomobileFrame> C_ARR = BOOTSTRAP.register(
+            Automobility.rl("c_arr"),
+            of(
                     0.85f,
-                    new FrameModel(
+                    FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/c_arr.png"),
                             Automobility.rl("frame_c_arr"),
                             WheelBase.basic(44.5f, 16),
@@ -96,11 +139,11 @@ public record AutomobileFrame(
             )
     );
 
-    public static final AutomobileFrame PINEAPPLE = REGISTRY.register(
-            new AutomobileFrame(
-                    Automobility.rl("pineapple"),
+    public static final ResourceKey<AutomobileFrame> PINEAPPLE = BOOTSTRAP.register(
+            Automobility.rl("pineapple"),
+            of(
                     0.75f,
-                    new FrameModel(
+                    FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/pineapple.png"),
                             Automobility.rl("frame_pineapple"),
                             WheelBase.basic(10, 18),
@@ -114,11 +157,10 @@ public record AutomobileFrame(
             )
     );
 
-    private static AutomobileFrame standard(String color) {
-        return new AutomobileFrame(
-                Automobility.rl("standard_"+color),
+    private static DefaultRegistrar.Candidate<AutomobileFrame> standard(String color) {
+        return DefaultRegistrar.cand(Automobility.rl("standard_"+color), of(
                 0.6f,
-                new FrameModel(
+                FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/standard_"+color+".png"),
                         Automobility.rl("frame_standard"),
                         WheelBase.basic(26, 10),
@@ -129,14 +171,13 @@ public record AutomobileFrame(
                         18,
                         22
                 )
-        );
+        ));
     }
 
-    private static AutomobileFrame motorcar(String variant, float weight) {
-        return new AutomobileFrame(
-                Automobility.rl(variant+"_motorcar"),
+    private static DefaultRegistrar.Candidate<AutomobileFrame> motorcar(String variant, float weight) {
+        return DefaultRegistrar.cand(Automobility.rl(variant+"_motorcar"), of(
                 weight,
-                new FrameModel(
+                FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+variant+"_motorcar.png"),
                         Automobility.rl("frame_motorcar"),
                         WheelBase.basic(32, 12),
@@ -147,22 +188,21 @@ public record AutomobileFrame(
                         23,
                         22
                 )
-        );
+        ));
     }
 
-    private static AutomobileFrame tractor(String color) {
-        return new AutomobileFrame(
-                Automobility.rl(color+"_tractor"),
+    private static DefaultRegistrar.Candidate<AutomobileFrame> tractor(String color) {
+        return DefaultRegistrar.cand(Automobility.rl(color+"_tractor"), of(
                 0.9f,
-                new FrameModel(
+                FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+color+"_tractor.png"),
                         Automobility.rl("frame_tractor"),
-                        new WheelBase(
+                        new WheelBase(List.of(
                                 new WheelBase.WheelPos(-2, -7, 1.8f, 0, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(-2, 7, 1.8f, 180, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.RIGHT),
                                 new WheelBase.WheelPos(15, -1, 1, 0, WheelBase.WheelEnd.FRONT, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(15, 1, 1, 180, WheelBase.WheelEnd.FRONT, WheelBase.WheelSide.RIGHT)
-                        ),
+                        )),
                         24,
                         9,
                         9,
@@ -170,22 +210,21 @@ public record AutomobileFrame(
                         12,
                         19
                 )
-        );
+        ));
     }
 
-    private static AutomobileFrame rickshaw(String prefix, float weight) {
-        return new AutomobileFrame(
-                Automobility.rl(prefix+"_rickshaw"),
+    private static DefaultRegistrar.Candidate<AutomobileFrame> rickshaw(String prefix, float weight) {
+        return DefaultRegistrar.cand(Automobility.rl(prefix+"_rickshaw"), of(
                 weight,
-                new FrameModel(
+                FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+prefix+"_rickshaw.png"),
                         Automobility.rl("frame_rickshaw"),
-                        new WheelBase(
+                        new WheelBase(List.of(
                                 new WheelBase.WheelPos(-11, -7.5f, 1, 0, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(-11, 7.5f, 1, 180, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.RIGHT),
                                 new WheelBase.WheelPos(11, -0.1f, 1, 0, WheelBase.WheelEnd.FRONT, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(11, 0.1f, 1, 180, WheelBase.WheelEnd.FRONT, WheelBase.WheelSide.RIGHT)
-                        ),
+                        )),
                         26,
                         2.5f,
                         13,
@@ -193,14 +232,14 @@ public record AutomobileFrame(
                         17.5f,
                         14.5f
                 )
-        );
+        ));
     }
 
     public static final DisplayStat<AutomobileFrame> STAT_WEIGHT = new DisplayStat<>("weight", AutomobileFrame::weight);
 
     @Override
     public boolean isEmpty() {
-        return this == EMPTY;
+        return empty();
     }
 
     @Override
@@ -213,24 +252,74 @@ public record AutomobileFrame(
         action.accept(STAT_WEIGHT);
     }
 
-    @Override
-    public ResourceLocation getId() {
-        return this.id;
-    }
-
-    public String getTranslationKey() {
+    public static String getTranslationKey(ResourceLocation id) {
         return "frame."+id.getNamespace()+"."+id.getPath();
     }
 
-    public static record FrameModel(
+    @Override
+    public ResourceLocation getId() {
+        return Automobility.rl("invalid");
+    }
+
+    public record FrameModel(
             ResourceLocation texture,
             ResourceLocation modelId,
             WheelBase wheelBase,
             float lengthPx,
-            float seatHeight,
-            float enginePosBack,
-            float enginePosUp,
+            Vec3 driverSeatPos,
+            Vec3 enginePos,
             float rearAttachmentPos,
             float frontAttachmentPos
-    ) {}
+    ) {
+        public static final Codec<FrameModel> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+                ResourceLocation.CODEC.fieldOf("texture").forGetter(FrameModel::texture),
+                ResourceLocation.CODEC.fieldOf("model").forGetter(FrameModel::modelId),
+                WheelBase.CODEC.fieldOf("wheels").forGetter(FrameModel::wheelBase),
+                Codec.FLOAT.fieldOf("length_pixels").forGetter(FrameModel::lengthPx),
+                Vec3.CODEC.fieldOf("driver_seat").forGetter(FrameModel::driverSeatPos),
+                Vec3.CODEC.fieldOf("engine_position").forGetter(FrameModel::enginePos),
+                Codec.FLOAT.fieldOf("rear_attachment_offset").forGetter(FrameModel::rearAttachmentPos),
+                Codec.FLOAT.fieldOf("front_attachment_offset").forGetter(FrameModel::frontAttachmentPos)
+        ).apply(inst, FrameModel::new));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, FrameModel> STREAM_CODEC = StreamCodec.of(
+                (buf, m) -> {
+                    buf.writeResourceLocation(m.texture());
+                    buf.writeResourceLocation(m.modelId());
+                    WheelBase.STREAM_CODEC.encode(buf, m.wheelBase());
+                    buf.writeFloat(m.lengthPx());
+                    AUtils.STREAM_CODEC_VEC3.encode(buf, m.driverSeatPos());
+                    AUtils.STREAM_CODEC_VEC3.encode(buf, m.enginePos());
+                    buf.writeFloat(m.rearAttachmentPos());
+                    buf.writeFloat(m.frontAttachmentPos());
+                },
+                buf -> new FrameModel(
+                        buf.readResourceLocation(),
+                        buf.readResourceLocation(),
+                        WheelBase.STREAM_CODEC.decode(buf),
+                        buf.readFloat(),
+                        AUtils.STREAM_CODEC_VEC3.decode(buf),
+                        AUtils.STREAM_CODEC_VEC3.decode(buf),
+                        buf.readFloat(),
+                        buf.readFloat()
+                )
+        );
+
+        public static FrameModel legacy(ResourceLocation texture,
+                                        ResourceLocation modelId,
+                                        WheelBase wheelBase,
+                                        float lengthPx,
+                                        float seatHeight,
+                                        float enginePosBack,
+                                        float enginePosUp,
+                                        float rearAttachmentPos,
+                                        float frontAttachmentPos) {
+            return new FrameModel(
+                    texture, modelId, wheelBase, lengthPx,
+                    new Vec3(0, seatHeight, 0),
+                    new Vec3(0, enginePosUp, -enginePosBack),
+                    rearAttachmentPos, frontAttachmentPos
+            );
+        }
+    }
 }

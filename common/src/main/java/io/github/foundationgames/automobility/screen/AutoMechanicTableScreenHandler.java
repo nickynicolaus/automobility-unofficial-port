@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.screen;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipe;
+import io.github.foundationgames.automobility.recipe.ContainerRecipeInput;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
     private final Level world;
@@ -61,7 +63,12 @@ public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
             this.addSlot(new Slot(playerInv, s, 8 + (s * 18), playerInvY + 58));
         }
 
-        this.recipes = new ArrayList<>(world.getRecipeManager().getAllRecipesFor(AutoMechanicTableRecipe.TYPE));
+        this.recipes = world.getRecipeManager().getAllRecipesFor(AutoMechanicTableRecipe.TYPE)
+                .stream().map(h -> {
+                    var r = h.value();
+                    r.sortId = h.id();
+                    return r;
+                }).collect(Collectors.toList());
         Collections.sort(this.recipes);
 
         this.selectedRecipe.set(-1);
@@ -80,14 +87,16 @@ public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
     private void updateMissingIngredients() {
         this.missingIngredients.clear();
 
-        this.getSelectedRecipe().ifPresent(recipe -> recipe.forMissingIngredients(this.inputInv, this.missingIngredients::add));
+        var ctr = new ContainerRecipeInput(this.inputInv);
+        this.getSelectedRecipe().ifPresent(recipe -> recipe.forMissingIngredients(ctr, this.missingIngredients::add));
     }
 
     private void updateRecipeState() {
         this.updateMissingIngredients();
 
+        var ctr = new ContainerRecipeInput(this.inputInv);
         this.getSelectedRecipe().ifPresent(recipe -> {
-            if (recipe.matches(this.inputInv, this.world)) {
+            if (recipe.matches(ctr, this.world)) {
                 this.outputSlot.set(recipe.getResultItem().copy());
             } else {
                 this.outputSlot.set(ItemStack.EMPTY);
@@ -208,7 +217,7 @@ public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
 
             AutoMechanicTableScreenHandler.this.getSelectedRecipe()
                     .ifPresent(recipe -> {
-                        recipe.assemble(AutoMechanicTableScreenHandler.this.inputInv);
+                        recipe.assemble(new ContainerRecipeInput(AutoMechanicTableScreenHandler.this.inputInv));
                         stack.getItem().onCraftedBy(stack, player.level(), player);
                         AutoMechanicTableScreenHandler.this.updateRecipeState();
                     });

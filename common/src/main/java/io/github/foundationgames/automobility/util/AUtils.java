@@ -1,17 +1,15 @@
 package io.github.foundationgames.automobility.util;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.foundationgames.automobility.Automobility;
+import io.github.foundationgames.automobility.automobile.AutomobileData;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
-import io.github.foundationgames.automobility.automobile.AutomobilePrefab;
 import io.github.foundationgames.automobility.automobile.AutomobileWheel;
 import io.github.foundationgames.automobility.item.AutomobilityItems;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
@@ -40,6 +38,15 @@ public enum AUtils {;
      * confuse the server moving quickly through holes)
      */
     public static boolean IGNORE_ENTITY_GROUND_CHECK_STEPPING = false;
+
+    public static final StreamCodec<ByteBuf, Vec3> STREAM_CODEC_VEC3 = StreamCodec.of(
+            (buf, v) -> {
+                buf.writeDouble(v.x());
+                buf.writeDouble(v.y());
+                buf.writeDouble(v.z());
+            },
+            buf -> new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble())
+    );
 
     private static final RandomSource RANDOM = RandomSource.create();
 
@@ -137,23 +144,6 @@ public enum AUtils {;
     }
 
     /**
-     * A shortcut method to render a Myron obj model, or any baked model without directional/blockstate-based quads
-     * @param model The Myron BakedModel to render
-     * @param vertices A vertex consumer buffer using a terrain render layer
-     * @param matrices A matrix stack containing transformations
-     * @param light The lightmap coordinates to render with
-     * @param overlay The overlay coordinates to render with
-     */
-    public static void renderMyronObj(BakedModel model, VertexConsumer vertices, PoseStack matrices, int light, int overlay) {
-        // For some reason with Iris, model.getQuads() throws a NPE
-        try {
-            for (BakedQuad quad : model.getQuads(null, null, RANDOM)) {
-                vertices.putBulkData(matrices.last(), quad, 1, 1, 1, light, overlay);
-            }
-        } catch (NullPointerException ignored) {}
-    }
-
-    /**
      * Turns an RGB color integer into a Vec3f.
      * @param color An RGB color integer
      * @return A Vec3f containing the color integer's RGB, with x being r, y being g, and z being b. All values are from 0 to 1.
@@ -165,8 +155,23 @@ public enum AUtils {;
         return new Vector3f((float)r / 255, (float)g / 255, (float)b / 255);
     }
 
+    public static int colorToInt(float a, float r, float g, float b) {
+        int ia = (int)(a * 255);
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        return (ia << 24) | (ir << 16) | (ig << 8) | ib;
+    }
+
     public static boolean canMerge(ItemStack a, ItemStack b) {
         return ItemStack.isSameItem(a, b) && (a.getCount() + b.getCount() <= a.getMaxStackSize());
+    }
+
+    public static byte[] arrayOf(ByteBuf buffer) {
+        int sz = buffer.readableBytes();
+        byte[] r = new byte[sz];
+        buffer.readBytes(r);
+        return r;
     }
 
     /**
@@ -200,6 +205,6 @@ public enum AUtils {;
     }
 
     public static ItemStack createPrefabsIcon() {
-        return new AutomobilePrefab(Automobility.rl("standard_light_blue"), AutomobileFrame.STANDARD_LIGHT_BLUE, AutomobileWheel.STANDARD, AutomobileEngine.IRON).toStack();
+        return new AutomobileData(Automobility.rl("standard_light_blue"), AutomobileFrame.STANDARD_LIGHT_BLUE, AutomobileWheel.STANDARD, AutomobileEngine.IRON).asStack();
     }
 }

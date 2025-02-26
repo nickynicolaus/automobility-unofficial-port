@@ -1,12 +1,13 @@
 package io.github.foundationgames.automobility.block;
 
+import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.block.entity.AutomobileAssemblerBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +34,8 @@ public class AutomobileAssemblerBlock extends HorizontalDirectionalBlock impleme
 
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
+    public static final MapCodec<AutomobileAssemblerBlock> CODEC = Block.simpleCodec(AutomobileAssemblerBlock::new);
+
     private static final VoxelShape BASE = Shapes.or(
             Block.box(0, 0, 0, 16, 4, 16),
             Block.box(5, 4, 5, 11, 12, 11));
@@ -45,6 +48,11 @@ public class AutomobileAssemblerBlock extends HorizontalDirectionalBlock impleme
     public AutomobileAssemblerBlock(Properties settings) {
         super(settings);
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.NORTH).setValue(POWERED, false));
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -67,12 +75,12 @@ public class AutomobileAssemblerBlock extends HorizontalDirectionalBlock impleme
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (world.getBlockEntity(pos) instanceof AutomobileAssemblerBlockEntity assembler) {
-            return assembler.interact(player, hand);
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (level.getBlockEntity(pos) instanceof AutomobileAssemblerBlockEntity assembler) {
+            return assembler.interact(player, stack, hand);
         }
 
-        return super.use(state, world, pos, player, hand, hit);
+        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override

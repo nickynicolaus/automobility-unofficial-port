@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.automobile.attachment;
 
+import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.automobile.DisplayStat;
@@ -20,9 +21,10 @@ public record FrontAttachmentType<T extends FrontAttachment>(
 ) implements AutomobileComponent<FrontAttachmentType<?>> {
     public static final ResourceLocation ID = Automobility.rl("front_attachment");
     public static final SimpleMapContentRegistry<FrontAttachmentType<?>> REGISTRY = new SimpleMapContentRegistry<>();
+    public static final Codec<FrontAttachmentType<?>> CODEC = REGISTRY.codec();
 
     public static final FrontAttachmentType<EmptyFrontAttachment> EMPTY = register(new FrontAttachmentType<>(
-            Automobility.rl("empty"), EmptyFrontAttachment::new, new FrontAttachmentModel(new ResourceLocation("empty"), Automobility.rl("empty"), 1)
+            Automobility.rl("empty"), EmptyFrontAttachment::new, new FrontAttachmentModel(ResourceLocation.parse("empty"), Automobility.rl("empty"), 1)
     ));
 
     public static final FrontAttachmentType<MobControllerFrontAttachment> MOB_CONTROLLER = register(new FrontAttachmentType<>(

@@ -7,9 +7,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-public class RearAttachmentItem extends AutomobileComponentItem<RearAttachmentType<?>> implements AutomobileInteractable {
+public class RearAttachmentItem extends AutomobileComponentItem.Builtin<RearAttachmentType<?>> implements AutomobileInteractable {
     public RearAttachmentItem(Properties settings) {
-        super(settings, "attachment", "attachment.rear", RearAttachmentType.REGISTRY);
+        super(settings, "attachment.rear", RearAttachmentType.REGISTRY);
     }
 
     @Override
@@ -19,7 +19,7 @@ public class RearAttachmentItem extends AutomobileComponentItem<RearAttachmentTy
                 return InteractionResult.SUCCESS;
             }
 
-            automobile.setRearAttachment(getComponent(stack));
+            automobile.setRearAttachment(getComponent(stack, player.level().registryAccess()));
             automobile.playHitSound(automobile.getTailPos());
             if (!player.isCreative()) {
                 stack.shrink(1);

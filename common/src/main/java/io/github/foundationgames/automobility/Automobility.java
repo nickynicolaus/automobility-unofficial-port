@@ -1,5 +1,8 @@
 package io.github.foundationgames.automobility;
 
+import io.github.foundationgames.automobility.automobile.AutomobileEngine;
+import io.github.foundationgames.automobility.automobile.AutomobileFrame;
+import io.github.foundationgames.automobility.automobile.AutomobileWheel;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.entity.AutomobilityEntities;
 import io.github.foundationgames.automobility.item.AutomobilityItems;
@@ -18,6 +21,7 @@ import io.github.foundationgames.automobility.util.RegistryQueue;
 import io.github.foundationgames.automobility.util.network.CommonPackets;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.MenuType;
@@ -55,9 +59,16 @@ public class Automobility {
         RegistryQueue.register(BuiltInRegistries.RECIPE_SERIALIZER, AutoMechanicTableRecipe.ID, () -> AutoMechanicTableRecipeSerializer.INSTANCE);
         RegistryQueue.register(BuiltInRegistries.CREATIVE_MODE_TAB, TAB.location, () -> Platform.get().creativeTab(TAB.location, AUtils::createGroupIcon, TAB));
         RegistryQueue.register(BuiltInRegistries.CREATIVE_MODE_TAB, PREFAB_TAB.location, () -> Platform.get().creativeTab(PREFAB_TAB.location, AUtils::createPrefabsIcon, PREFAB_TAB));
+
+        EntityDataSerializers.registerSerializer(AutomobileFrame.SERIALIZER);
+        Platform.get().registerSyncedRegistry(AutomobileFrame.REGISTRY, AutomobileFrame.DIRECT_CODEC, AutomobileFrame.BOOTSTRAP);
+        EntityDataSerializers.registerSerializer(AutomobileWheel.SERIALIZER);
+        Platform.get().registerSyncedRegistry(AutomobileWheel.REGISTRY, AutomobileWheel.DIRECT_CODEC, AutomobileWheel.BOOTSTRAP);
+        EntityDataSerializers.registerSerializer(AutomobileEngine.SERIALIZER);
+        Platform.get().registerSyncedRegistry(AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC, AutomobileEngine.BOOTSTRAP);
     }
 
     public static ResourceLocation rl(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 }

@@ -48,7 +48,7 @@ public class SlopeUnbakedModel implements UnbakedModel {
             MODEL_STEEP_SLOPE_DASH_PANEL_OFF, () -> new SlopeUnbakedModel(Type.STEEP, TEX_FRAME, TEX_DASH_PANEL_OFF, TEX_DASH_PANEL_FRAME)
     );
 
-    private static final ResourceLocation PARENT = new ResourceLocation("block/block");
+    private static final ResourceLocation PARENT = ResourceLocation.parse("block/block");
 
     private final Type type;
     private final Material frameTex;
@@ -85,14 +85,14 @@ public class SlopeUnbakedModel implements UnbakedModel {
 
     @Nullable
     @Override
-    public BakedModel bake(ModelBaker modelBaker, Function<Material, TextureAtlasSprite> function, ModelState modelState, ResourceLocation resourceLocation) {
-        return SlopeBakedModel.impl.create(function.apply(frameTex), createFrameTexOverrides(function),
-                plateInnerTex != null ? function.apply(plateInnerTex) : null,
-                plateOuterTex != null ? function.apply(plateOuterTex) : null, modelState, type);
+    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state) {
+        return SlopeBakedModel.impl.create(spriteGetter.apply(frameTex), createFrameTexOverrides(spriteGetter),
+                plateInnerTex != null ? spriteGetter.apply(plateInnerTex) : null,
+                plateOuterTex != null ? spriteGetter.apply(plateOuterTex) : null, state, type);
     }
 
     private static TextureAtlasSprite vanillaSprite(Function<Material, TextureAtlasSprite> spriteGet, String name) {
-        return spriteGet.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("minecraft", name)));
+        return spriteGet.apply(new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.fromNamespaceAndPath("minecraft", name)));
     }
 
     public enum Type {

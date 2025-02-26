@@ -10,13 +10,17 @@ import io.github.foundationgames.automobility.particle.AutomobilityParticles;
 import io.github.foundationgames.automobility.particle.DriftSmokeParticle;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.screen.AutomobileHud;
+import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
+import io.github.foundationgames.automobility.util.network.ClientPackets;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 
@@ -29,11 +33,15 @@ public class AutomobilityClientFabric implements ClientModInitializer {
 
         AutomobilityClient.init();
 
+        PayloadTypeRegistry.playS2C().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
+        ClientPlayNetworking.registerGlobalReceiver(AutomobilityPacketPayload.TYPE, (payload, context) ->
+                ClientPackets.CLIENTBOUND_HANDLERS.getOrDefault(payload.id(), (x,y)->{}).accept(context.client(), payload.buf()));
+
         ParticleFactoryRegistry.getInstance().register(AutomobilityParticles.DRIFT_SMOKE.require(), DriftSmokeParticle.Factory::new);
         HudRenderCallback.EVENT.register((pose, tickDelta) -> {
             var player = Minecraft.getInstance().player;
             if (player.getVehicle() instanceof AutomobileEntity auto) {
-                AutomobileHud.render(pose, player, auto, tickDelta);
+                AutomobileHud.render(pose, player, auto, tickDelta.getGameTimeDeltaTicks());
             }
         });
 
@@ -42,8 +50,9 @@ public class AutomobilityClientFabric implements ClientModInitializer {
 
         SlopeBakedModel.impl = FabricSlopeBakedModel::new;
 
-        ModelLoadingRegistry.INSTANCE.registerResourceProvider(manager -> (location, context) ->
-                SlopeUnbakedModel.DEFAULT_MODELS.containsKey(location) ? SlopeUnbakedModel.DEFAULT_MODELS.get(location).get() : null);
+        ModelLoadingPlugin.register(ctx -> ctx.resolveModel().register(
+                c -> SlopeUnbakedModel.DEFAULT_MODELS.getOrDefault(c.id(), () -> null).get()
+        ));
 
         ClientTickEvents.START_WORLD_TICK.register(world -> {
             boolean isRidingAutomobile = Minecraft.getInstance().player != null &&

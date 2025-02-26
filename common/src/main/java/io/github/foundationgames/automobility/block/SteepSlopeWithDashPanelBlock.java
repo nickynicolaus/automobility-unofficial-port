@@ -1,17 +1,21 @@
 package io.github.foundationgames.automobility.block;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
 public class SteepSlopeWithDashPanelBlock extends SteepSlopeBlock {
+    public static final MapCodec<SteepSlopeWithDashPanelBlock> CODEC = Block.simpleCodec(SteepSlopeWithDashPanelBlock::new);
+
     public SteepSlopeWithDashPanelBlock(Properties settings) {
-        super(settings, false);
+        super(settings);
 
         registerDefaultState(defaultBlockState().setValue(DashPanelBlock.POWERED, false));
     }
@@ -35,7 +39,7 @@ public class SteepSlopeWithDashPanelBlock extends SteepSlopeBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(AutomobilityBlocks.DASH_PANEL.require());
     }
 
@@ -43,5 +47,10 @@ public class SteepSlopeWithDashPanelBlock extends SteepSlopeBlock {
     public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
         super.entityInside(state, world, pos, entity);
         DashPanelBlock.onCollideWithDashPanel(state, entity);
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 }
