@@ -14,16 +14,16 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipProvider;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
-public record AutomobileData(@Nullable ResourceLocation prefabName,
+public record AutomobileData(Optional<ResourceLocation> prefabName,
                              ResourceKey<AutomobileFrame> frame,
                              ResourceKey<AutomobileWheel> wheel,
                              ResourceKey<AutomobileEngine> engine) implements TooltipProvider {
     public static final Codec<AutomobileData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            ResourceLocation.CODEC.optionalFieldOf("prefab_id", null).forGetter(AutomobileData::prefabName),
+            ResourceLocation.CODEC.optionalFieldOf("prefab_id").forGetter(AutomobileData::prefabName),
             AutomobileFrame.CODEC.fieldOf("frame").forGetter(AutomobileData::frame),
             AutomobileWheel.CODEC.fieldOf("wheels").forGetter(AutomobileData::wheel),
             AutomobileEngine.CODEC.fieldOf("engine").forGetter(AutomobileData::engine)
@@ -31,13 +31,21 @@ public record AutomobileData(@Nullable ResourceLocation prefabName,
 
     private static final AutomobileStats stats = new AutomobileStats();
 
+    public static AutomobileData prefab(ResourceLocation prefabName,
+                                        ResourceKey<AutomobileFrame> frame,
+                                        ResourceKey<AutomobileWheel> wheel,
+                                        ResourceKey<AutomobileEngine> engine) {
+        return new AutomobileData(Optional.of(prefabName), frame, wheel, engine);
+    }
+
     public ItemStack asStack() {
         var stack = AutomobilityItems.AUTOMOBILE.require().getDefaultInstance();
         stack.set(AutomobilityItems.COMPONENT_AUTOMOBILE_DATA.require(), this);
 
-        if (this.prefabName() != null) {
+        if (this.prefabName().isPresent()) {
+            var name = this.prefabName().get();
             stack.set(DataComponents.ITEM_NAME, Component.translatable(String.format(
-                    "prefab.%s.%s", this.prefabName().getNamespace(), this.prefabName().getPath()
+                    "prefab.%s.%s", name.getNamespace(), name.getPath()
             )));
         }
 

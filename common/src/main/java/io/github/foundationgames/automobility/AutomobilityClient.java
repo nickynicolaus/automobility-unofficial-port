@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
@@ -25,9 +26,13 @@ import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GrassColor;
 
+import java.io.IOException;
 import java.util.function.Function;
 
 public class AutomobilityClient {
@@ -46,6 +51,22 @@ public class AutomobilityClient {
 
         Platform.get().registerMenuScreen(Automobility.AUTO_MECHANIC_SCREEN.require(), AutoMechanicTableScreen::new);
         Platform.get().registerMenuScreen(Automobility.SINGLE_SLOT_SCREEN.require(), SingleSlotScreen::new);
+
+        Platform.get().registerClientCommand((dispatcher, registries) ->
+                dispatcher.register(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("automobilityc")
+                        .then(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("dump")
+                                .executes(ctx -> {
+                                    if (tryDumpBuiltinResources(registries)) {
+                                        sendClientMessage("Dumped all resources to .minecraft/automobility_dump/");
+                                        return 0;
+                                    } else {
+                                        sendClientMessage("Error dumping resources! See game log for details.");
+                                        return 1;
+                                    }
+                                })
+                        )
+                )
+        );
     }
 
     public static void initBlocks() {
@@ -100,6 +121,8 @@ public class AutomobilityClient {
             var component = item.getComponent(stack, lvl.registryAccess());
             if (item.isVisible(component)) {
                 var model = modelProvider.apply(component);
+                if (model == null) return;
+
                 float scale = scaleProvider.apply(component);
                 matrices.translate(0.5, 0, 0.5);
                 matrices.scale(scale, -scale, -scale);
@@ -135,5 +158,24 @@ public class AutomobilityClient {
         }
 
         return old;
+    }
+
+    public static boolean tryDumpBuiltinResources(HolderLookup.Provider registries) {
+        try {
+            AutomobileModels.dump();
+            Automobility.dumpDynamicRegistries(registries);
+
+            return true;
+        } catch (IOException ex) {
+            Automobility.LOG.error("Error dumping Automobility resources: ", ex);
+        }
+        return false;
+    }
+
+    public static void sendClientMessage(String message) {
+        var mc = Minecraft.getInstance();
+        var txt = Component.literal(message);
+        mc.gui.getChat().addMessage(txt);
+        mc.getNarrator().sayNow(txt);
     }
 }

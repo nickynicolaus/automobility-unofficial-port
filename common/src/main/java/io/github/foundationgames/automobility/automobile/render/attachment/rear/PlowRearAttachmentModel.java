@@ -10,8 +10,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.NoSuchElementException;
-
 public class PlowRearAttachmentModel extends RearAttachmentRenderModel {
     public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Automobility.rl("automobile/rear_attachment/plow"), "main");
 
@@ -24,14 +22,8 @@ public class PlowRearAttachmentModel extends RearAttachmentRenderModel {
                                    Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
 
-        ModelPart assembly = null, instrument = null;
-        try {
-            assembly = this.root.getChild("assembly");
-            instrument = assembly.getChild("instrument");
-        } catch (NoSuchElementException ignored) {}
-
-        this.assembly = assembly;
-        this.instrument = instrument;
+        this.assembly = getChildSafe(this.root, "assembly");
+        this.instrument = getChildSafe(assembly, "instrument");
     }
 
     @Override

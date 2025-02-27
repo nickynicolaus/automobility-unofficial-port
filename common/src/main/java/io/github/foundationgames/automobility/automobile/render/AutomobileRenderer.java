@@ -91,7 +91,7 @@ public enum AutomobileRenderer {;
 
         // Rear Attachment
         var rearAtt = automobile.getRearAttachmentType();
-        if (!rearAtt.isEmpty()) {
+        if (!rearAtt.isEmpty() && rearAttachmentModel != null) {
             pose.pushPose();
             pose.translate(0, chassisRaise, frame.model().rearAttachmentPos() / 16);
             pose.mulPose(Axis.YN.rotationDegrees(automobile.getAutomobileYaw(tickDelta) - automobile.getRearAttachmentYaw(tickDelta)));
@@ -109,7 +109,7 @@ public enum AutomobileRenderer {;
 
         // Front Attachment
         var frontAtt = automobile.getFrontAttachmentType();
-        if (!frontAtt.isEmpty()) {
+        if (!frontAtt.isEmpty() && frontAttachmentModel != null) {
             pose.pushPose();
             pose.translate(0, 0, frame.model().frontAttachmentPos() / -16);
 
@@ -126,7 +126,7 @@ public enum AutomobileRenderer {;
         // WHEELS ----------------------------------------
         var wPoses = frame.model().wheelBase().wheels();
 
-        if (!wheels.isEmpty()) {
+        if (!wheels.isEmpty() && wheelModel != null) {
             var wheelBuffer = buffers.getBuffer(wheelModel.renderType(wheels.model().texture()));
             float wheelAngle = automobile.getWheelAngle(tickDelta);
             int wheelCount = automobile.getWheelCount();

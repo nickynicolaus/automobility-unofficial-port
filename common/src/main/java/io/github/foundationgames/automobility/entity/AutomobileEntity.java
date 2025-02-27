@@ -77,6 +77,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -660,7 +661,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public ItemStack asPrefabItem() {
-        return new AutomobileData(null,
+        return new AutomobileData(Optional.empty(),
                 this.entityData.get(FRAME_TYPE).unwrapKey().orElse(AutomobileFrame.EMPTY_KEY),
                 this.entityData.get(WHEEL_TYPE).unwrapKey().orElse(AutomobileWheel.EMPTY_KEY),
                 this.entityData.get(ENGINE_TYPE).unwrapKey().orElse(AutomobileEngine.EMPTY_KEY)

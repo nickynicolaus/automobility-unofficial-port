@@ -19,12 +19,7 @@ public class HarvesterFrontAttachmentModel extends FrontAttachmentRenderModel {
                                          ModelLayerLocation layer,
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-
-        if (this.ground != null) {
-            this.roller = this.ground.getChild("roller");
-        } else {
-            this.roller = null;
-        }
+        this.roller = getChildSafe(this.ground, "roller");
     }
 
     @Override

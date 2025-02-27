@@ -14,10 +14,12 @@ import io.github.foundationgames.automobility.automobile.render.attachment.rear.
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.GrindstoneRearAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.PlowRearAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.StonecutterRearAttachmentModel;
+import io.github.foundationgames.automobility.util.AutomobilityClientResourceDumper;
 import io.github.foundationgames.automobility.util.EntityRenderHelper;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -38,7 +40,8 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     private static Model skidEffect = new EmptyModel();
     private static Model exhaustFumes = new EmptyModel();
 
-    private static final Map<ResourceLocation, ModelDefinition> modelProviders = new HashMap<>();
+    private static final Map<ResourceLocation, ModelDefinition> modelDefinitions = new HashMap<>();
+    private static EntityRendererProvider.Context modelProvider = null;
     private static final Map<ResourceLocation, Model> models = new HashMap<>();
 
     public static final ModelDefinition FRAME_STANDARD = ModelDefinition.ofYaw(
@@ -170,17 +173,13 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     }
     
     public static void register(ResourceLocation location, ModelDefinition model) {
-        modelProviders.put(location, model);
+        modelDefinitions.put(location, model);
     }
 
     public static void init() {
         EntityRenderHelper.registerContextListener(ctx -> {
             models.clear();
-            models.put(EMPTY, new EmptyModel());
-
-            for (var entry : modelProviders.entrySet()) {
-                models.put(entry.getKey(), entry.getValue().createModel(ctx));
-            }
+            modelProvider = ctx;
 
             skidEffect = new SkidEffectModel(ctx);
             exhaustFumes = new ExhaustFumesModel(ctx);
@@ -224,7 +223,16 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     }
 
     public static Model getModelOrNull(ResourceLocation location) {
-        return models.get(location);
+        if (modelProvider == null) {
+            return null;
+        }
+
+        var def =  modelDefinitions.get(location);
+        if (def == null) {
+            return null;
+        }
+
+        return models.computeIfAbsent(location, l -> def.createModel(modelProvider));
     }
 
     public static Model getModel(ResourceLocation location) {
@@ -247,16 +255,29 @@ public class AutomobileModels implements ResourceManagerReloadListener {
 
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
+        modelDefinitions.clear();
+        AutomobileModels.registerDefaults();
+
         FileToIdConverter.json("automobile_models").listMatchingResources(resourceManager).forEach((rl, res) -> {
-            models.clear();
-            AutomobileModels.registerDefaults();
+            var ns = rl.getNamespace();
+            var pt = rl.getPath().replaceAll("automobile_models/", "").replaceAll(".json", "");
 
             try (var in = res.open()) {
                 var data = AutomobileModels.readJson(in);
-                data.ifPresent(model -> AutomobileModels.register(rl, model));
+                data.ifPresent(model -> AutomobileModels.register(ResourceLocation.fromNamespaceAndPath(ns, pt), model));
             } catch (IOException | ResourceLocationException e) {
                 Automobility.LOG.error(e);
             }
         });
+    }
+
+    public static void dump() throws IOException {
+        var dumpRoot = "assets";
+        var subFolder = "automobile_models";
+        var codec = ModelDefinition.CODEC;
+
+        for (var e : modelDefinitions.entrySet()) {
+            AutomobilityClientResourceDumper.dumpJsonResource(dumpRoot, subFolder, e.getKey(), e.getValue(), codec);
+        }
     }
 }

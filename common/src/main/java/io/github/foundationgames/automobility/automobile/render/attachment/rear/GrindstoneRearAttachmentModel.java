@@ -19,7 +19,7 @@ public class GrindstoneRearAttachmentModel extends RearAttachmentRenderModel {
                                          ModelLayerLocation layer,
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.grindstone = this.root.getChild("grindstone");
+        this.grindstone = getChildSafe(this.root, "grindstone");
     }
 
     @Override

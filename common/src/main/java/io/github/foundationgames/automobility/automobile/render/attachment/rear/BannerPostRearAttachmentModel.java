@@ -38,13 +38,13 @@ public class BannerPostRearAttachmentModel extends RearAttachmentRenderModel {
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
 
-        this.fakePole = this.root.getChild("fake_pole");
-        this.pole = this.root.getChild("pole");
-        this.bar = this.pole.getChild("bar");
+        this.fakePole = getChildSafe(this.root, "fake_pole");
+        this.pole = getChildSafe(this.root, "pole");
+        this.bar = getChildSafe(this.pole, "bar");
 
-        this.flagPole = this.root.getChild("flag_pole");
-        this.flagBar = this.flagPole.getChild("flag_bar");
-        this.flag = this.flagBar.getChild("flag");
+        this.flagPole = getChildSafe(this.root, "flag_pole");
+        this.flagBar = getChildSafe(this.flagPole, "flag_bar");
+        this.flag = getChildSafe(this.flagBar, "flag");
 
         this.flagPole.visible = false;
         this.pole.visible = false;

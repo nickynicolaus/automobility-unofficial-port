@@ -11,11 +11,17 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.joml.Vector3f;
 
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
 public class BaseModel extends Model {
     protected final ModelPart root;
     protected final Vector3f translation;
     protected final Vector3f rotation;
     protected final Vector3f scale;
+
+    public static final ModelPart PART_EMPTY = new ModelPart(List.of(), Map.of());
 
     public BaseModel(EntityRendererProvider.Context ctx,
                      ModelDefinition.RenderMaterial material,
@@ -25,7 +31,21 @@ public class BaseModel extends Model {
         this.translation = translation;
         this.rotation = rotation;
         this.scale = scale;
-        this.root = ctx.bakeLayer(layer).getChild("main");
+
+        var head = ctx.bakeLayer(layer);
+        var root = getChildSafe(head, "main");
+        if (root == PART_EMPTY) {
+            root = head;
+        }
+        this.root = root;
+    }
+
+    protected static ModelPart getChildSafe(ModelPart parent, String child) {
+        try {
+            return parent.getChild(child);
+        } catch (NoSuchElementException ex) {
+            return PART_EMPTY;
+        }
     }
 
     protected void prepare(PoseStack matrices) {

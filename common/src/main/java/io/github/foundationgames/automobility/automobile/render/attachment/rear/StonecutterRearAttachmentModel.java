@@ -19,7 +19,7 @@ public class StonecutterRearAttachmentModel extends RearAttachmentRenderModel {
                                           ModelLayerLocation layer,
                                           Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.blade = this.root.getChild("blade");
+        this.blade = getChildSafe(this.root, "blade");
     }
 
     @Override

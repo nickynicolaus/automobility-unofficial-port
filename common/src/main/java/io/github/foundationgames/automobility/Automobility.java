@@ -15,10 +15,12 @@ import io.github.foundationgames.automobility.screen.AutoMechanicTableScreenHand
 import io.github.foundationgames.automobility.screen.SingleSlotScreenHandler;
 import io.github.foundationgames.automobility.sound.AutomobilitySounds;
 import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.AutomobilityClientResourceDumper;
 import io.github.foundationgames.automobility.util.Eventual;
 import io.github.foundationgames.automobility.util.InitlessConstants;
 import io.github.foundationgames.automobility.util.RegistryQueue;
 import io.github.foundationgames.automobility.util.network.CommonPackets;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -28,6 +30,8 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
 
 public class Automobility {
     public static final String MOD_ID = InitlessConstants.AUTOMOBILITY;
@@ -73,5 +77,11 @@ public class Automobility {
 
     public static ResourceLocation rl(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    public static void dumpDynamicRegistries(HolderLookup.Provider registries) throws IOException {
+        AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileFrame.REGISTRY, AutomobileFrame.DIRECT_CODEC);
+        AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileWheel.REGISTRY, AutomobileWheel.DIRECT_CODEC);
+        AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC);
     }
 }

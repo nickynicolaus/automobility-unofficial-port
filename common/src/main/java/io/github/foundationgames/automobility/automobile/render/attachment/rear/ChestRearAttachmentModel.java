@@ -20,7 +20,7 @@ public class ChestRearAttachmentModel extends RearAttachmentRenderModel {
                                     ModelLayerLocation layer,
                                     Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.lid = this.root.getChild("lid");
+        this.lid = getChildSafe(this.root, "lid");
     }
 
     @Override

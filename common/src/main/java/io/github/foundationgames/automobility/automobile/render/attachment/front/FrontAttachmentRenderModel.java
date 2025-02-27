@@ -11,8 +11,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.NoSuchElementException;
-
 public class FrontAttachmentRenderModel extends BaseModel {
     protected final @Nullable ModelPart ground;
     private float groundHeight = 0;
@@ -22,13 +20,7 @@ public class FrontAttachmentRenderModel extends BaseModel {
                                       ModelLayerLocation layer,
                                       Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        ModelPart ground;
-        try {
-            ground = ctx.bakeLayer(layer).getChild("ground");
-        } catch (NoSuchElementException ignored) {
-            ground = null;
-        }
-        this.ground = ground;
+        this.ground = getChildSafe(ctx.bakeLayer(layer), "ground");
     }
 
     public void setRenderState(@Nullable FrontAttachment attachment, float groundHeight, float tickDelta) {
