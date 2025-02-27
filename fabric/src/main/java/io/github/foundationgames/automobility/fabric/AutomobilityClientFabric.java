@@ -6,6 +6,7 @@ import io.github.foundationgames.automobility.block.model.SlopeBakedModel;
 import io.github.foundationgames.automobility.block.model.SlopeUnbakedModel;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.fabric.block.render.FabricSlopeBakedModel;
+import io.github.foundationgames.automobility.fabric.resource.FabricAutomobileModels;
 import io.github.foundationgames.automobility.particle.AutomobilityParticles;
 import io.github.foundationgames.automobility.particle.DriftSmokeParticle;
 import io.github.foundationgames.automobility.platform.Platform;
@@ -21,8 +22,10 @@ import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.server.packs.PackType;
 
 public class AutomobilityClientFabric implements ClientModInitializer {
     private static boolean wasRidingAutomobile = false;
@@ -75,5 +78,7 @@ public class AutomobilityClientFabric implements ClientModInitializer {
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.STEEP_SLOPE.require(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.SLOPE_WITH_DASH_PANEL.require(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.STEEP_SLOPE_WITH_DASH_PANEL.require(), RenderType.translucent());
+
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(FabricAutomobileModels.INSTANCE);
     }
 }

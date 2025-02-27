@@ -5,14 +5,14 @@
     ],
     "key": {
         "A": {
-            "item": "minecraft:sand"
+            "item": "minecraft:slime_ball"
         },
         "B": {
-            "item": "minecraft:gravel"
+            "item": "minecraft:quartz"
         }
     },
     "result": {
-        "item": "automobility:sand_off_road",
-        "count": 6
+        "id": "automobility:launch_gel",
+        "count": 3
     }
 }

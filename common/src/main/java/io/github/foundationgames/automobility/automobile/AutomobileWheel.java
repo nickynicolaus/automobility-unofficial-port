@@ -55,19 +55,19 @@ public record AutomobileWheel(
     }
 
     public static final ResourceKey<AutomobileWheel> STANDARD = BOOTSTRAP.register(Automobility.rl("standard"),
-            of(0.6f, 0.5f, new WheelModel(3, 3, Automobility.rl("textures/entity/automobile/wheel/standard.png"), Automobility.rl("wheel_standard")))
+            of(0.6f, 0.5f, new WheelModel(3, 3, Automobility.rl("textures/entity/automobile/wheel/standard.png"), Automobility.rl("wheel/standard")))
     );
 
     public static final ResourceKey<AutomobileWheel> OFF_ROAD = BOOTSTRAP.register(Automobility.rl("off_road"),
-            of(1.1f, 0.8f, new WheelModel(8.4f, 5, Automobility.rl("textures/entity/automobile/wheel/off_road.png"), Automobility.rl("wheel_off_road")))
+            of(1.1f, 0.8f, new WheelModel(8.4f, 5, Automobility.rl("textures/entity/automobile/wheel/off_road.png"), Automobility.rl("wheel/off_road")))
     );
 
     public static final ResourceKey<AutomobileWheel> STEEL = BOOTSTRAP.register(Automobility.rl("steel"),
-            of(0.69f, 0.4f, new WheelModel(3.625f, 3, Automobility.rl("textures/entity/automobile/wheel/steel.png"), Automobility.rl("wheel_steel")))
+            of(0.69f, 0.4f, new WheelModel(3.625f, 3, Automobility.rl("textures/entity/automobile/wheel/steel.png"), Automobility.rl("wheel/steel")))
     );
 
     public static final ResourceKey<AutomobileWheel> TRACTOR = BOOTSTRAP.register(Automobility.rl("tractor"),
-            of(1.05f, 0.69f, new WheelModel(3.625f, 3, Automobility.rl("textures/entity/automobile/wheel/tractor.png"), Automobility.rl("wheel_tractor")))
+            of(1.05f, 0.69f, new WheelModel(3.625f, 3, Automobility.rl("textures/entity/automobile/wheel/tractor.png"), Automobility.rl("wheel/tractor")))
     );
 
     public static final ResourceKey<AutomobileWheel> CARRIAGE = carriage("carriage", 0.2f);
@@ -78,7 +78,7 @@ public record AutomobileWheel(
 
     private static ResourceKey<AutomobileWheel> carriage(String name, float grip) {
         return BOOTSTRAP.register(Automobility.rl(name),
-                of(1.05f, grip, new WheelModel(5, 2, Automobility.rl("textures/entity/automobile/wheel/"+name+".png"), Automobility.rl("wheel_carriage"))));
+                of(1.05f, grip, new WheelModel(5, 2, Automobility.rl("textures/entity/automobile/wheel/"+name+".png"), Automobility.rl("wheel/carriage"))));
     }
 
     public static final DisplayStat<AutomobileWheel> STAT_SIZE = new DisplayStat<>("size", AutomobileWheel::size);

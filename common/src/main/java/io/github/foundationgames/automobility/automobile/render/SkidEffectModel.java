@@ -1,10 +1,11 @@
 package io.github.foundationgames.automobility.automobile.render;
 
 import io.github.foundationgames.automobility.Automobility;
+import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Vector3f;
 
 public class SkidEffectModel extends BaseModel {
     public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Automobility.rl("automobile_skid_effect"), "main");
@@ -31,6 +32,7 @@ public class SkidEffectModel extends BaseModel {
     };
 
     public SkidEffectModel(EntityRendererProvider.Context ctx) {
-        super(RenderType::entityCutout, ctx, MODEL_LAYER);
+        super(ctx, ModelDefinition.RenderMaterial.CUTOUT, MODEL_LAYER,
+                new Vector3f(), new Vector3f(), new Vector3f(1));
     }
 }

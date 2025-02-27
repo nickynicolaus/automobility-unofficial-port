@@ -26,7 +26,7 @@ public record WheelBase(List<WheelPos> wheels) {
         LEFT,
         RIGHT;
 
-        public static final EnumCodec<WheelSide> CODEC = StringRepresentable.fromEnum(WheelSide::values);
+        public static final Codec<WheelSide> CODEC = StringRepresentable.fromEnum(WheelSide::values);
 
         @Override
         public String getSerializedName() {
@@ -38,7 +38,7 @@ public record WheelBase(List<WheelPos> wheels) {
         FRONT,
         BACK;
 
-        public static final EnumCodec<WheelEnd> CODEC = StringRepresentable.fromEnum(WheelEnd::values);
+        public static final Codec<WheelEnd> CODEC = StringRepresentable.fromEnum(WheelEnd::values);
 
         @Override
         public String getSerializedName() {

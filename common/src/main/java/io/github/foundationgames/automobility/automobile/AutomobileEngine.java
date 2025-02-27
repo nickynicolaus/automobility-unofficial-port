@@ -75,7 +75,7 @@ public record AutomobileEngine(
             0.3f, 0.58f,
             AutomobilitySounds.STONE_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/stone.png"), Automobility.rl("engine_stone"),
+                    Automobility.rl("textures/entity/automobile/engine/stone.png"), Automobility.rl("engine/stone"),
                     new AutomobileEngine.ExhaustPos(0, 7f, -8.3f, 50, 0)
             )
     ));
@@ -84,7 +84,7 @@ public record AutomobileEngine(
             0.5f, 0.75f,
             AutomobilitySounds.IRON_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/iron.png"), Automobility.rl("engine_iron"),
+                    Automobility.rl("textures/entity/automobile/engine/iron.png"), Automobility.rl("engine/iron"),
                     new AutomobileEngine.ExhaustPos(-3.5f, 5.4f, -8, 26, 0),
                     new AutomobileEngine.ExhaustPos(3.5f, 5.4f, -8, 26, 0)
             )
@@ -94,7 +94,7 @@ public record AutomobileEngine(
             0.375f, 0.68f,
             AutomobilitySounds.COPPER_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/copper.png"), Automobility.rl("engine_copper"),
+                    Automobility.rl("textures/entity/automobile/engine/copper.png"), Automobility.rl("engine/copper"),
                     new AutomobileEngine.ExhaustPos(2, 1.625f, -8.95f, 26, 0)
             )
     ));
@@ -103,7 +103,7 @@ public record AutomobileEngine(
             0.8f, 0.75f,
             AutomobilitySounds.GOLD_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/gold.png"), Automobility.rl("engine_gold"),
+                    Automobility.rl("textures/entity/automobile/engine/gold.png"), Automobility.rl("engine/gold"),
                     new AutomobileEngine.ExhaustPos(4, 9.3f, -7.75f, 26, 0),
                     new AutomobileEngine.ExhaustPos(-4, 9.3f, -7.75f, 26, 0)
             )
@@ -113,7 +113,7 @@ public record AutomobileEngine(
             0.95f, 0.85f,
             AutomobilitySounds.DIAMOND_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/diamond.png"), Automobility.rl("engine_diamond"),
+                    Automobility.rl("textures/entity/automobile/engine/diamond.png"), Automobility.rl("engine/diamond"),
                     new AutomobileEngine.ExhaustPos(3, 3.8f, -7.6f, 40, 0),
                     new AutomobileEngine.ExhaustPos(-3, 3.8f, -7.6f, 40, 0),
                     new AutomobileEngine.ExhaustPos(4, 7.075f, -4.95f, 40, 0),
@@ -125,7 +125,7 @@ public record AutomobileEngine(
             1f, 1f,
             AutomobilitySounds.CREATIVE_ENGINE::require,
             model(
-                    Automobility.rl("textures/entity/automobile/engine/creative.png"), Automobility.rl("engine_creative"),
+                    Automobility.rl("textures/entity/automobile/engine/creative.png"), Automobility.rl("engine/creative"),
                     new AutomobileEngine.ExhaustPos(0, 7, -7, 90, 0)
             )
     ));

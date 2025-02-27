@@ -26,9 +26,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Automobility {
     public static final String MOD_ID = InitlessConstants.AUTOMOBILITY;
+    public static final Logger LOG = LogManager.getLogger("Automobility");
 
     public static CreativeTabQueue TAB = new CreativeTabQueue(rl("automobility"));
     public static CreativeTabQueue PREFAB_TAB = new CreativeTabQueue(rl("automobility_prefabs"));

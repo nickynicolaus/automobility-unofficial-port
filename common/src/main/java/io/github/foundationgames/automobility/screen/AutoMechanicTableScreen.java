@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechanicTableScreenHandler> {
     private static final ResourceLocation TEXTURE = Automobility.rl("textures/gui/container/auto_mechanic_table.png");
@@ -116,8 +117,6 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
 
     @Override
     protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
-        this.renderBackground(graphics, mouseX, mouseY, delta);
-
         this.preDraw();
         graphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
         this.drawCategoryBar(graphics, mouseX, mouseY);
@@ -226,7 +225,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
 
     protected List<RecipeEntry> getRecipeList() {
         if (this.currentCategory < this.orderedCategories.size() && this.currentCategory >= 0) {
-            return this.recipes.get(this.orderedCategories.get(this.currentCategory));
+            return Objects.requireNonNullElseGet(this.recipes.get(this.orderedCategories.get(this.currentCategory)), Collections::emptyList);
         }
 
         return Collections.emptyList();
@@ -291,7 +290,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         if (this.orderedCategories.size() > 0) {
             var recipes = this.recipes.get(this.orderedCategories.get(this.currentCategory));
 
-            for (int row = 0; row < 3; row++) {
+            if (recipes != null) for (int row = 0; row < 3; row++) {
                 for (int col = 0; col < 5; col++) {
                     int idx = (5 * this.recipeScroll) + (5 * row) + col;
 
@@ -337,7 +336,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         graphics.renderFakeItem(stack, x, y);
     }
 
-    public static record RecipeEntry(int id, AutoMechanicTableRecipe recipe) {}
+    public record RecipeEntry(int id, AutoMechanicTableRecipe recipe) {}
 
     public enum RecipeButtonState {
         DEFAULT, HOVERED, SELECTED

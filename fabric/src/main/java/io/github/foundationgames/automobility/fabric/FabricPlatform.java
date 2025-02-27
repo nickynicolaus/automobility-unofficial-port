@@ -10,7 +10,6 @@ import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.HexCons;
 import io.github.foundationgames.automobility.util.TriFunc;
 import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
-import io.github.foundationgames.jsonem.JsonEM;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
@@ -28,7 +27,6 @@ import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -131,11 +129,6 @@ public class FabricPlatform implements Platform {
     @Override
     public <T extends Entity> void entityRenderer(EntityType<T> entity, Function<EntityRendererProvider.Context, EntityRenderer<T>> factory) {
         EntityRendererRegistry.register(entity, factory::apply);
-    }
-
-    @Override
-    public void modelLayer(ModelLayerLocation layer) {
-        JsonEM.registerModelLayer(layer);
     }
 
     @Override

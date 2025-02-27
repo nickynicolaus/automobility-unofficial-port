@@ -10,9 +10,11 @@ import com.mojang.serialization.JsonOps;
 import io.github.foundationgames.automobility.forge.vendored.jsonem.JsonEM;
 import io.github.foundationgames.automobility.forge.vendored.jsonem.serialization.JsonEMCodecs;
 import io.github.foundationgames.automobility.util.InitlessConstants;
+import net.minecraft.ResourceLocationException;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.neoforged.neoforge.client.ClientHooks;
@@ -34,30 +36,26 @@ public final class JsonEntityModelUtil {
         return JsonEMCodecs.LAYER_DEFINITION.decode(JsonOps.INSTANCE, json).result().map(Pair::getFirst);
     }
 
-    public static void loadModels(ResourceManager manager, Map<ModelLayerLocation, LayerDefinition> models) {
+    public static void loadModels(ResourceManager manager, Map<ModelLayerLocation, LayerDefinition> layers) {
         var tempMap = new ImmutableMap.Builder<ModelLayerLocation, LayerDefinition>();
         ClientHooks.loadLayerDefinitions(tempMap);
 
-        // Only load Automobility models, don't mess with other mods (or the vanilla game)
-        var layers = Streams.concat(
-                ModelLayers.getKnownLocations(),
-                tempMap.build().keySet().stream()
-                        .filter(ml -> InitlessConstants.AUTOMOBILITY.equals(ml.getModel().getNamespace()))
-        );
-        layers.forEach(layer -> {
-            var modelLoc = ResourceLocation.fromNamespaceAndPath(layer.getModel().getNamespace(), "models/entity/"+layer.getModel().getPath()+"/"+layer.getLayer()+".json");
+        FileToIdConverter.json("models/entity").listMatchingResources(manager).forEach((id, res) -> {
+            try {
+                var fullPath = id.getPath().replaceFirst("models/entity/", "");
+                var splitPath = fullPath.split("/");
+                var dirs = new String[splitPath.length - 1];
+                System.arraycopy(splitPath, 0, dirs, 0, dirs.length);
+                var layerName = splitPath[splitPath.length - 1].replace(".json", "");
+                var modelName = String.join("/", dirs);
+                var layer = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), modelName), layerName);
 
-            var res = manager.getResource(modelLoc);
-
-            if (res.isPresent()) {
-                try {
-                    try (var in = res.get().open()) {
-                        var data = JsonEntityModelUtil.readJson(in);
-                        data.ifPresent(model -> models.put(layer, model));
-                    }
-                } catch (IOException e) {
-                    JsonEM.LOG.error(e);
+                try (var in = res.open()) {
+                    var data = readJson(in);
+                    data.ifPresent(model -> layers.put(layer, model));
                 }
+            } catch (ResourceLocationException | IOException var14) {
+                JsonEM.LOG.error(var14);
             }
         });
     }

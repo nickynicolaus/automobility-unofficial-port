@@ -5,16 +5,17 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.attachment.rear.BannerPostRearAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.rear.RearAttachment;
+import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BannerRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 public class BannerPostRearAttachmentModel extends RearAttachmentRenderModel {
     public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Automobility.rl("automobile/rear_attachment/banner_post"), "main");
@@ -31,8 +32,11 @@ public class BannerPostRearAttachmentModel extends RearAttachmentRenderModel {
     private DyeColor baseColor;
     private BannerPatternLayers patterns;
 
-    public BannerPostRearAttachmentModel(EntityRendererProvider.Context ctx) {
-        super(RenderType::entityCutoutNoCull, ctx, MODEL_LAYER);
+    public BannerPostRearAttachmentModel(EntityRendererProvider.Context ctx,
+                                         ModelDefinition.RenderMaterial material,
+                                         ModelLayerLocation layer,
+                                         Vector3f translation, Vector3f rotation, Vector3f scale) {
+        super(ctx, material, layer, translation, rotation, scale);
 
         this.fakePole = this.root.getChild("fake_pole");
         this.pole = this.root.getChild("pole");

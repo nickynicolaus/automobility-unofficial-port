@@ -5,14 +5,14 @@
     ],
     "key": {
         "A": {
-            "item": "minecraft:grass"
+            "item": "minecraft:dirt"
         },
         "B": {
-            "item": "minecraft:coarse_dirt"
+            "item": "minecraft:gravel"
         }
     },
     "result": {
-        "item": "automobility:grass_off_road",
+        "id": "automobility:dirt_off_road",
         "count": 6
     }
 }

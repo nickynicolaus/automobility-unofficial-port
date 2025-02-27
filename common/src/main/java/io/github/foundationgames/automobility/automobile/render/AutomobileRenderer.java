@@ -7,7 +7,6 @@ import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.WheelBase;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.FrontAttachmentRenderModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.RearAttachmentRenderModel;
-import io.github.foundationgames.automobility.automobile.render.wheel.WheelContextReceiver;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,8 +22,8 @@ public enum AutomobileRenderer {;
         var wheels = automobile.getWheels();
         var engine = automobile.getEngine();
 
-        var skidEffectModel = AutomobileModels.getModel(AutomobileModels.SKID_EFFECT);
-        var exhaustFumesModel = AutomobileModels.getModel(AutomobileModels.EXHAUST_FUMES);
+        var skidEffectModel = AutomobileModels.getSkidEffectModel();
+        var exhaustFumesModel = AutomobileModels.getExhaustFumesModel();
 
         pose.pushPose();
 
@@ -137,9 +136,6 @@ public enum AutomobileRenderer {;
                     break;
                 }
 
-                if (wheelModel instanceof WheelContextReceiver receiver) {
-                    receiver.provideContext(pos);
-                }
                 float scale = pos.scale();
                 float wheelRadius = wheels.model().radius() - (wheels.model().radius() * (scale - 1));
                 pose.pushPose();

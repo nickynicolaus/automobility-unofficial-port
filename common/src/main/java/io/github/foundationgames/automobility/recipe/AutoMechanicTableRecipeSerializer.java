@@ -3,9 +3,12 @@ package io.github.foundationgames.automobility.recipe;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.foundationgames.automobility.Automobility;
+import io.github.foundationgames.automobility.item.AutomobileComponentItem;
 import io.github.foundationgames.automobility.item.AutomobilityItems;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -18,12 +21,25 @@ public class AutoMechanicTableRecipeSerializer implements RecipeSerializer<AutoM
 
     public static final Codec<ItemStack> AUTO_COMPONENT_STACK = RecordCodecBuilder.create(inst -> inst.group(
             ItemStack.ITEM_NON_AIR_CODEC.fieldOf("item").forGetter(ItemStack::getItemHolder),
-            Codec.INT.fieldOf("count").forGetter(ItemStack::getCount),
-            ResourceLocation.CODEC.fieldOf("component").forGetter(s -> s.get(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require()))
+            Codec.INT.optionalFieldOf("count", 1).forGetter(ItemStack::getCount),
+            ResourceLocation.CODEC.fieldOf("component").forGetter(s -> {
+                var item = s.getItem();
+                if (item instanceof AutomobileComponentItem.Dynamic<?> cItem) {
+                    return cItem.getComponentId(s, null);
+                } else if (item instanceof AutomobileComponentItem.Builtin<?> cItem) {
+                    return cItem.getComponent(s, null).getId();
+                }
+                return Automobility.rl("empty");
+            })
     ).apply(inst, (i, c, p) -> {
         var stack = i.value().getDefaultInstance();
         stack.setCount(c);
-        stack.set(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require(), p);
+        var item = stack.getItem();
+        if (item instanceof AutomobileComponentItem.Dynamic<?> cItem) {
+            cItem.setComponent(stack, (ResourceKey) ResourceKey.create(cItem.registryKey, p));
+        } else {
+            stack.set(AutomobilityItems.COMPONENT_GENERIC_AUTO_PART.require(), p);
+        }
         return stack;
     }));
 

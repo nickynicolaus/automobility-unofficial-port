@@ -2,19 +2,23 @@ package io.github.foundationgames.automobility.automobile.render.attachment.fron
 
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.attachment.front.FrontAttachment;
+import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 public class HarvesterFrontAttachmentModel extends FrontAttachmentRenderModel {
     public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Automobility.rl("automobile/front_attachment/harvester"), "main");
 
     private final @Nullable ModelPart roller;
 
-    public HarvesterFrontAttachmentModel(EntityRendererProvider.Context ctx) {
-        super(RenderType::entityCutout, ctx, MODEL_LAYER);
+    public HarvesterFrontAttachmentModel(EntityRendererProvider.Context ctx,
+                                         ModelDefinition.RenderMaterial material,
+                                         ModelLayerLocation layer,
+                                         Vector3f translation, Vector3f rotation, Vector3f scale) {
+        super(ctx, material, layer, translation, rotation, scale);
 
         if (this.ground != null) {
             this.roller = this.ground.getChild("roller");

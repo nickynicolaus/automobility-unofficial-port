@@ -32,15 +32,15 @@ public record RearAttachmentType<T extends RearAttachment>(
 
     public static final RearAttachmentType<PassengerSeatRearAttachment> PASSENGER_SEAT = register(new RearAttachmentType<>(
             Automobility.rl("passenger_seat"), PassengerSeatRearAttachment::new,
-            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/passenger_seat.png"), Automobility.rl("rearatt_passenger_seat"), 11)
+            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/passenger_seat.png"), Automobility.rl("rear_attachment/passenger_seat"), 11)
     ));
 
     public static final RearAttachmentType<BlockRearAttachment> CRAFTING_TABLE = register(block("crafting_table", BlockRearAttachment::craftingTable));
     public static final RearAttachmentType<BlockRearAttachment> LOOM = register(block("loom", BlockRearAttachment::loom));
     public static final RearAttachmentType<BlockRearAttachment> CARTOGRAPHY_TABLE = register(block("cartography_table", BlockRearAttachment::cartographyTable));
     public static final RearAttachmentType<BlockRearAttachment> SMITHING_TABLE = register(block("smithing_table", BlockRearAttachment::smithingTable));
-    public static final RearAttachmentType<BlockRearAttachment> GRINDSTONE = register(block("grindstone", Automobility.rl("rearatt_grindstone"), BlockRearAttachment::grindstone));
-    public static final RearAttachmentType<BlockRearAttachment> STONECUTTER = register(block("stonecutter", Automobility.rl("rearatt_stonecutter"), BlockRearAttachment::stonecutter));
+    public static final RearAttachmentType<BlockRearAttachment> GRINDSTONE = register(block("grindstone", Automobility.rl("rear_attachment/grindstone"), BlockRearAttachment::grindstone));
+    public static final RearAttachmentType<BlockRearAttachment> STONECUTTER = register(block("stonecutter", Automobility.rl("rear_attachment/stonecutter"), BlockRearAttachment::stonecutter));
     public static final RearAttachmentType<BlockRearAttachment> AUTO_MECHANIC_TABLE = register(block("auto_mechanic_table", BlockRearAttachment::autoMechanicTable));
 
     public static final RearAttachmentType<BlockRearAttachment> CHEST = register(chest("chest", BaseChestRearAttachment::chest));
@@ -49,17 +49,17 @@ public record RearAttachmentType<T extends RearAttachment>(
 
     public static final RearAttachmentType<BannerPostRearAttachment> BANNER_POST = register(new RearAttachmentType<>(
             Automobility.rl("banner_post"), BannerPostRearAttachment::new,
-            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/banner_post.png"), Automobility.rl("rearatt_banner_post"), 10)
+            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/banner_post.png"), Automobility.rl("rear_attachment/banner_post"), 10)
     ));
 
     public static final RearAttachmentType<BackhoeRearAttachment> BACKHOE = register(new RearAttachmentType<>(
             Automobility.rl("backhoe"), BackhoeRearAttachment::new,
-            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/backhoe.png"), Automobility.rl("rearatt_plow"), 11)
+            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/backhoe.png"), Automobility.rl("rear_attachment/plow"), 11)
     ));
 
     public static final RearAttachmentType<PaverRearAttachment> PAVER = register(new RearAttachmentType<>(
             Automobility.rl("paver"), PaverRearAttachment::new,
-            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/paver.png"), Automobility.rl("rearatt_plow"), 11)
+            new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/paver.png"), Automobility.rl("rear_attachment/plow"), 11)
     ));
 
     @Override
@@ -82,11 +82,11 @@ public record RearAttachmentType<T extends RearAttachment>(
     }
 
     private static RearAttachmentType<BlockRearAttachment> chest(String name, BiFunction<RearAttachmentType<BlockRearAttachment>, AutomobileEntity, BlockRearAttachment> constructor) {
-        return block(name, Automobility.rl("rearatt_chest"), constructor);
+        return block(name, Automobility.rl("rear_attachment/chest"), constructor);
     }
 
     private static RearAttachmentType<BlockRearAttachment> block(String name, BiFunction<RearAttachmentType<BlockRearAttachment>, AutomobileEntity, BlockRearAttachment> constructor) {
-        return block(name, Automobility.rl("rearatt_block"), constructor);
+        return block(name, Automobility.rl("rear_attachment/block"), constructor);
     }
 
     private static RearAttachmentType<BlockRearAttachment> block(String name, ResourceLocation model, BiFunction<RearAttachmentType<BlockRearAttachment>, AutomobileEntity, BlockRearAttachment> constructor) {

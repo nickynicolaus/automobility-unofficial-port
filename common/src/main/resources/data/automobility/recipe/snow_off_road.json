@@ -5,14 +5,14 @@
     ],
     "key": {
         "A": {
-            "item": "minecraft:dirt"
+            "item": "minecraft:snow_block"
         },
         "B": {
             "item": "minecraft:gravel"
         }
     },
     "result": {
-        "item": "automobility:dirt_off_road",
+        "id": "automobility:snow_off_road",
         "count": 6
     }
 }

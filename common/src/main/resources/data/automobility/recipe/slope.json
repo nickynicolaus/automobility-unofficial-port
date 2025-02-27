@@ -1,9 +1,8 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        "ABA",
-        "ACA",
-        "ADA"
+        " AA",
+        "ABC"
     ],
     "key": {
         "A": {
@@ -13,14 +12,11 @@
             "item": "minecraft:glow_ink_sac"
         },
         "C": {
-            "item": "minecraft:redstone"
-        },
-        "D": {
-            "item": "minecraft:blaze_powder"
+            "item": "minecraft:slime_ball"
         }
     },
     "result": {
-        "item": "automobility:dash_panel",
-        "count": 2
+        "id": "automobility:slope",
+        "count": 6
     }
 }

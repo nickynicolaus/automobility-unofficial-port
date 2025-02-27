@@ -2,25 +2,38 @@ package io.github.foundationgames.automobility.automobile.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
-
-import java.util.function.Function;
+import org.joml.Vector3f;
 
 public class BaseModel extends Model {
     protected final ModelPart root;
+    protected final Vector3f translation;
+    protected final Vector3f rotation;
+    protected final Vector3f scale;
 
-    public BaseModel(Function<ResourceLocation, RenderType> layerFactory, EntityRendererProvider.Context ctx, ModelLayerLocation layer) {
-        super(layerFactory);
+    public BaseModel(EntityRendererProvider.Context ctx,
+                     ModelDefinition.RenderMaterial material,
+                     ModelLayerLocation layer,
+                     Vector3f translation, Vector3f rotation, Vector3f scale) {
+        super(material.renderType);
+        this.translation = translation;
+        this.rotation = rotation;
+        this.scale = scale;
         this.root = ctx.bakeLayer(layer).getChild("main");
     }
 
     protected void prepare(PoseStack matrices) {
+        matrices.translate(translation.x(), translation.y(), translation.z());
+        matrices.mulPose(Axis.ZP.rotationDegrees(rotation.z()));
+        matrices.mulPose(Axis.XP.rotationDegrees(rotation.x()));
+        matrices.mulPose(Axis.YP.rotationDegrees(rotation.y()));
+        matrices.scale(scale.x(), scale.y(), scale.z());
     }
 
     @Override

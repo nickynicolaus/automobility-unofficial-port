@@ -9,7 +9,6 @@ import io.github.foundationgames.automobility.util.TriFunc;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -79,8 +78,6 @@ public interface Platform {
     <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange);
 
     <T extends Entity> void entityRenderer(EntityType<T> entity, Function<EntityRendererProvider.Context, EntityRenderer<T>> factory);
-
-    void modelLayer(ModelLayerLocation layer);
 
     <T> void registerSyncedRegistry(ResourceKey<? extends Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults);
 

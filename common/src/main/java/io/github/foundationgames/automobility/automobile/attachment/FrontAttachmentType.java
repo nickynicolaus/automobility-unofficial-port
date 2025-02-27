@@ -29,17 +29,17 @@ public record FrontAttachmentType<T extends FrontAttachment>(
 
     public static final FrontAttachmentType<MobControllerFrontAttachment> MOB_CONTROLLER = register(new FrontAttachmentType<>(
             Automobility.rl("mob_controller"), MobControllerFrontAttachment::new,
-            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/mob_controller.png"), Automobility.rl("frontatt_mob_controller"), 1.7f)
+            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/mob_controller.png"), Automobility.rl("front_attachment/mob_controller"), 1.7f)
     ));
 
     public static final FrontAttachmentType<CropHarvesterFrontAttachment> CROP_HARVESTER = register(new FrontAttachmentType<>(
             Automobility.rl("crop_harvester"), CropHarvesterFrontAttachment::new,
-            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/crop_harvester.png"), Automobility.rl("frontatt_harvester"), 0.83f)
+            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/crop_harvester.png"), Automobility.rl("front_attachment/harvester"), 0.83f)
     ));
 
     public static final FrontAttachmentType<GrassCutterFrontAttachment> GRASS_CUTTER = register(new FrontAttachmentType<>(
             Automobility.rl("grass_cutter"), GrassCutterFrontAttachment::new,
-            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/grass_cutter.png"), Automobility.rl("frontatt_harvester"), 0.83f)
+            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/grass_cutter.png"), Automobility.rl("front_attachment/harvester"), 0.83f)
     ));
 
     @Override

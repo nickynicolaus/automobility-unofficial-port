@@ -109,7 +109,7 @@ public record AutomobileFrame(
                     0.25f,
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/shopping_cart.png"),
-                            Automobility.rl("frame_shopping_cart"),
+                            Automobility.rl("frame/shopping_cart"),
                             WheelBase.basic(17, 12.05f),
                             25,
                             11,
@@ -127,7 +127,7 @@ public record AutomobileFrame(
                     0.85f,
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/c_arr.png"),
-                            Automobility.rl("frame_c_arr"),
+                            Automobility.rl("frame/c_arr"),
                             WheelBase.basic(44.5f, 16),
                             44f,
                             6f,
@@ -145,7 +145,7 @@ public record AutomobileFrame(
                     0.75f,
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/pineapple.png"),
-                            Automobility.rl("frame_pineapple"),
+                            Automobility.rl("frame/pineapple"),
                             WheelBase.basic(10, 18),
                             20,
                             16,
@@ -162,7 +162,7 @@ public record AutomobileFrame(
                 0.6f,
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/standard_"+color+".png"),
-                        Automobility.rl("frame_standard"),
+                        Automobility.rl("frame/standard"),
                         WheelBase.basic(26, 10),
                         26,
                         5,
@@ -179,7 +179,7 @@ public record AutomobileFrame(
                 weight,
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+variant+"_motorcar.png"),
-                        Automobility.rl("frame_motorcar"),
+                        Automobility.rl("frame/motorcar"),
                         WheelBase.basic(32, 12),
                         28,
                         3,
@@ -196,7 +196,7 @@ public record AutomobileFrame(
                 0.9f,
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+color+"_tractor.png"),
-                        Automobility.rl("frame_tractor"),
+                        Automobility.rl("frame/tractor"),
                         new WheelBase(List.of(
                                 new WheelBase.WheelPos(-2, -7, 1.8f, 0, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(-2, 7, 1.8f, 180, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.RIGHT),
@@ -218,7 +218,7 @@ public record AutomobileFrame(
                 weight,
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+prefix+"_rickshaw.png"),
-                        Automobility.rl("frame_rickshaw"),
+                        Automobility.rl("frame/rickshaw"),
                         new WheelBase(List.of(
                                 new WheelBase.WheelPos(-11, -7.5f, 1, 0, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.LEFT),
                                 new WheelBase.WheelPos(-11, 7.5f, 1, 180, WheelBase.WheelEnd.BACK, WheelBase.WheelSide.RIGHT),

@@ -1,9 +1,8 @@
 {
     "type": "minecraft:crafting_shaped",
     "pattern": [
-        "AAA",
-        " B ",
-        "BBB"
+        "AA",
+        "BB"
     ],
     "key": {
         "A": {
@@ -14,7 +13,7 @@
         }
     },
     "result": {
-        "item": "automobility:automobile_assembler",
+        "id": "automobility:auto_mechanic_table",
         "count": 1
     }
 }
