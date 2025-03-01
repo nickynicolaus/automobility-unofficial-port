@@ -7,11 +7,13 @@ import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.util.TriCons;
 import io.netty.buffer.Unpooled;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.entity.BannerPatternLayers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,12 +40,18 @@ public enum CommonPackets {;
         Platform.get().serverSendPacket(player, Automobility.rl("sync_automobile_attachments"), buf);
     }
 
-    public static void sendBannerPostAttachmentUpdatePacket(AutomobileEntity entity, CompoundTag banner, ServerPlayer player) {
-        var buf = new FriendlyByteBuf(Unpooled.buffer());
+    public static void sendBannerPostAttachmentUpdatePacket(AutomobileEntity entity, DyeColor baseColor, BannerPatternLayers layers, ServerPlayer player) {
+        var buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), entity.level().registryAccess());
 
         if (entity.getRearAttachment() instanceof BannerPostRearAttachment) {
             buf.writeInt(entity.getId());
-            buf.writeNbt(banner);
+            if (baseColor != null && layers != null) {
+                buf.writeBoolean(true);
+                DyeColor.STREAM_CODEC.encode(buf, baseColor);
+                BannerPatternLayers.STREAM_CODEC.encode(buf, layers);
+            } else {
+                buf.writeBoolean(false);
+            }
             Platform.get().serverSendPacket(player, Automobility.rl("update_banner_post"), buf);
         }
     }

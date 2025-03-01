@@ -10,7 +10,10 @@ import io.github.foundationgames.automobility.platform.Platform;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.entity.BannerPatternLayers;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,12 +65,22 @@ public enum ClientPackets {;
             });
         });
         ClientPackets.registerReceiver(Automobility.rl("update_banner_post"), (client, buf) -> {
+            var rbuf = new RegistryFriendlyByteBuf(buf, client.level.registryAccess());
+
             int entityId = buf.readInt();
-            var banner = buf.readNbt();
+            final DyeColor baseColor;
+            final BannerPatternLayers layers;
+            if (buf.readBoolean()) {
+                baseColor = DyeColor.STREAM_CODEC.decode(buf);
+                layers = BannerPatternLayers.STREAM_CODEC.decode(rbuf);
+            } else {
+                baseColor = null;
+                layers = null;
+            }
             client.execute(() -> {
                 if (client.player.level().getEntity(entityId) instanceof AutomobileEntity automobile &&
                         automobile.getRearAttachment() instanceof BannerPostRearAttachment bannerPost) {
-                    bannerPost.setFromNbt(banner);
+                    bannerPost.setBanner(baseColor, layers);
                 }
             });
         });

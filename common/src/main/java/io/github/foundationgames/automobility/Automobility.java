@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility;
 
+import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
 import io.github.foundationgames.automobility.automobile.AutomobileWheel;
@@ -16,14 +17,16 @@ import io.github.foundationgames.automobility.screen.SingleSlotScreenHandler;
 import io.github.foundationgames.automobility.sound.AutomobilitySounds;
 import io.github.foundationgames.automobility.util.AUtils;
 import io.github.foundationgames.automobility.util.AutomobilityClientResourceDumper;
+import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.Eventual;
 import io.github.foundationgames.automobility.util.InitlessConstants;
 import io.github.foundationgames.automobility.util.RegistryQueue;
 import io.github.foundationgames.automobility.util.network.CommonPackets;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.MenuType;
@@ -67,12 +70,15 @@ public class Automobility {
         RegistryQueue.register(BuiltInRegistries.CREATIVE_MODE_TAB, TAB.location, () -> Platform.get().creativeTab(TAB.location, AUtils::createGroupIcon, TAB));
         RegistryQueue.register(BuiltInRegistries.CREATIVE_MODE_TAB, PREFAB_TAB.location, () -> Platform.get().creativeTab(PREFAB_TAB.location, AUtils::createPrefabsIcon, PREFAB_TAB));
 
-        EntityDataSerializers.registerSerializer(AutomobileFrame.SERIALIZER);
-        Platform.get().registerSyncedRegistry(AutomobileFrame.REGISTRY, AutomobileFrame.DIRECT_CODEC, AutomobileFrame.BOOTSTRAP);
-        EntityDataSerializers.registerSerializer(AutomobileWheel.SERIALIZER);
-        Platform.get().registerSyncedRegistry(AutomobileWheel.REGISTRY, AutomobileWheel.DIRECT_CODEC, AutomobileWheel.BOOTSTRAP);
-        EntityDataSerializers.registerSerializer(AutomobileEngine.SERIALIZER);
-        Platform.get().registerSyncedRegistry(AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC, AutomobileEngine.BOOTSTRAP);
+        Platform.get().registerDataSerializer(AutomobileFrame.ID, AutomobileFrame.SERIALIZER);
+        Platform.get().registerDataSerializer(AutomobileWheel.ID, AutomobileWheel.SERIALIZER);
+        Platform.get().registerDataSerializer(AutomobileEngine.ID, AutomobileEngine.SERIALIZER);
+    }
+
+    public static void initDynamicRegistries(DynamicRegistryRegistrar handler) {
+        handler.accept(AutomobileFrame.REGISTRY, AutomobileFrame.DIRECT_CODEC, AutomobileFrame.BOOTSTRAP);
+        handler.accept(AutomobileWheel.REGISTRY, AutomobileWheel.DIRECT_CODEC, AutomobileWheel.BOOTSTRAP);
+        handler.accept(AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC, AutomobileEngine.BOOTSTRAP);
     }
 
     public static ResourceLocation rl(String path) {
@@ -83,5 +89,9 @@ public class Automobility {
         AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileFrame.REGISTRY, AutomobileFrame.DIRECT_CODEC);
         AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileWheel.REGISTRY, AutomobileWheel.DIRECT_CODEC);
         AutomobilityClientResourceDumper.dumpDynamicRegistry(registries, AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC);
+    }
+
+    public interface DynamicRegistryRegistrar {
+        <T> void accept(ResourceKey<Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults);
     }
 }

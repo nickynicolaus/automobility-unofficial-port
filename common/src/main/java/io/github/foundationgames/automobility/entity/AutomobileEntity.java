@@ -58,7 +58,6 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -69,6 +68,10 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.Nullable;
+import org.joml.AxisAngle4f;
+import org.joml.Quaterniond;
+import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.ArrayDeque;
@@ -110,6 +113,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private double trackedZ;
     private float trackedYaw;
     private int lerpTicks;
+
+    private final List<HitboxEntity> hitboxes = new ArrayList<>();
 
     private boolean dirty = false;
 
@@ -499,6 +504,28 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.stats.from(getFrame(), getWheels(), getEngine());
     }
 
+    public void verifyHitboxesFor(AutomobileFrame frame) {
+        if (this.level().isClientSide()) return;
+
+        var boxes = frame.hitboxes();
+        if (boxes.isEmpty()) boxes = List.of(AutomobileFrame.Hitbox.DEFAULT);
+
+        this.hitboxes.removeIf(Entity::isRemoved);
+
+        if (this.hitboxes.size() != boxes.size()) {
+            this.hitboxes.forEach(e -> e.remove(RemovalReason.DISCARDED));
+            this.hitboxes.clear();
+
+            for (var box : boxes) {
+                var boxEntity = new HitboxEntity(this.level(), this, box);
+                boxEntity.setPos(this.position());
+                this.hitboxes.add(boxEntity);
+
+                this.level().addFreshEntity(boxEntity);
+            }
+        }
+    }
+
     @Override
     public float maxUpStep() {
         return this.getWheels().size();
@@ -530,7 +557,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public boolean hasSpaceForPassengers() {
-        return (this.rearAttachment.isRideable()) ? (this.getPassengers().size() < 2) : (!this.isVehicle());
+        var frame = this.getFrame();
+        int maxPassengers = this.rearAttachment.isRideable() ? 2 : 1;
+        if (frame != null) {
+            maxPassengers += frame.model().passengerSeats().size();
+        }
+        return this.getPassengers().size() < maxPassengers;
     }
 
     public void setSpeed(float horizontal, float vertical) {
@@ -581,6 +613,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         postMovementTick();
 
         if (!level().isClientSide()) {
+            this.verifyHitboxesFor(getFrame());
+
             var prevTailPos = this.prevTailPos != null ? this.prevTailPos : this.getTailPos();
             var tailPos = this.getTailPos();
 
@@ -666,12 +700,6 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 this.entityData.get(WHEEL_TYPE).unwrapKey().orElse(AutomobileWheel.EMPTY_KEY),
                 this.entityData.get(ENGINE_TYPE).unwrapKey().orElse(AutomobileEngine.EMPTY_KEY)
         ).asStack();
-    }
-
-    @Nullable
-    @Override
-    public ItemStack getPickResult() {
-        return asPrefabItem();
     }
 
     // making mobs drive automobiles
@@ -895,17 +923,24 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void runOverEntities(Vec3 velocity) {
-        var frontBox = getBoundingBox().move(velocity.scale(0.5));
+        var entitiesToHit = new HashSet<LivingEntity>();
         var velAdd = velocity.add(0, 0.1, 0).scale(3);
-        for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), frontBox, entity -> entity != this && entity != getFirstPassenger())) {
-            if (!entity.isInvulnerable()) {
-                if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
-                    AutomobilityEntities.automobileDamageSource(level()).ifPresent(dmg -> living.hurt(dmg, hSpeed * 10));
 
-                    entity.push(velAdd.x, velAdd.y, velAdd.z);
+        for (var box : this.hitboxes) {
+            var bbox = box.getBoundingBox().move(velocity.scale(0.5));
+            for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), bbox, entity -> entity != this && entity != getFirstPassenger())) {
+                if (!entity.isInvulnerable()) {
+                    if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
+                        entitiesToHit.add(living);
+                    }
                 }
             }
         }
+
+        entitiesToHit.forEach(e -> {
+            AutomobilityEntities.automobileDamageSource(level()).ifPresent(dmg -> e.hurt(dmg, hSpeed * 10));
+            e.push(velAdd.x, velAdd.y, velAdd.z);
+        });
     }
 
     public void postMovementTick() {
@@ -1040,8 +1075,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return false; // Riders shouldn't take fall damage
     }
 
+    public boolean isOneOfMyHitboxes(Entity e) {
+        return e instanceof HitboxEntity hitbox && hitbox.automobile() == this;
+    }
+
     public void accumulateCollisionAreas(Collection<CollisionArea> areas) {
-        this.level().getEntitiesOfClass(Entity.class, this.getBoundingBox().inflate(3, 3, 3), e -> e != this && e.getVehicle() != this)
+        this.level().getEntitiesOfClass(Entity.class, this.getBoundingBox().inflate(3, 3, 3),
+                        e -> e != this &&
+                                e.getVehicle() != this &&
+                                !(e instanceof AutomobileEntity) &&
+                                !this.isOneOfMyHitboxes(e))
                 .forEach(e -> areas.add(CollisionArea.entity(e)));
     }
 
@@ -1076,8 +1119,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         var wid = (b.getXsize() + b.getZsize()) * 0.5f;
         var floorBox = new AABB(b.minX + (wid * 0.94), b.minY - 0.05, b.minZ + (wid * 0.94), b.maxX - (wid * 0.94), b.minY, b.maxZ - (wid * 0.94));
         var wallBox = b.deflate(0.05).move(this.lastVelocity.normalize().scale(0.12));
-        var start = new BlockPos((int) (b.minX - 0.1), (int) (b.minY - 0.2), (int) (b.minZ - 0.1));
-        var end = new BlockPos((int) (b.maxX + 0.1), (int) (b.maxY + 0.2 + this.maxUpStep()), (int) (b.maxZ + 0.1));
+        var start = new BlockPos((int) Math.floor(b.minX - 0.1), (int) Math.floor(b.minY - 0.2), (int) Math.floor(b.minZ - 0.1));
+        var end = new BlockPos((int) Math.floor(b.maxX + 0.1), (int) Math.floor(b.maxY + 0.2 + this.maxUpStep()), (int) Math.floor(b.maxZ + 0.1));
         var groundCuboid = Shapes.create(groundBox);
         var floorCuboid = Shapes.create(floorBox);
         var wallCuboid = Shapes.create(wallBox);
@@ -1256,14 +1299,15 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void createDriftParticles() {
-        var origin = this.position().add(0, this.displacement.verticalTarget, 0);
         for (var wheel : this.getFrame().model().wheelBase().wheels()) {
             if (wheel.end() == WheelBase.WheelEnd.BACK) {
-                var pos = new Vec3(wheel.right() + ((wheel.right() > 0 ? 1 : -1) * this.getWheels().model().width() * wheel.scale()), 0, wheel.forward())
-                        .xRot((float) Math.toRadians(this.displacement.currAngularX))
-                        .zRot((float) Math.toRadians(this.displacement.currAngularZ))
-                        .yRot((float) Math.toRadians(-this.getYRot())).scale(0.0625).add(0, 0.4, 0);
-                level().addParticle(AutomobilityParticles.DRIFT_SMOKE.require(), origin.x + pos.x, origin.y + pos.y, origin.z + pos.z, 0, 0, 0);
+                var pos = new Vector3d(wheel.right() + ((wheel.right() > 0 ? 1 : -1) * this.getWheels().model().width() * wheel.scale()), 0, wheel.forward())
+                        .mul(0.0625);
+
+                this.localPosToWorldSpace(pos);
+                pos.add(0, 0.4, 0);
+
+                level().addParticle(AutomobilityParticles.DRIFT_SMOKE.require(), pos.x(), pos.y(), pos.z(), 0, 0, 0);
             }
         }
     }
@@ -1365,8 +1409,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.remove(reason);
     }
 
-    @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
+    public InteractionResult handleInteraction(Player player, InteractionHand hand) {
         if (player.isShiftKeyDown()) {
             if (this.hasInventory()) {
                 if (!level().isClientSide()) {
@@ -1424,53 +1467,49 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return InteractionResult.PASS;
     }
 
-    public Vec3 getPassengersRidingOffset() {
-        return getFrame().model().driverSeatPos().add(0, getWheels().model().radius(), 0).scale(1.0 / 16);
+    public Vec3 fixPassengerRidingOffset(Vec3 offset) {
+        return offset.add(0, getWheels().model().radius(), 0).scale(1.0 / 16);
     }
 
     @Override
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunc) {
-        var myRidingOffset = passenger.getVehicleAttachmentPoint(this).reverse();
-        if (passenger == this.getFirstPassenger()) {
-            var pos = this.position().add(myRidingOffset)
-                    .add(0, this.displacement.verticalTarget, 0)
-                    .add(this.getPassengersRidingOffset()
-                        .xRot((float) Math.toRadians(-this.displacement.currAngularX))
-                        .zRot((float) Math.toRadians(-this.displacement.currAngularZ)));
+        if (getFrame() == null) {
+            super.positionRider(passenger, moveFunc);
+        }
 
-            moveFunc.accept(passenger, pos.x, pos.y, pos.z);
-        } else if (this.hasPassenger(passenger)) {
-            var pos = this.position().add(
-                    new Vec3(0, this.displacement.verticalTarget, this.getFrame().model().rearAttachmentPos() * 0.0625)
-                            .add(myRidingOffset)
-                        .yRot((float) Math.toRadians(180 - this.getYRot()))
-                        .add(0, this.rearAttachment.getPassengerHeightOffset() - 0.14, 0)
-                        .add(this.rearAttachment.scaledYawVec())
-                        .xRot((float) Math.toRadians(-this.displacement.currAngularX))
-                        .zRot((float) Math.toRadians(-this.displacement.currAngularZ)));
+        var attPoint = passenger.getVehicleAttachmentPoint(this);
+        var frameModel = getFrame().model();
 
-            moveFunc.accept(passenger, pos.x, pos.y, pos.z);
+        if (this.hasPassenger(passenger)) {
+            int idx = this.getPassengers().indexOf(passenger);
+            var offset = Vec3.ZERO;
+
+            if (idx == 0) {
+                offset = this.fixPassengerRidingOffset(frameModel.driverSeatPos());
+            } else if (idx <= frameModel.passengerSeats().size()) {
+                offset = this.fixPassengerRidingOffset(frameModel.passengerSeats().get(idx - 1));
+            } else {
+                offset = new Vec3(0, 0, -this.getFrame().model().rearAttachmentPos() / 16)
+                        .add(this.rearAttachment.scaledYawVec().yRot((float) Math.toRadians(this.getYRot())))
+                        .add(0, this.rearAttachment.getPassengerHeightOffset(), 0);
+            }
+
+            var pos = new Vector3d(offset.x(), offset.y(), offset.z());
+            this.localPosToWorldSpace(pos);
+            pos.sub(attPoint.x(), attPoint.y(), attPoint.z());
+
+            moveFunc.accept(passenger, pos.x(), pos.y(), pos.z());
         }
     }
 
     @Override
-    public boolean canCollideWith(Entity other) {
-        return Boat.canVehicleCollide(this, other);
+    public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        return super.getDismountLocationForPassenger(passenger);
     }
 
     @Override
-    public boolean canBeCollidedWith() {
-        return true;
-    }
-
-    @Override
-    public boolean isPickable() {
-        return !this.isRemoved();
-    }
-
-    @Override
-    public boolean isPushable() {
-        return true;
+    public boolean canCollideWith(Entity entity) {
+        return false;
     }
 
     @Override
@@ -1538,29 +1577,48 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         controllerAction(AutomobileController::groundThudRumble);
     }
 
+    /**
+     * Transform a local (model space) position into world space
+     */
+    public void localPosToWorldSpace(Vector3d position) {
+        position.rotateY(Math.toRadians(-this.getYRot()));
+        var disp = this.getDisplacement();
+
+        var rot = new Quaternionf();
+        disp.getAngular(1, rot);
+
+        position.rotate(new Quaterniond(rot.x(), rot.y(), rot.z(), rot.w()));
+
+        var pos = this.position();
+        position.add(pos.x(), pos.y() + disp.getVertical(1), pos.z());
+    }
+
     public static final class Displacement {
         private static final int SCAN_STEPS_PER_BLOCK = 20;
         private static final double INV_SCAN_STEPS = 1d / SCAN_STEPS_PER_BLOCK;
 
         private boolean wereAllOnGround = true;
         private float lastVertical = 0;
-        private float lastAngularX = 0;
-        private float lastAngularZ = 0;
-        private float currAngularX = 0;
-        private float currAngularZ = 0;
         private float verticalTarget = 0;
-        private float angularXTarget = 0;
-        private float angularZTarget = 0;
+        private final Quaternionf lastAngular = new Quaternionf();
+        private final Quaternionf currAngular = new Quaternionf();
+        private final Quaternionf angularTarget = new Quaternionf();
         private final List<Vec3> scanPoints = new ArrayList<>();
         public final Set<CollisionArea> otherColliders = new HashSet<>();
 
         public void preTick() {
-            this.lastAngularX = currAngularX;
-            this.lastAngularZ = currAngularZ;
             this.lastVertical = verticalTarget;
+            this.lastAngular.set(this.currAngular);
 
-            this.currAngularX = AUtils.shift(this.currAngularX, 9, this.angularXTarget);
-            this.currAngularZ = AUtils.shift(this.currAngularZ, 9, this.angularZTarget);
+            float lerpAmount = 1;
+
+            var rotation = angularTarget.mul(currAngular.invert(new Quaternionf()), new Quaternionf());
+            var rotationInfo = new AxisAngle4f(rotation);
+            if (rotationInfo.angle > 0) {
+                lerpAmount = (float) Math.min(rotationInfo.angle, Math.toRadians(9)) / rotationInfo.angle;
+                lerpAmount = Mth.clamp(lerpAmount, 0, 1);
+                this.currAngular.slerp(this.angularTarget, lerpAmount);
+            }
         }
 
         public void tick(Level world, AutomobileEntity entity, Vec3 centerPos, double yaw, double stepHeight) {
@@ -1651,8 +1709,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 return;
             }
 
-            angularXTarget = 0;
-            angularZTarget = 0;
+            angularTarget.identity();
             verticalTarget = 0;
 
             if (lowestDisplacementPos != null) {
@@ -1704,8 +1761,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
                 combinedNormals = normalCount > 0 ? combinedNormals.scale(1f / normalCount) : new Vec3(0, 1, 0);
 
-                angularXTarget = Mth.wrapDegrees(90f - (float) Math.toDegrees(Math.atan2(combinedNormals.y, combinedNormals.z)));
-                angularZTarget = Mth.wrapDegrees(270f + (float) Math.toDegrees(Math.atan2(combinedNormals.y, combinedNormals.x)));
+                var up = new Vector3f(0, 1, 0);
+                var rotatedUp = new Vector3f((float) combinedNormals.x(), (float) combinedNormals.y(), (float) combinedNormals.z());
+                up.rotationTo(rotatedUp, this.angularTarget);
 
                 verticalTarget = (float) displacementCenterPos.subtract(centerPos).y;
             }
@@ -1722,12 +1780,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             return Mth.lerp(tickDelta, lastVertical, verticalTarget);
         }
 
-        public float getAngularX(float tickDelta) {
-            return Mth.rotLerp(tickDelta, lastAngularX, currAngularX);
-        }
-
-        public float getAngularZ(float tickDelta) {
-            return Mth.rotLerp(tickDelta, lastAngularZ, currAngularZ);
+        public void getAngular(float tickDelta, Quaternionf rot) {
+            this.lastAngular.slerp(this.currAngular, tickDelta, rot);
         }
     }
 }

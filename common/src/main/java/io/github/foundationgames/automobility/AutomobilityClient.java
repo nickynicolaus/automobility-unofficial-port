@@ -17,6 +17,7 @@ import io.github.foundationgames.automobility.item.AutomobileComponentItem;
 import io.github.foundationgames.automobility.item.AutomobilityItems;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.screen.AutoMechanicTableScreen;
+import io.github.foundationgames.automobility.screen.MenuScreenRegistrar;
 import io.github.foundationgames.automobility.screen.SingleSlotScreen;
 import io.github.foundationgames.automobility.sound.AutomobileSoundInstance;
 import io.github.foundationgames.automobility.util.FloatFunc;
@@ -26,6 +27,7 @@ import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
@@ -48,9 +50,6 @@ public class AutomobilityClient {
         ClientPackets.initClient();
 
         Platform.get().controller().initCompat();
-
-        Platform.get().registerMenuScreen(Automobility.AUTO_MECHANIC_SCREEN.require(), AutoMechanicTableScreen::new);
-        Platform.get().registerMenuScreen(Automobility.SINGLE_SLOT_SCREEN.require(), SingleSlotScreen::new);
 
         Platform.get().registerClientCommand((dispatcher, registries) ->
                 dispatcher.register(LiteralArgumentBuilder.<SharedSuggestionProvider>literal("automobilityc")
@@ -85,6 +84,10 @@ public class AutomobilityClient {
             var wheel = lvl.registryAccess().registryOrThrow(AutomobileWheel.REGISTRY).get(data.wheel());
             var engine = lvl.registryAccess().registryOrThrow(AutomobileEngine.REGISTRY).get(data.engine());
 
+            if (frame == null || wheel == null || engine == null) {
+                return;
+            }
+
             float wheelDist = frame.model().lengthPx() / 16;
             float scale = 1;
             scale /= wheelDist * 0.77f;
@@ -113,6 +116,11 @@ public class AutomobilityClient {
         );
     }
 
+    public static void initMenuScreens(MenuScreenRegistrar screens) {
+        screens.accept(Automobility.AUTO_MECHANIC_SCREEN, AutoMechanicTableScreen::new);
+        screens.accept(Automobility.SINGLE_SLOT_SCREEN, SingleSlotScreen::new);
+    }
+
     public static <T extends AutomobileComponent<T>, V> void componentItemRenderer(AutomobileComponentItem<T, V> item, Function<T, Model> modelProvider, Function<T, ResourceLocation> textureProvider, FloatFunc<T> scaleProvider) {
         Platform.get().builtinItemRenderer(item, (stack, mode, matrices, vertexConsumers, light, overlay) -> {
             var lvl = Minecraft.getInstance().level;
@@ -135,6 +143,7 @@ public class AutomobilityClient {
         var libs = Platform.get();
 
         libs.entityRenderer(AutomobilityEntities.AUTOMOBILE.require(), AutomobileEntityRenderer::new);
+        libs.entityRenderer(AutomobilityEntities.HITBOX.require(), NoopRenderer::new);
 
         AutomobileEntity.engineSound = auto -> {
             if (auto.getEngine().isEmpty()) {

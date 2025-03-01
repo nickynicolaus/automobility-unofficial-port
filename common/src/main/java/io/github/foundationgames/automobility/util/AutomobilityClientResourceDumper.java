@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import net.fabricmc.loader.api.FabricLoader;
+import io.github.foundationgames.automobility.platform.Platform;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class AutomobilityClientResourceDumper {
-    public static final Path DUMP_DIR = FabricLoader.getInstance().getGameDir().resolve("automobility_dump");
+    public static final Path DUMP_DIR = Platform.get().getGameDir().resolve("automobility_dump");
     public static final Gson GSON = new Gson();
 
     public static <R> void dumpDynamicRegistry(HolderLookup.Provider registries, ResourceKey<Registry<R>> key, Codec<R> codec) throws IOException {

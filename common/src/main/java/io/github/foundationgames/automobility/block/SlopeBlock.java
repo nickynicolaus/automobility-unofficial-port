@@ -100,10 +100,10 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
 
     public static VoxelShape slopeStep(Direction dir, double height) {
         return switch (dir) {
-            case NORTH -> Block.box(0, 0, 0, 16, height, 0.5);
-            case SOUTH -> Block.box(0, 0, 15.5, 16, height, 16);
-            case EAST -> Block.box(15.5, 0, 0, 16, height, 16);
-            case WEST -> Block.box(0, 0, 0, 0.5, height, 16);
+            case NORTH -> Block.box(0, 0, 0, 16, height, 4);
+            case SOUTH -> Block.box(0, 0, 12, 16, height, 16);
+            case EAST -> Block.box(12, 0, 0, 16, height, 16);
+            case WEST -> Block.box(0, 0, 0, 4, height, 16);
             default -> Shapes.empty();
         };
     }
@@ -113,18 +113,18 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
         for (var dir : AUtils.HORIZONTAL_DIRS) {
             for (int i = 0; i < 2; i++) {
                 double ox = switch (dir) {
-                    case WEST -> 0.5;
-                    case EAST -> -0.5;
+                    case WEST -> 4;
+                    case EAST -> -4;
                     default -> 0;
                 };
                 double oz = switch (dir) {
-                    case NORTH -> 0.5;
-                    case SOUTH -> -0.5;
+                    case NORTH -> 4;
+                    case SOUTH -> -4;
                     default -> 0;
                 };
                 var finalShape = Shapes.empty();
-                for (int j = 0; j < 32; j++) {
-                    finalShape = Shapes.or(finalShape, slopeStep(dir, (i * 8) + (j * 0.25)).move((ox * j) / 16, 0, (oz * j) / 16));
+                for (int j = 0; j < 4; j++) {
+                    finalShape = Shapes.or(finalShape, slopeStep(dir, (i * 8) + (j * 2)).move((ox * j) / 16, 0, (oz * j) / 16));
                 }
                 shapes.add(finalShape);
             }

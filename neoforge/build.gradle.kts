@@ -27,6 +27,15 @@ neoForge {
         create("Server") {
             server()
         }
+        create("Datagen") {
+            data()
+
+            programArguments.addAll(
+                "--mod", rootProject.properties["archives_base_name"].toString(),
+                "--all",
+                "--output", file("src/generated/resources/").getAbsolutePath(),
+                "--existing", file("src/main/resources/").getAbsolutePath())
+        }
 
         configureEach {
             systemProperty("forge.logging.markers", "REGISTRIES")
@@ -39,6 +48,11 @@ neoForge {
             sourceSet(sourceSets.main.get())
         }
     }
+}
+
+
+sourceSets.main.get().resources {
+    srcDir("src/generated/resources")
 }
 
 tasks {
@@ -66,7 +80,7 @@ tasks {
         from(project(":common").sourceSets.main.get().resources)
 
         filesMatching("META-INF/neoforge.mods.toml") {
-            expand(rootProject.properties)
+            expand(mapOf("version" to rootProject.properties["mod_version"]))
         }
     }
 }

@@ -77,18 +77,18 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
         var shapes = new ArrayList<VoxelShape>();
         for (var dir : AUtils.HORIZONTAL_DIRS) {
             double ox = switch (dir) {
-                case WEST -> 0.5;
-                case EAST -> -0.5;
+                case WEST -> 4;
+                case EAST -> -4;
                 default -> 0;
             };
             double oz = switch (dir) {
-                case NORTH -> 0.5;
-                case SOUTH -> -0.5;
+                case NORTH -> 4;
+                case SOUTH -> -4;
                 default -> 0;
             };
             var finalShape = Shapes.empty();
-            for (int j = 1; j < 32; j++) {
-                finalShape = Shapes.or(finalShape, SlopeBlock.slopeStep(dir, (j * 0.5)).move((ox * j) / 16, 0, (oz * j) / 16));
+            for (int j = 1; j < 4; j++) {
+                finalShape = Shapes.or(finalShape, SlopeBlock.slopeStep(dir, (j * 4)).move((ox * j) / 16, 0, (oz * j) / 16));
             }
             shapes.add(finalShape);
         }
@@ -96,33 +96,6 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
         SOUTH_SHAPE = shapes.get(1);
         EAST_SHAPE = shapes.get(2);
         WEST_SHAPE = shapes.get(3);
-
-        // OLD SLOPE SHAPES
-        shapes.clear();
-        for (var dir : AUtils.HORIZONTAL_DIRS) {
-            double ox = switch (dir) {
-                case WEST -> 0.5;
-                case EAST -> -0.5;
-                default -> 0;
-            };
-            double oz = switch (dir) {
-                case NORTH -> 0.5;
-                case SOUTH -> -0.5;
-                default -> 0;
-            };
-            var shape = switch (dir) {
-                case NORTH -> Block.box(0, -1.5, 0, 16, 0.5, 0.5);
-                case SOUTH -> Block.box(0, -1.5, 15.5, 16, 0.5, 16);
-                case EAST -> Block.box(15.5, -1.5, 0, 16, 0.5, 16);
-                case WEST -> Block.box(0, -1.5, 0, 0.5, 0.5, 16);
-                default -> Shapes.empty();
-            };
-            var finalShape = shape;
-            for (int i = 1; i < 32; i++) {
-                finalShape = Shapes.or(finalShape, shape.move((ox * i) / 16, (0.5 * i) / 16, (oz * i) / 16));
-            }
-            shapes.add(finalShape);
-        }
     }
 
     @Override

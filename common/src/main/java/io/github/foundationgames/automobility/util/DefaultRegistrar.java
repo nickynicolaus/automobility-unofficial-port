@@ -25,9 +25,9 @@ public class DefaultRegistrar<V> {
         return register(c.id(), c.value());
     }
 
-    public void bootstrap(Registry<V> registry) {
+    public void bootstrap(RegistrationContext<V> registry) {
         for (var e : toRegister.entrySet()) {
-            Registry.register(registry, e.getKey(), e.getValue());
+            registry.register(e.getKey(), e.getValue());
         }
     }
 
@@ -35,5 +35,10 @@ public class DefaultRegistrar<V> {
         return new Candidate<>(id, value);
     }
 
-    public record Candidate<V>(ResourceLocation id, V value) {}
+    public record Candidate<V>(ResourceLocation id, V value) {
+    }
+
+    public interface RegistrationContext<V> {
+        void register(ResourceKey<V> key, V value);
+    }
 }

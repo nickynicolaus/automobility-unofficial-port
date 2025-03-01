@@ -20,7 +20,11 @@ import java.util.Optional;
 public enum AutomobilityEntities {;
     public static final Eventual<EntityType<AutomobileEntity>> AUTOMOBILE = RegistryQueue.register(BuiltInRegistries.ENTITY_TYPE,
             Automobility.rl("automobile"),
-            () -> Platform.get().entityType(MobCategory.MISC, AutomobileEntity::new, EntityDimensions.fixed(1f, 0.66f), 3, 10)
+            () -> Platform.get().entityType(MobCategory.MISC, AutomobileEntity::new, EntityDimensions.scalable(1f, 0.66f), 3, 10, false, "automobile")
+    );
+    public static final Eventual<EntityType<HitboxEntity>> HITBOX = RegistryQueue.register(BuiltInRegistries.ENTITY_TYPE,
+            Automobility.rl("hitbox"),
+            () -> Platform.get().entityType(MobCategory.MISC, HitboxEntity::new, EntityDimensions.scalable(1.1f, 0.7f), 3, 10, true, "automobile_hitbox")
     );
 
     public static final TagKey<EntityType<?>> DASH_PANEL_BOOSTABLES = TagKey.create(Registries.ENTITY_TYPE, Automobility.rl("dash_panel_boostables"));

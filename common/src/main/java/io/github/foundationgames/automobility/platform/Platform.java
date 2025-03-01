@@ -2,14 +2,9 @@ package io.github.foundationgames.automobility.platform;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.controller.AutomobileController;
-import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.HexCons;
-import io.github.foundationgames.automobility.util.TriFunc;
 import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -18,11 +13,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -43,6 +36,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -67,8 +61,6 @@ public interface Platform {
 
     <T extends AbstractContainerMenu> MenuType<T> menuType(BiFunction<Integer, Inventory, T> factory);
 
-    <T extends AbstractContainerMenu, U extends Screen & MenuAccess<T>> void registerMenuScreen(MenuType<T> type, TriFunc<T, Inventory, Component, U> factory);
-
     @Nullable BlockColor blockColor(BlockState state);
 
     <T extends BlockEntity> BlockEntityType<T> blockEntity(BiFunction<BlockPos, BlockState, T> factory, Block... blocks);
@@ -79,11 +71,11 @@ public interface Platform {
 
     void clientSendPacket(ResourceLocation rl, FriendlyByteBuf buf);
 
-    <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange);
+    <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange, boolean internal, String key);
 
     <T extends Entity> void entityRenderer(EntityType<T> entity, Function<EntityRendererProvider.Context, EntityRenderer<T>> factory);
 
-    <T> void registerSyncedRegistry(ResourceKey<? extends Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults);
+    void registerDataSerializer(ResourceLocation id, EntityDataSerializer<?> serializer);
 
     void registerClientCommand(BiConsumer<CommandDispatcher<SharedSuggestionProvider>, CommandBuildContext> callback);
 
@@ -91,4 +83,5 @@ public interface Platform {
 
     AutomobileController controller();
 
+    Path getGameDir();
 }

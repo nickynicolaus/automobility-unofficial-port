@@ -11,7 +11,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -42,7 +41,6 @@ public record AutomobileEngine(
             SoundEvent.DIRECT_CODEC.fieldOf("sound").forGetter(e -> e.sound().get()),
             EngineModel.CODEC.fieldOf("display").forGetter(AutomobileEngine::model)
     ).apply(inst, AutomobileEngine::create));
-    public static final Codec<Holder<AutomobileEngine>> HOLDER_CODEC = RegistryFileCodec.create(REGISTRY, DIRECT_CODEC);
     public static final Codec<ResourceKey<AutomobileEngine>> CODEC = ResourceKey.codec(REGISTRY);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AutomobileEngine> DIRECT_STREAM_CODEC = StreamCodec.composite(
@@ -68,7 +66,7 @@ public record AutomobileEngine(
     }
 
     public static AutomobileEngine create(boolean empty, float torque, float speed, SoundEvent sound, EngineModel model) {
-        return new AutomobileEngine(false, torque, speed, () -> sound, model);
+        return new AutomobileEngine(empty, torque, speed, () -> sound, model);
     }
 
     public static final ResourceKey<AutomobileEngine> STONE = BOOTSTRAP.register(Automobility.rl("stone"), of(

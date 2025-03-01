@@ -27,8 +27,12 @@ public abstract class RearAttachment extends BaseAttachment<RearAttachmentType<?
         return new Vec3(0, 0, 1).yRot((float) Math.toRadians(180 - this.yaw()));
     }
 
+    public final Vec3 localPos() {
+        return this.yawVec().scale(this.type.model().pivotDistPx());
+    }
+
     public final Vec3 scaledYawVec() {
-        return this.yawVec().scale(this.type.model().pivotDistPx() * 0.0625);
+        return this.localPos().scale(0.0625);
     }
 
     public final Vec3 origin() {

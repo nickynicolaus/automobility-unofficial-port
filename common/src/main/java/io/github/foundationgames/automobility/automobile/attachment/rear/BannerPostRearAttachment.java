@@ -7,10 +7,9 @@ import io.github.foundationgames.automobility.util.network.CommonPackets;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -28,7 +27,7 @@ public class BannerPostRearAttachment extends RearAttachment {
     private @Nullable DyeColor baseColor = null;
     private BannerPatternLayers patterns = null;
 
-    public final Container inventory = new SimpleContainer(1) {
+    public final SimpleContainer inventory = new SimpleContainer(1) {
         @Override
         public void setItem(int slot, ItemStack stack) {
             super.setItem(slot, stack);
@@ -42,12 +41,9 @@ public class BannerPostRearAttachment extends RearAttachment {
     }
 
     public void sendPacket() {
-        var nbt = new CompoundTag();
-        this.putToNbt(nbt);
-
         if (!this.world().isClientSide()) {
             this.automobile().forNearbyPlayers(200, false, p ->
-                    CommonPackets.sendBannerPostAttachmentUpdatePacket(this.automobile(), nbt, p));
+                    CommonPackets.sendBannerPostAttachmentUpdatePacket(this.automobile(), this.baseColor, this.patterns, p));
         }
     }
 
@@ -55,33 +51,12 @@ public class BannerPostRearAttachment extends RearAttachment {
     public void updatePacketRequested(ServerPlayer player) {
         super.updatePacketRequested(player);
 
-        var nbt = new CompoundTag();
-        this.putToNbt(nbt);
-        CommonPackets.sendBannerPostAttachmentUpdatePacket(this.automobile(), nbt, player);
+        CommonPackets.sendBannerPostAttachmentUpdatePacket(this.automobile(), this.baseColor, this.patterns, player);
     }
 
-    public void putToNbt(CompoundTag nbt) {
-        if (this.baseColor != null) {
-            nbt.putInt("Color", this.baseColor.getId());
-        }
-
-        if (this.patterns != null) {
-            nbt.put("Patterns", BannerPatternLayers.CODEC.encode(this.patterns, NbtOps.INSTANCE, new CompoundTag()).getOrThrow());
-        }
-    }
-
-    public void setFromNbt(CompoundTag nbt) {
-        if (nbt.contains("Color")) {
-            this.baseColor = DyeColor.byId(nbt.getInt("Color"));
-        } else {
-            this.baseColor = null;
-        }
-
-        if (nbt.contains("Patterns", 9)) {
-            this.patterns = BannerPatternLayers.CODEC.decode(NbtOps.INSTANCE, nbt.get("Patterns")).getOrThrow().getFirst();
-        } else {
-            this.patterns = null;
-        }
+    public void setBanner(DyeColor color, BannerPatternLayers layers) {
+        this.baseColor = color;
+        this.patterns = layers;
     }
 
     public void setFromItem(ItemStack stack) {
@@ -126,20 +101,15 @@ public class BannerPostRearAttachment extends RearAttachment {
     @Override
     public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.writeNbt(nbt, registry);
-        this.putToNbt(nbt);
 
-        var item = new CompoundTag();
-        ItemStack.CODEC.encode(this.inventory.getItem(0), NbtOps.INSTANCE, item);
-
-        nbt.put("Banner", item);
+        nbt.put("Banner", this.inventory.createTag(registry));
     }
 
     @Override
     public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.readNbt(nbt, registry);
-        this.setFromNbt(nbt);
 
-        this.inventory.setItem(0, ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("Banner")).getOrThrow().getFirst());
+        this.inventory.fromTag(nbt.getList("Banner", Tag.TAG_COMPOUND), registry);
     }
 
     @Override

@@ -2,14 +2,11 @@ package io.github.foundationgames.automobility.fabric;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.controller.AutomobileController;
 import io.github.foundationgames.automobility.fabric.controller.controlify.ControlifyController;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.util.AUtils;
-import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.HexCons;
-import io.github.foundationgames.automobility.util.TriFunc;
 import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -17,18 +14,12 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
-import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -37,11 +28,11 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -63,6 +54,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -97,11 +89,6 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public <T extends AbstractContainerMenu, U extends Screen & MenuAccess<T>> void registerMenuScreen(MenuType<T> type, TriFunc<T, Inventory, Component, U> factory) {
-        MenuScreens.register(type, factory::apply);
-    }
-
-    @Override
     public @Nullable BlockColor blockColor(BlockState state) {
         return ColorProviderRegistry.BLOCK.get(state.getBlock());
     }
@@ -127,8 +114,12 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange) {
-        return FabricEntityTypeBuilder.create(category, factory::apply).dimensions(size).trackedUpdateRate(updateRate).trackRangeChunks(updateRange).build();
+    public <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange, boolean internal, String key) {
+        var builder = EntityType.Builder.of(factory::apply, category).sized(size.width(), size.height()).eyeHeight(size.eyeHeight()).updateInterval(updateRate).clientTrackingRange(updateRange);
+        if (internal) {
+            builder.noSave().noSummon();
+        }
+        return builder.build();
     }
 
     @Override
@@ -137,9 +128,8 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public <T> void registerSyncedRegistry(ResourceKey<? extends Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults) {
-        DynamicRegistries.registerSynced(key, codec, codec);
-        DynamicRegistrySetupCallback.EVENT.register(reg -> reg.asDynamicRegistryManager().registry(key).ifPresent(defaults::bootstrap));
+    public void registerDataSerializer(ResourceLocation id, EntityDataSerializer<?> serializer) {
+        EntityDataSerializers.registerSerializer(serializer);
     }
 
     @Override
@@ -165,4 +155,8 @@ public class FabricPlatform implements Platform {
         return automobileController;
     }
 
+    @Override
+    public Path getGameDir() {
+        return FabricLoader.getInstance().getGameDir();
+    }
 }

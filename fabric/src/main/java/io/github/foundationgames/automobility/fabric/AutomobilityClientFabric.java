@@ -11,6 +11,9 @@ import io.github.foundationgames.automobility.particle.AutomobilityParticles;
 import io.github.foundationgames.automobility.particle.DriftSmokeParticle;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.screen.AutomobileHud;
+import io.github.foundationgames.automobility.screen.MenuScreenRegistrar;
+import io.github.foundationgames.automobility.util.Eventual;
+import io.github.foundationgames.automobility.util.TriFunc;
 import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
 import io.github.foundationgames.automobility.util.network.ClientPackets;
 import net.fabricmc.api.ClientModInitializer;
@@ -24,8 +27,15 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 
 public class AutomobilityClientFabric implements ClientModInitializer {
     private static boolean wasRidingAutomobile = false;
@@ -35,6 +45,14 @@ public class AutomobilityClientFabric implements ClientModInitializer {
         FabricPlatform.init();
 
         AutomobilityClient.init();
+
+        AutomobilityClient.initMenuScreens(new MenuScreenRegistrar() {
+            @Override
+            public <T extends AbstractContainerMenu, U extends Screen & MenuAccess<T>> void accept(
+                    Eventual<MenuType<T>> type, TriFunc<T, Inventory, Component, U> factory) {
+                MenuScreens.register(type.require(), factory::apply);
+            }
+        });
 
         PayloadTypeRegistry.playS2C().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
         ClientPlayNetworking.registerGlobalReceiver(AutomobilityPacketPayload.TYPE, (payload, context) ->
