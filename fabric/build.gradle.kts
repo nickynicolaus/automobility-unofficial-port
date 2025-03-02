@@ -29,6 +29,9 @@ dependencies {
     modImplementation("maven.modrinth:jsonem:${rootProject.properties["jsonem_version"]}")
     include("maven.modrinth:jsonem:${rootProject.properties["jsonem_version"]}")
 
+    implementation("de.javagl:obj:0.4.0")
+    include("de.javagl:obj:0.4.0")
+
     // Controlify
     modCompileOnly("dev.isxander:controlify:${rootProject.properties["controlify_version"]}-fabric")
 

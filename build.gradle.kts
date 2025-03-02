@@ -61,16 +61,16 @@ subprojects {
 		}
 	}
 
-	version = properties["mod_version"].toString()
+	version = "${properties["mod_version"].toString()}+${rootProject.properties["minecraft_version"]}-${project.name}"
 	group = properties["maven_group"].toString()
 
 	base {
-		archivesName =
-				"${rootProject.properties["archives_base_name"]}-${project.name}-${rootProject.properties["minecraft_version"]}"
+		archivesName = "${rootProject.properties["archives_base_name"]}"
 	}
 
 	dependencies {
 		compileOnly("org.jetbrains:annotations:26.0.1")
+		compileOnly("de.javagl:obj:0.4.0")
 	}
 }
 

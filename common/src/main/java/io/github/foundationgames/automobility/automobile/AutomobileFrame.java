@@ -15,6 +15,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -70,7 +71,7 @@ public record AutomobileFrame(
     );
 
     public static AutomobileFrame of(float weight, float width, List<Hitbox> hitboxes, FrameModel model) {
-        return new AutomobileFrame(false, weight, weight, hitboxes, model);
+        return new AutomobileFrame(false, weight, width, hitboxes, model);
     }
 
     public static AutomobileFrame of(float weight, List<Hitbox> hitboxes, FrameModel model) {
@@ -83,6 +84,10 @@ public record AutomobileFrame(
 
     public static AutomobileFrame get(ResourceKey<AutomobileFrame> key, HolderLookup.Provider registries) {
         return registries.lookupOrThrow(REGISTRY).get(key).map(Holder.Reference::value).orElse(EMPTY);
+    }
+
+    public EntityDimensions makeBounds() {
+        return EntityDimensions.scalable(this.width(), 0.66f);
     }
 
     public static final ResourceKey<AutomobileFrame> WOODEN_MOTORCAR = BOOTSTRAP.register(motorcar("wooden", 0.3f));

@@ -11,6 +11,7 @@ import io.github.foundationgames.automobility.automobile.render.attachment.rear.
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.PlowRearAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.RearAttachmentRenderModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.StonecutterRearAttachmentModel;
+import io.github.foundationgames.automobility.automobile.render.obj.ObjModel;
 import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -33,6 +34,7 @@ public record ModelType(ResourceLocation id,
     public static final ModelType STONECUTTER_REAR_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("stonecutter_rear_attachment"), StonecutterRearAttachmentModel::new));
     public static final ModelType PLOW_REAR_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("plow_rear_attachment"), PlowRearAttachmentModel::new));
     public static final ModelType BANNER_REAR_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("banner_rear_attachment"), BannerPostRearAttachmentModel::new));
+    public static final ModelType OBJ = REGISTRY.register(new ModelType(Automobility.rl("obj"), ObjModel::new));
 
     @Override
     public ResourceLocation getId() {

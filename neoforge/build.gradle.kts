@@ -8,6 +8,9 @@ plugins {
 apply(plugin = "net.neoforged.moddev")
 
 dependencies {
+    implementation("de.javagl:obj:0.4.0")
+    jarJar("de.javagl:obj:0.4.0")
+
     implementation(project.project(":common").sourceSets.getByName("main").output)
 }
 
@@ -22,7 +25,6 @@ neoForge {
     runs {
         create("Client") {
             client()
-
         }
         create("Server") {
             server()
@@ -38,6 +40,10 @@ neoForge {
         }
 
         configureEach {
+            dependencies {
+                runtimeOnly("de.javagl:obj:0.4.0")
+            }
+
             systemProperty("forge.logging.markers", "REGISTRIES")
             logLevel = Level.DEBUG
         }

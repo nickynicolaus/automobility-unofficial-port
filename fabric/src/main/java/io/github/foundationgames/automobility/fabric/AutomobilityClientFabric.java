@@ -7,6 +7,7 @@ import io.github.foundationgames.automobility.block.model.SlopeUnbakedModel;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.fabric.block.render.FabricSlopeBakedModel;
 import io.github.foundationgames.automobility.fabric.resource.FabricAutomobileModels;
+import io.github.foundationgames.automobility.fabric.resource.FabricObjLoader;
 import io.github.foundationgames.automobility.particle.AutomobilityParticles;
 import io.github.foundationgames.automobility.particle.DriftSmokeParticle;
 import io.github.foundationgames.automobility.platform.Platform;
@@ -98,5 +99,6 @@ public class AutomobilityClientFabric implements ClientModInitializer {
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.STEEP_SLOPE_WITH_DASH_PANEL.require(), RenderType.translucent());
 
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(FabricAutomobileModels.INSTANCE);
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(FabricObjLoader.INSTANCE);
     }
 }

@@ -36,7 +36,8 @@ public record WheelBase(List<WheelPos> wheels) {
 
     public enum WheelEnd implements StringRepresentable {
         FRONT,
-        BACK;
+        BACK,
+        NONE;
 
         public static final Codec<WheelEnd> CODEC = StringRepresentable.fromEnum(WheelEnd::values);
 

@@ -51,9 +51,17 @@ public class HitboxEntity extends Entity {
         return null;
     }
 
-    private Vector3d boxOrigin() {
+    public Vector3d boxOrigin() {
         var o = this.entityData.get(ORIGIN);
         return new Vector3d(o.x(), o.y(), o.z());
+    }
+
+    public float width() {
+        return this.size.width();
+    }
+
+    public float height() {
+        return this.size.height();
     }
 
     @Override
@@ -79,7 +87,7 @@ public class HitboxEntity extends Entity {
         automobile.localPosToWorldSpace(pos);
 
         this.setPos(pos.x(), pos.y() - this.size.height() * 0.5, pos.z());
-        this.setDeltaMovement(automobile.getDeltaMovement());
+        super.tick();
     }
 
     @Override
@@ -110,7 +118,7 @@ public class HitboxEntity extends Entity {
 
     @Override
     public boolean canBeCollidedWith() {
-        return true;
+        return this.level().isClientSide();
     }
 
     @Override

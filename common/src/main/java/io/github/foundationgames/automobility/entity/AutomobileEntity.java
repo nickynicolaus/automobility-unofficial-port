@@ -31,6 +31,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Cursor3D;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -50,14 +51,18 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
@@ -115,6 +120,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private int lerpTicks;
 
     private final List<HitboxEntity> hitboxes = new ArrayList<>();
+    private EntityDimensions size;
 
     private boolean dirty = false;
 
@@ -316,6 +322,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         this.setRearAttachment(RearAttachmentType.REGISTRY.getOrDefault(null));
         this.setFrontAttachment(FrontAttachmentType.REGISTRY.getOrDefault(null));
+
+        this.size = type.getDimensions();
     }
 
     public AutomobileEntity(Level world) {
@@ -502,6 +510,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.entityData.set(WHEEL_TYPE, wheel);
         this.entityData.set(ENGINE_TYPE, engine);
         this.stats.from(getFrame(), getWheels(), getEngine());
+
+        this.size = getFrame().makeBounds();
+        this.displacement.applyWheelbase(getFrame().model().wheelBase());
+        this.refreshDimensions();
     }
 
     public void verifyHitboxesFor(AutomobileFrame frame) {
@@ -1504,6 +1516,55 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        float maxWidth = 1.1f;
+        float maxHeight = 0.7f;
+
+        for (var box : this.hitboxes) {
+            var origin = box.boxOrigin();
+            if (Math.abs(origin.z()) > 0.5f * box.width()) {
+                continue;
+            }
+
+            float width = ((float) Math.abs(origin.x()) + 0.5f * box.width()) * 2;
+            if (width > maxWidth) maxWidth = width;
+
+            float height = (float) (origin.y() + box.height() * 0.5);
+            if (height > maxHeight) maxHeight = height;
+        }
+
+        float yaw = this.getYRot() + (passenger.getMainArm() == HumanoidArm.RIGHT ? 90 : -90);
+        var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth, passenger.getBbWidth(), yaw);
+        dir = dir.yRot(this.getYRot());
+
+        var scanPos = new Vector3d(
+                dir.x() + getX(),
+                dir.y() + getY() + this.displacement.getVertical(1),
+                dir.z() + getZ());
+
+        var pos = new BlockPos.MutableBlockPos();
+        double maxDismountHeight = this.getBoundingBox().maxY + 0.75;
+
+        for (var pose : passenger.getDismountPoses()) {
+            pos.set(scanPos.x(), scanPos.y(), scanPos.z());
+
+            while (true) {
+                double height = this.level().getBlockFloorHeight(pos);
+                if (pos.getY() + height > maxDismountHeight) break;
+
+                if (DismountHelper.isBlockFloorValid(height)) {
+                    var bounds = passenger.getLocalBoundsForPose(pose);
+                    var dismountPos = new Vec3(scanPos.x(), (double)pos.getY() + height, scanPos.z());
+                    if (DismountHelper.canDismountTo(this.level(), passenger, bounds.move(dismountPos))) {
+                        passenger.setPose(pose);
+                        return dismountPos;
+                    }
+                }
+
+                pos.move(Direction.UP);
+                if (pos.getY() > maxDismountHeight) break;
+            }
+        }
+
         return super.getDismountLocationForPassenger(passenger);
     }
 
@@ -1535,6 +1596,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.frontAttachment.onTrackedAnimationUpdated(getTrackedFrontAttachmentAnimation());
         } else if (FRAME_TYPE.equals(data)) {
             this.displacement.applyWheelbase(getFrame().model().wheelBase());
+
+            this.size = getFrame().makeBounds();
+            this.refreshDimensions();
         }
 
         if (FRAME_TYPE.equals(data) || WHEEL_TYPE.equals(data) || ENGINE_TYPE.equals(data)) {
@@ -1591,6 +1655,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         var pos = this.position();
         position.add(pos.x(), pos.y() + disp.getVertical(1), pos.z());
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return size;
     }
 
     public static final class Displacement {
@@ -1771,7 +1840,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         public void applyWheelbase(WheelBase wheelBase) {
             this.scanPoints.clear();
-            for (WheelBase.WheelPos pos : wheelBase.wheels()) {
+            for (WheelBase.WheelPos pos : wheelBase.wheels()) if (pos.end() != WheelBase.WheelEnd.NONE) {
                 this.scanPoints.add(new Vec3(pos.right() / 16, 0, pos.forward() / 16));
             }
         }

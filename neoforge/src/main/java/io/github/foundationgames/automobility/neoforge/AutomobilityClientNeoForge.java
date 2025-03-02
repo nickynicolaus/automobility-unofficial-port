@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.neoforge;
 
 import io.github.foundationgames.automobility.AutomobilityClient;
 import io.github.foundationgames.automobility.automobile.render.AutomobileModels;
+import io.github.foundationgames.automobility.automobile.render.obj.ObjLoader;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.block.model.SlopeBakedModel;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
@@ -16,7 +17,6 @@ import io.github.foundationgames.automobility.util.Eventual;
 import io.github.foundationgames.automobility.util.InitlessConstants;
 import io.github.foundationgames.automobility.util.TriFunc;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.network.chat.Component;
@@ -89,6 +89,7 @@ public class AutomobilityClientNeoForge {
     @SubscribeEvent
     public static void registerResourceLoaders(RegisterClientReloadListenersEvent evt) {
         evt.registerReloadListener(MODEL_DEF_LOADER);
+        evt.registerReloadListener(ObjLoader.INSTANCE);
     }
 
     @SubscribeEvent
