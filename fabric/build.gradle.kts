@@ -77,7 +77,7 @@ tasks {
         from(project(":common").sourceSets.main.get().resources)
 
         filesMatching("fabric.mod.json") {
-            expand(rootProject.properties)
+            expand(mapOf("version" to rootProject.properties["mod_version"]))
         }
     }
 

@@ -22,6 +22,8 @@ loom {
     mixin {
         useLegacyMixinAp = false
     }
+
+    accessWidenerPath = file("src/main/resources/automobility.accesswidener")
 }
 
 tasks {

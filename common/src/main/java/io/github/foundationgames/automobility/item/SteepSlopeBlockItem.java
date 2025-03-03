@@ -18,8 +18,7 @@ public class SteepSlopeBlockItem extends BlockItem {
     @Nullable
     @Override
     public BlockPlaceContext updatePlacementContext(BlockPlaceContext context) {
-        var hitPos = context.getClickLocation();
-        var pos = new BlockPos((int) hitPos.x, (int) hitPos.y, (int) hitPos.z);
+        var pos = BlockPos.containing(context.getClickLocation());
         var world = context.getLevel();
         if (world.getBlockState(pos).getBlock() instanceof SteepSlopeBlock) {
             var facing = world.getBlockState(pos).getValue(BlockStateProperties.HORIZONTAL_FACING);

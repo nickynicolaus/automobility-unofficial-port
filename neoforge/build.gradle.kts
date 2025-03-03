@@ -2,7 +2,7 @@ import org.slf4j.event.Level
 
 plugins {
     id("idea")
-    id("net.neoforged.moddev") version "2.0.78"
+    id("net.neoforged.moddev") version "2.0.28-beta"
 }
 
 apply(plugin = "net.neoforged.moddev")
@@ -10,6 +10,7 @@ apply(plugin = "net.neoforged.moddev")
 dependencies {
     implementation("de.javagl:obj:0.4.0")
     jarJar("de.javagl:obj:0.4.0")
+    additionalRuntimeClasspath("de.javagl:obj:0.4.0")
 
     implementation(project.project(":common").sourceSets.getByName("main").output)
 }
@@ -40,10 +41,6 @@ neoForge {
         }
 
         configureEach {
-            dependencies {
-                runtimeOnly("de.javagl:obj:0.4.0")
-            }
-
             systemProperty("forge.logging.markers", "REGISTRIES")
             logLevel = Level.DEBUG
         }
@@ -54,8 +51,11 @@ neoForge {
             sourceSet(sourceSets.main.get())
         }
     }
-}
 
+    accessTransformers {
+        file("neoforge/src/main/resources/META-INF/accesstransformer.cfg")
+    }
+}
 
 sourceSets.main.get().resources {
     srcDir("src/generated/resources")

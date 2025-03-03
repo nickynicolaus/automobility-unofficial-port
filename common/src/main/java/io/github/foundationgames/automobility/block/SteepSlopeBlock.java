@@ -3,10 +3,12 @@ package io.github.foundationgames.automobility.block;
 import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.item.SlopePlacementContext;
 import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.duck.CollisionArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -17,6 +19,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class SteepSlopeBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class SteepSlopeBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, SpecialAutomobileColliderBlock {
     public static final VoxelShape NORTH_SHAPE;
     public static final VoxelShape SOUTH_SHAPE;
     public static final VoxelShape EAST_SHAPE;
@@ -36,6 +39,25 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
     public SteepSlopeBlock(Properties settings) {
         super(settings.noOcclusion());
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    public CollisionArea getCollisionArea(BlockState state, Level level, BlockPos pos, double downStretch) {
+        var bounds = new AABB(pos.getX(), pos.getY() - 4 * downStretch, pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+
+        double zSlope = 0;
+        switch (state.getValue(FACING)) {
+            case NORTH -> zSlope = 1;
+            case SOUTH -> zSlope = -1;
+        }
+
+        double xSlope = 0;
+        switch (state.getValue(FACING)) {
+            case EAST -> xSlope = -1;
+            case WEST -> xSlope = 1;
+        }
+
+        return new CollisionArea.SlopeArea(bounds, xSlope, zSlope, 0.5);
     }
 
     @Nullable
@@ -77,18 +99,18 @@ public class SteepSlopeBlock extends HorizontalDirectionalBlock implements Simpl
         var shapes = new ArrayList<VoxelShape>();
         for (var dir : AUtils.HORIZONTAL_DIRS) {
             double ox = switch (dir) {
-                case WEST -> 4;
-                case EAST -> -4;
+                case WEST -> 2;
+                case EAST -> -2;
                 default -> 0;
             };
             double oz = switch (dir) {
-                case NORTH -> 4;
-                case SOUTH -> -4;
+                case NORTH -> 2;
+                case SOUTH -> -2;
                 default -> 0;
             };
             var finalShape = Shapes.empty();
-            for (int j = 1; j < 4; j++) {
-                finalShape = Shapes.or(finalShape, SlopeBlock.slopeStep(dir, (j * 4)).move((ox * j) / 16, 0, (oz * j) / 16));
+            for (int j = 1; j < 8; j++) {
+                finalShape = Shapes.or(finalShape, SlopeBlock.slopeStep(dir, (j * 2)).move((ox * j) / 16, 0, (oz * j) / 16));
             }
             shapes.add(finalShape);
         }

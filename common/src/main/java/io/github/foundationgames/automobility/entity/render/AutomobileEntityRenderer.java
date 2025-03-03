@@ -23,7 +23,7 @@ public class AutomobileEntityRenderer extends EntityRenderer<AutomobileEntity> {
     @Override
     public void render(AutomobileEntity entity, float yaw, float tickDelta, PoseStack pose, MultiBufferSource buffers, int light) {
         pose.pushPose();
-        float offsetY = entity.getDisplacement().getVertical(tickDelta);
+        float offsetY = entity.getDisplacement().getVerticalOffset(tickDelta, entity);
         var rotation = new Quaternionf();
         entity.getDisplacement().getAngular(tickDelta, rotation);
 

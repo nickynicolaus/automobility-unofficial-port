@@ -32,13 +32,6 @@ public enum AUtils {;
      */
     public static final Direction[] HORIZONTAL_DIRS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
-    /**
-     * Flag to allow entities to step up blocks without being on the ground
-     * (necessary for automobiles, which update movement coarsely and might
-     * confuse the server moving quickly through holes)
-     */
-    public static boolean IGNORE_ENTITY_GROUND_CHECK_STEPPING = false;
-
     public static final StreamCodec<ByteBuf, Vec3> STREAM_CODEC_VEC3 = StreamCodec.of(
             (buf, v) -> {
                 buf.writeDouble(v.x());

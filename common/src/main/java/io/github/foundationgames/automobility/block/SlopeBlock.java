@@ -3,10 +3,12 @@ package io.github.foundationgames.automobility.block;
 import com.mojang.serialization.MapCodec;
 import io.github.foundationgames.automobility.item.SlopePlacementContext;
 import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.duck.CollisionArea;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -19,6 +21,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -26,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock {
+public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock, SpecialAutomobileColliderBlock {
     public static final VoxelShape NORTH_BOTTOM_SHAPE;
     public static final VoxelShape SOUTH_BOTTOM_SHAPE;
     public static final VoxelShape EAST_BOTTOM_SHAPE;
@@ -44,6 +47,30 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
     public SlopeBlock(Properties settings) {
         super(settings);
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(HALF, Half.BOTTOM).setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    public CollisionArea getCollisionArea(BlockState state, Level level, BlockPos pos, double downStretch) {
+        var bounds = new AABB(pos.getX(), pos.getY() - 4 * downStretch, pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+
+        double originY = 0.25;
+        if (state.getValue(HALF) == Half.TOP) {
+            originY = 0.75;
+        }
+
+        double zSlope = 0;
+        switch (state.getValue(FACING)) {
+            case NORTH -> zSlope = 0.5;
+            case SOUTH -> zSlope = -0.5;
+        }
+
+        double xSlope = 0;
+        switch (state.getValue(FACING)) {
+            case EAST -> xSlope = -0.5;
+            case WEST -> xSlope = 0.5;
+        }
+
+        return new CollisionArea.SlopeArea(bounds, xSlope, zSlope, originY);
     }
 
     @Override
@@ -100,10 +127,10 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
 
     public static VoxelShape slopeStep(Direction dir, double height) {
         return switch (dir) {
-            case NORTH -> Block.box(0, 0, 0, 16, height, 4);
-            case SOUTH -> Block.box(0, 0, 12, 16, height, 16);
-            case EAST -> Block.box(12, 0, 0, 16, height, 16);
-            case WEST -> Block.box(0, 0, 0, 4, height, 16);
+            case NORTH -> Block.box(0, 0, 0, 16, height, 2);
+            case SOUTH -> Block.box(0, 0, 14, 16, height, 16);
+            case EAST -> Block.box(14, 0, 0, 16, height, 16);
+            case WEST -> Block.box(0, 0, 0, 2, height, 16);
             default -> Shapes.empty();
         };
     }
@@ -113,18 +140,18 @@ public class SlopeBlock extends HorizontalDirectionalBlock implements SimpleWate
         for (var dir : AUtils.HORIZONTAL_DIRS) {
             for (int i = 0; i < 2; i++) {
                 double ox = switch (dir) {
-                    case WEST -> 4;
-                    case EAST -> -4;
+                    case WEST -> 2;
+                    case EAST -> -2;
                     default -> 0;
                 };
                 double oz = switch (dir) {
-                    case NORTH -> 4;
-                    case SOUTH -> -4;
+                    case NORTH -> 2;
+                    case SOUTH -> -2;
                     default -> 0;
                 };
                 var finalShape = Shapes.empty();
-                for (int j = 0; j < 4; j++) {
-                    finalShape = Shapes.or(finalShape, slopeStep(dir, (i * 8) + (j * 2)).move((ox * j) / 16, 0, (oz * j) / 16));
+                for (int j = 0; j < 8; j++) {
+                    finalShape = Shapes.or(finalShape, slopeStep(dir, (i * 8) + j).move((ox * j) / 16, 0, (oz * j) / 16));
                 }
                 shapes.add(finalShape);
             }

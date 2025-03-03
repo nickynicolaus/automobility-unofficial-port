@@ -29,6 +29,7 @@
     "automobility.mixins.json",
     "automobility_fabric.mixins.json"
   ],
+  "accessWidener" : "automobility.accesswidener",
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",

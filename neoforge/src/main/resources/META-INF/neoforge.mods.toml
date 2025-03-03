@@ -18,6 +18,9 @@ config = "automobility.mixins.json"
 [[mixins]]
 config = "automobility_neoforge.mixins.json"
 
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+
 [[dependencies.automobility]]
 modId="neoforge"
 type="required"
