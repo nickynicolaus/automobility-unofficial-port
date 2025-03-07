@@ -21,6 +21,13 @@ public class RearAttachmentRenderModel extends BaseModel {
         this.wheels = getChildSafe(this.root, "wheels");
     }
 
+    @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        resetModel();
+    }
+
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         if (this.wheels != null) {
             this.wheels.setRotation(wheelAngle, 0, 0);

@@ -58,7 +58,7 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
 
         if (player.getVehicle() != this.automobile) {
             double distance = this.automobile.position().subtract(player.position()).length();
-            this.pitch += (0.36 * Math.atan(lastDistance - distance));
+            this.pitch += (float) (0.16 * Math.atan(lastDistance - distance));
 
             this.lastDistance = distance;
         } else {

@@ -12,7 +12,7 @@ import org.joml.Vector3f;
 public class HarvesterFrontAttachmentModel extends FrontAttachmentRenderModel {
     public static final ModelLayerLocation MODEL_LAYER = new ModelLayerLocation(Automobility.rl("automobile/front_attachment/harvester"), "main");
 
-    private final @Nullable ModelPart roller;
+    private final ModelPart roller;
 
     public HarvesterFrontAttachmentModel(EntityRendererProvider.Context ctx,
                                          ModelDefinition.RenderMaterial material,
@@ -20,6 +20,13 @@ public class HarvesterFrontAttachmentModel extends FrontAttachmentRenderModel {
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
         this.roller = getChildSafe(this.ground, "roller");
+    }
+
+    @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.roller.setRotation(0, 0, 0);
     }
 
     @Override

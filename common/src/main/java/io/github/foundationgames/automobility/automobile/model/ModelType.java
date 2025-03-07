@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.automobile.model;
 import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.render.BaseModel;
+import io.github.foundationgames.automobility.automobile.render.attachment.front.AutopilotFrontAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.FrontAttachmentRenderModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.HarvesterFrontAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.BannerPostRearAttachmentModel;
@@ -27,6 +28,7 @@ public record ModelType(ResourceLocation id,
 
     public static final ModelType BASIC = REGISTRY.register(new ModelType(Automobility.rl("basic"), BaseModel::new));
     public static final ModelType FRONT_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("front_attachment"), FrontAttachmentRenderModel::new));
+    public static final ModelType AUTOPILOT_FRONT_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("autopilot_front_attachment"), AutopilotFrontAttachmentModel::new));
     public static final ModelType HARVESTER_FRONT_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("harvester_front_attachment"), HarvesterFrontAttachmentModel::new));
     public static final ModelType REAR_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("rear_attachment"), RearAttachmentRenderModel::new));
     public static final ModelType CHEST_REAR_ATTACHMENT = REGISTRY.register(new ModelType(Automobility.rl("chest_rear_attachment"), ChestRearAttachmentModel::new));

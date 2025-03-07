@@ -3,12 +3,14 @@ package io.github.foundationgames.automobility.automobile.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -22,6 +24,7 @@ public class BaseModel extends Model {
     protected final Vector3f scale;
 
     public static final ModelPart PART_EMPTY = new ModelPart(List.of(), Map.of());
+    public static final ResourceLocation TEXTURE_SOLID = Automobility.rl("textures/solid.png");
 
     public BaseModel(EntityRendererProvider.Context ctx,
                      ModelDefinition.RenderMaterial material,
@@ -54,6 +57,9 @@ public class BaseModel extends Model {
         matrices.mulPose(Axis.XP.rotationDegrees(rotation.x()));
         matrices.mulPose(Axis.YP.rotationDegrees(rotation.y()));
         matrices.scale(scale.x(), scale.y(), scale.z());
+    }
+
+    public void setDefaultState(float tickDelta) {
     }
 
     @Override

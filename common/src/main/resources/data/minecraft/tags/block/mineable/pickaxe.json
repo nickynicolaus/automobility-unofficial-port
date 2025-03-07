@@ -3,6 +3,7 @@
   "values": [
     "automobility:auto_mechanic_table",
     "automobility:automobile_assembler",
+    "automobility:autopilot_sign",
     "automobility:dash_panel",
     "automobility:slope",
     "automobility:steep_slope",

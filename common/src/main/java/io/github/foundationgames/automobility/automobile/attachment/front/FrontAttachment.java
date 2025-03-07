@@ -13,6 +13,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class FrontAttachment extends BaseAttachment<FrontAttachmentType<?>> {
     public FrontAttachment(FrontAttachmentType<?> type, AutomobileEntity automobile) {
@@ -31,6 +32,13 @@ public abstract class FrontAttachment extends BaseAttachment<FrontAttachmentType
 
     public boolean canDrive(Entity entity) {
         return entity instanceof Player;
+    }
+
+    public boolean isProvidingAlternativeInputs(AutomobileEntity automobile, @Nullable Entity driver) {
+        return false;
+    }
+
+    public void provideAlternativeInputs(AutomobileEntity automobile, AutomobileEntity.Input input, @Nullable Entity driver) {
     }
 
     @Override

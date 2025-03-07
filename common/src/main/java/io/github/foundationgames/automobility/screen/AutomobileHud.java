@@ -24,6 +24,10 @@ public enum AutomobileHud {;
     );
 
     public static void render(GuiGraphics graphics, Player player, AutomobileEntity auto, float tickDelta) {
+        if (Minecraft.getInstance().options.hideGui) {
+            return;
+        }
+
         renderSpeedometer(graphics, auto);
 
         if (!Platform.get().controller().inControllerMode()) {
@@ -39,7 +43,7 @@ public enum AutomobileHud {;
     }
 
     private static void renderSpeedometer(GuiGraphics graphics, AutomobileEntity auto) {
-        float speed = (float) auto.getEffectiveSpeed() * 20;
+        float speed = auto.getEffectiveSpeed() * 20;
         int color = 0xFFFFFF;
         if (auto.getBoostTimer() > 0) color = 0xFF6F00;
         if (auto.getTurboCharge() > AutomobileEntity.SMALL_TURBO_TIME) color = 0xFFEA4A;

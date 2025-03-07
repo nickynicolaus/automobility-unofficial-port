@@ -23,6 +23,13 @@ public class GrindstoneRearAttachmentModel extends RearAttachmentRenderModel {
     }
 
     @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.grindstone.setRotation(0, 0, 0);
+    }
+
+    @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 

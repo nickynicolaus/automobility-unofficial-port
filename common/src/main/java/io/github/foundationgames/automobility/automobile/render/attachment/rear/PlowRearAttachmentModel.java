@@ -27,6 +27,14 @@ public class PlowRearAttachmentModel extends RearAttachmentRenderModel {
     }
 
     @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.assembly.setRotation(0, 0, 0);
+        this.instrument.setRotation(0, 0, 0);
+    }
+
+    @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 

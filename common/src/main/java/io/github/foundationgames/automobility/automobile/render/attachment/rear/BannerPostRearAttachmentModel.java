@@ -51,6 +51,13 @@ public class BannerPostRearAttachmentModel extends RearAttachmentRenderModel {
     }
 
     @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.fakePole.visible = true;
+    }
+
+    @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 

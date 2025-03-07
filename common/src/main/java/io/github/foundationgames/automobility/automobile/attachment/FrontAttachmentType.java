@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.automobile.DisplayStat;
+import io.github.foundationgames.automobility.automobile.attachment.front.AutopilotFrontAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.front.CropHarvesterFrontAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.front.EmptyFrontAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.front.FrontAttachment;
@@ -30,6 +31,11 @@ public record FrontAttachmentType<T extends FrontAttachment>(
     public static final FrontAttachmentType<MobControllerFrontAttachment> MOB_CONTROLLER = register(new FrontAttachmentType<>(
             Automobility.rl("mob_controller"), MobControllerFrontAttachment::new,
             new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/mob_controller.png"), Automobility.rl("front_attachment/mob_controller"), 1.7f)
+    ));
+
+    public static final FrontAttachmentType<AutopilotFrontAttachment> AUTOPILOT = register(new FrontAttachmentType<>(
+            Automobility.rl("autopilot"), AutopilotFrontAttachment::new,
+            new FrontAttachmentModel(Automobility.rl("textures/entity/automobile/front_attachment/autopilot.png"), Automobility.rl("front_attachment/autopilot"), 1.7f)
     ));
 
     public static final FrontAttachmentType<CropHarvesterFrontAttachment> CROP_HARVESTER = register(new FrontAttachmentType<>(

@@ -7,6 +7,7 @@ import io.github.foundationgames.automobility.automobile.AutomobileFrame;
 import io.github.foundationgames.automobility.automobile.AutomobileWheel;
 import io.github.foundationgames.automobility.automobile.render.AutomobileModels;
 import io.github.foundationgames.automobility.automobile.render.AutomobileRenderer;
+import io.github.foundationgames.automobility.automobile.render.BaseModel;
 import io.github.foundationgames.automobility.automobile.render.item.SimpleRenderableAutomobile;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.block.entity.render.AutomobileAssemblerBlockEntityRenderer;
@@ -130,11 +131,18 @@ public class AutomobilityClient {
             if (item.isVisible(component)) {
                 var model = modelProvider.apply(component);
                 if (model == null) return;
+                if (model instanceof BaseModel base) {
+                    base.setDefaultState(0);
+                }
 
                 float scale = scaleProvider.apply(component);
                 matrices.translate(0.5, 0, 0.5);
                 matrices.scale(scale, -scale, -scale);
                 model.renderToBuffer(matrices, vertexConsumers.getBuffer(model.renderType(textureProvider.apply(component))), light, overlay, 0xFFFFFFFF);
+
+                if (model instanceof BaseModel base) {
+                    base.doOtherLayerRender(matrices, vertexConsumers, light, overlay);
+                }
             }
         });
     }

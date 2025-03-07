@@ -42,7 +42,7 @@ public class BannerPostRearAttachment extends RearAttachment {
 
     public void sendPacket() {
         if (!this.world().isClientSide()) {
-            this.automobile().forNearbyPlayers(200, false, p ->
+            this.automobile().forPlayersTrackingMe(false, p ->
                     CommonPackets.sendBannerPostAttachmentUpdatePacket(this.automobile(), this.baseColor, this.patterns, p));
         }
     }

@@ -25,10 +25,10 @@ public enum CommonPackets {;
         SERVERBOUND_HANDLERS.put(rl, run);
     }
 
-    public static void sendSyncAutomobileDataPacket(AutomobileEntity entity, ServerPlayer player) {
+    public static void sendClientboundAutomobileSyncPacket(AutomobileEntity entity, ServerPlayer player) {
         var buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeInt(entity.getId());
-        entity.writeSyncToClientData(buf);
+        entity.writeSyncStateData(buf);
         Platform.get().serverSendPacket(player, Automobility.rl("sync_automobile_data"), buf);
     }
 
@@ -67,16 +67,12 @@ public enum CommonPackets {;
     }
 
     public static void init() {
-        CommonPackets.registerReceiver(Automobility.rl("sync_automobile_inputs"), (server, player, buf) -> {
-            boolean fwd = buf.readBoolean();
-            boolean back = buf.readBoolean();
-            boolean left = buf.readBoolean();
-            boolean right = buf.readBoolean();
-            boolean space = buf.readBoolean();
-            int entityId = buf.readInt();
+        CommonPackets.registerReceiver(Automobility.rl("sync_automobile_data"), (server, player, buf) -> {
+            var dup = new FriendlyByteBuf(buf.copy());
+            int entityId = dup.readInt();
             server.execute(() -> {
-                if (player.level().getEntity(entityId) instanceof AutomobileEntity automobile) {
-                    automobile.setInputs(fwd, back, left, right, space);
+                if (player.level().getEntity(entityId) instanceof AutomobileEntity automobile && automobile.isDriving(player)) {
+                    automobile.readSyncStateData(dup);
                     automobile.markDirty();
                 }
             });

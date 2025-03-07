@@ -26,15 +26,11 @@ public enum ClientPackets {;
         CLIENTBOUND_HANDLERS.put(rl, run);
     }
 
-    public static void sendSyncAutomobileInputPacket(AutomobileEntity entity, boolean fwd, boolean back, boolean left, boolean right, boolean space) {
+    public static void sendServerboundAutomobileSyncPacket(AutomobileEntity entity) {
         var buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeBoolean(fwd);
-        buf.writeBoolean(back);
-        buf.writeBoolean(left);
-        buf.writeBoolean(right);
-        buf.writeBoolean(space);
         buf.writeInt(entity.getId());
-        Platform.get().clientSendPacket(Automobility.rl("sync_automobile_inputs"), buf);
+        entity.writeSyncStateData(buf);
+        Platform.get().clientSendPacket(Automobility.rl("sync_automobile_data"), buf);
     }
 
     public static void requestSyncAutomobileComponentsPacket(AutomobileEntity entity) {
@@ -45,11 +41,11 @@ public enum ClientPackets {;
 
     public static void initClient() {
         ClientPackets.registerReceiver(Automobility.rl("sync_automobile_data"), (client, buf) -> {
-            FriendlyByteBuf dup = new FriendlyByteBuf(buf.copy());
+            var dup = new FriendlyByteBuf(buf.copy());
             int entityId = dup.readInt();
             client.execute(() -> {
                 if (client.player.level().getEntity(entityId) instanceof AutomobileEntity automobile) {
-                    automobile.readSyncToClientData(dup);
+                    automobile.readSyncStateData(dup);
                 }
             });
         });

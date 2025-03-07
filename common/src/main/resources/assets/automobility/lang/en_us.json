@@ -44,6 +44,7 @@
   "block.automobility.steep_sloped_dash_panel": "Steep Sloped Dash Panel",
   "block.automobility.auto_mechanic_table": "Auto Mechanic Table",
   "block.automobility.automobile_assembler": "Automobile Assembler",
+  "block.automobility.autopilot_sign": "Autopilot Sign",
   "block.automobility.allow": "Allow",
 
   "block.automobility.slope": "Slope",
@@ -193,6 +194,7 @@
   "attachment.rear.automobility.paver": "Paver",
 
   "attachment.front.automobility.mob_controller": "Mob Controller",
+  "attachment.front.automobility.autopilot": "Autopilot",
   "attachment.front.automobility.crop_harvester": "Crop Harvester",
   "attachment.front.automobility.grass_cutter": "Grass Cutter"
 }

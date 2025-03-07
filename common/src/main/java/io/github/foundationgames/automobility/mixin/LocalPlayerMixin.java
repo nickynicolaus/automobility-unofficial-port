@@ -22,7 +22,7 @@ public class LocalPlayerMixin {
     @Inject(method = "rideTick", at = @At("TAIL"))
     public void automobility$setAutomobileInputs(CallbackInfo ci) {
         LocalPlayer self = (LocalPlayer)(Object)this;
-        if (self.getVehicle() instanceof AutomobileEntity vehicle) {
+        if (self.getVehicle() instanceof AutomobileEntity vehicle && vehicle.isDriving(self)) {
             if (Platform.get().controller().inControllerMode() && minecraft.screen == null) {
                 vehicle.provideClientInput(
                         Platform.get().controller().accelerating(),

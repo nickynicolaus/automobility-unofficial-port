@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.block;
 
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.block.entity.AutomobileAssemblerBlockEntity;
+import io.github.foundationgames.automobility.block.entity.AutopilotSignBlockEntity;
 import io.github.foundationgames.automobility.item.CreativeTabQueue;
 import io.github.foundationgames.automobility.item.DashPanelItem;
 import io.github.foundationgames.automobility.item.SlopeBlockItem;
@@ -28,6 +29,8 @@ import java.util.function.Supplier;
 public enum AutomobilityBlocks {;
     public static final Eventual<Block> AUTO_MECHANIC_TABLE = register("auto_mechanic_table", () -> new AutoMechanicTableBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK)), Automobility.TAB);
     public static final Eventual<Block> AUTOMOBILE_ASSEMBLER = register("automobile_assembler", () -> new AutomobileAssemblerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.ANVIL)), Automobility.TAB);
+    public static final Eventual<Block> AUTOPILOT_SIGN = register("autopilot_sign", () -> new AutopilotSignBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_TRAPDOOR)
+            .lightLevel(s -> 1).emissiveRendering((s,l,p) -> true).noCollission()), Automobility.TAB);
 
     public static final Eventual<Block> SLOPE = register("slope", () -> new SlopeBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)), b -> new SlopeBlockItem(b, new Item.Properties()), Automobility.TAB);
     public static final Eventual<Block> STEEP_SLOPE = register("steep_slope", () -> new SteepSlopeBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)), b -> new SteepSlopeBlockItem(b, new Item.Properties()), Automobility.TAB);
@@ -51,6 +54,8 @@ public enum AutomobilityBlocks {;
 
     public static final Eventual<BlockEntityType<AutomobileAssemblerBlockEntity>> AUTOMOBILE_ASSEMBLER_ENTITY = RegistryQueue.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
             Automobility.rl("automobile_assembler"), () -> Platform.get().blockEntity(AutomobileAssemblerBlockEntity::new, AUTOMOBILE_ASSEMBLER.require()));
+    public static final Eventual<BlockEntityType<AutopilotSignBlockEntity>> AUTOPILOT_SIGN_ENTITY = RegistryQueue.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            Automobility.rl("autopilot_sign"), () -> Platform.get().blockEntity(AutopilotSignBlockEntity::new, AUTOPILOT_SIGN.require()));
 
     public static void init() {
     }

@@ -44,6 +44,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerEntity;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -65,6 +66,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -113,6 +115,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     public static final int LARGE_TURBO_TIME = 115;
     public static final float TERMINAL_VELOCITY = -1.2f;
 
+    public final Input input = new Input();
+    private boolean prevHoldDrift = input.holdingDrift;
+
     private long clientTime;
 
     private double trackedX;
@@ -120,6 +125,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private double trackedZ;
     private float trackedYaw;
     private int lerpTicks;
+
+    private static final int CLIENT_SYNC_INTERVAL = 4;
+    private int clientSyncTicks = CLIENT_SYNC_INTERVAL;
 
     private final List<HitboxEntity> hitboxes = new ArrayList<>();
     private EntityDimensions size;
@@ -130,6 +138,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private float boostSpeed = 0;
     private float speedDirection = 0;
     private float lastBoostSpeed = boostSpeed;
+
+    private float lossySyncedEffectiveSpeed = 0;
+    private float lastSyncedBoostSpeed = 0;
+    private float lossySyncedBoostSpeed = 0;
+    private float lastSyncedWheelAngle = 0;
+    private float lossySyncedWheelAngle = 0;
+    private int dataLerpTicks;
 
     private int boostTimer = 0;
     private float boostPower = 0;
@@ -164,6 +179,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private Vec3 lastPosForDisplacement = Vec3.ZERO;
 
     private Vec3 prevTailPos = null;
+    private float prevYawForRotate = 0;
 
     private int slopeStickingTimer = 0;
     private float grip = 1;
@@ -186,30 +202,32 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     private float standStillTime = -1.3f;
 
-    public void writeSyncToClientData(FriendlyByteBuf buf) {
+    public void writeSyncStateData(FriendlyByteBuf buf) {
         buf.writeInt(boostTimer);
         buf.writeFloat(steering);
         buf.writeFloat(wheelAngle);
         buf.writeInt(turboCharge);
         buf.writeFloat(engineSpeed);
         buf.writeFloat(boostSpeed);
-        buf.writeByte(compactInputData());
+        input.writePacket(buf);
 
         buf.writeBoolean(drifting);
         buf.writeBoolean(burningOut);
     }
 
-    public void readSyncToClientData(FriendlyByteBuf buf) {
+    public void readSyncStateData(FriendlyByteBuf buf) {
         boostTimer = buf.readInt();
         steering = buf.readFloat();
         wheelAngle = buf.readFloat();
         turboCharge = buf.readInt();
         engineSpeed = buf.readFloat();
         boostSpeed = buf.readFloat();
-        readCompactedInputData(buf.readByte());
+        input.readPacket(buf);
 
         setDrifting(buf.readBoolean());
         setBurningOut(buf.readBoolean());
+
+        this.dataLerpTicks = CLIENT_SYNC_INTERVAL;
     }
 
     @Override
@@ -248,11 +266,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         driftDir = nbt.getInt("driftDir");
         burningOut = nbt.getBoolean("burningOut");
         turboCharge = nbt.getInt("turboCharge");
-        accelerating = nbt.getBoolean("accelerating");
-        braking = nbt.getBoolean("braking");
-        steeringLeft = nbt.getBoolean("steeringLeft");
-        steeringRight = nbt.getBoolean("steeringRight");
-        holdingDrift = nbt.getBoolean("holdingDrift");
+        input.accelerating = nbt.getBoolean("accelerating");
+        input.braking = nbt.getBoolean("braking");
+        input.steering = nbt.getFloat("steeringInput");
+        input.holdingDrift = nbt.getBoolean("holdingDrift");
         fallTicks = nbt.getInt("fallTicks");
         despawnTime = nbt.getInt("despawnTime");
         despawnCountdown = nbt.getInt("despawnCountdown");
@@ -282,41 +299,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         nbt.putInt("driftDir", driftDir);
         nbt.putBoolean("burningOut", burningOut);
         nbt.putInt("turboCharge", turboCharge);
-        nbt.putBoolean("accelerating", accelerating);
-        nbt.putBoolean("braking", braking);
-        nbt.putBoolean("steeringLeft", steeringLeft);
-        nbt.putBoolean("steeringRight", steeringRight);
-        nbt.putBoolean("holdingDrift", holdingDrift);
+        nbt.putBoolean("accelerating", input.accelerating);
+        nbt.putBoolean("braking", input.braking);
+        nbt.putFloat("steeringInput", input.steering);
+        nbt.putBoolean("holdingDrift", input.holdingDrift);
         nbt.putInt("fallTicks", fallTicks);
         nbt.putInt("despawnTime", despawnTime);
         nbt.putInt("despawnCountdown", despawnCountdown);
         nbt.putBoolean("decorative", decorative);
-    }
-
-    private boolean accelerating = false;
-    private boolean braking = false;
-    private boolean steeringLeft = false;
-    private boolean steeringRight = false;
-    private boolean holdingDrift = false;
-
-    private boolean prevHoldDrift = holdingDrift;
-
-    public byte compactInputData() {
-        int r = ((((((((accelerating ? 1 : 0) << 1) | (braking ? 1 : 0)) << 1) | (steeringLeft ? 1 : 0)) << 1) | (steeringRight ? 1 : 0)) << 1) | (holdingDrift ? 1 : 0);
-        return (byte) r;
-    }
-
-    public void readCompactedInputData(byte data) {
-        int d = data;
-        holdingDrift = (1 & d) > 0;
-        d = d >> 0b1;
-        steeringRight = (1 & d) > 0;
-        d = d >> 0b1;
-        steeringLeft = (1 & d) > 0;
-        d = d >> 0b1;
-        braking = (1 & d) > 0;
-        d = d >> 0b1;
-        accelerating = (1 & d) > 0;
     }
 
     public AutomobileEntity(EntityType<?> type, Level world) {
@@ -380,11 +370,19 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public float getWheelAngle(float tickDelta) {
-        return Mth.lerp(tickDelta, lastWheelAngle, wheelAngle);
+        if (this.isControlledByLocalInstance()) {
+            return Mth.lerp(tickDelta, lastWheelAngle, wheelAngle);
+        }
+
+        return Mth.lerp(tickDelta, lastSyncedWheelAngle, lossySyncedWheelAngle);
     }
 
     public float getBoostSpeed(float tickDelta) {
-        return Mth.lerp(tickDelta, lastBoostSpeed, boostSpeed);
+        if (this.isControlledByLocalInstance()) {
+            return Mth.lerp(tickDelta, lastBoostSpeed, boostSpeed);
+        }
+
+        return Mth.lerp(tickDelta, lastSyncedBoostSpeed, lossySyncedBoostSpeed);
     }
 
     @Override
@@ -394,7 +392,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public boolean engineRunning() {
-        return this.boostTimer > 0 || isVehicle();
+        boolean running = this.boostTimer > 0 || isVehicle();
+
+        if (!running) {
+            var fAtt = getFrontAttachment();
+            if (fAtt != null) {
+                running = fAtt.isProvidingAlternativeInputs(this, getFirstPassenger());
+            }
+        }
+
+        return running;
     }
 
     @Override
@@ -420,12 +427,20 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return boostTimer;
     }
 
-    public double getEffectiveSpeed() {
+    public float calculateEffectiveSpeed() {
         if (this.getControllingPassenger() instanceof Player player && player.isLocalPlayer()) {
-            return Math.max(this.addedVelocity.length(), Math.abs(this.hSpeed));
+            return (float) Math.max(this.addedVelocity.length(), Math.abs(this.hSpeed));
         }
 
-        return Math.max(this.addedVelocity.length(), Math.abs(this.engineSpeed + this.boostSpeed));
+        return (float) Math.max(this.addedVelocity.length(), Math.abs(this.engineSpeed + this.boostSpeed));
+    }
+
+    public float getEffectiveSpeed() {
+        if (this.isControlledByLocalInstance()) {
+            return calculateEffectiveSpeed();
+        }
+
+        return this.lossySyncedEffectiveSpeed;
     }
 
     @Override
@@ -545,13 +560,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return this.getWheels().size();
     }
 
-    public void forNearbyPlayers(int radius, boolean ignoreDriver, Consumer<ServerPlayer> action) {
-        for (Player p : level().players()) {
-            if (ignoreDriver && p == getFirstPassenger()) {
-                continue;
-            }
-            if (p.position().distanceTo(position()) < radius && p instanceof ServerPlayer player) {
-                action.accept(player);
+    public void forPlayersTrackingMe(boolean ignoreDriver, Consumer<ServerPlayer> action) {
+        if (level() instanceof ServerLevel sl) {
+            var cPos = new ChunkPos(blockPosition());
+            for (var p : sl.getPlayers(s -> s.getChunkTrackingView().contains(cPos))) {
+                if (ignoreDriver && isDriving(p)) {
+                    continue;
+                }
+                action.accept(p);
             }
         }
     }
@@ -579,9 +595,38 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return this.getPassengers().size() < maxPassengers;
     }
 
+    public boolean isDriving(@Nullable Entity entity) {
+        if (entity != null && entity == getFirstPassenger()) {
+            var fAtt = getFrontAttachment();
+            if (fAtt != null) {
+                return fAtt.canDrive(entity);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public void setSpeed(float horizontal, float vertical) {
         this.hSpeed = horizontal;
         this.vSpeed = vertical;
+    }
+
+    public void clientOnAboutToDismount() {
+        ClientPackets.sendServerboundAutomobileSyncPacket(this);
+    }
+
+    private void lerpAutomobileData() {
+        this.lastSyncedWheelAngle = this.lossySyncedWheelAngle;
+        this.lastSyncedBoostSpeed = this.lossySyncedBoostSpeed;
+        if (this.dataLerpTicks <= 0) return;
+
+        this.lossySyncedEffectiveSpeed = this.lossySyncedEffectiveSpeed + (this.calculateEffectiveSpeed() - this.lossySyncedEffectiveSpeed) / (float)this.dataLerpTicks;
+        this.lossySyncedBoostSpeed = this.lossySyncedBoostSpeed + (this.boostSpeed - this.lossySyncedBoostSpeed) / (float)this.dataLerpTicks;
+        this.lossySyncedWheelAngle = this.lossySyncedWheelAngle + (this.wheelAngle - this.lossySyncedWheelAngle) / (float)this.dataLerpTicks;
+
+        this.dataLerpTicks--;
     }
 
     @Override
@@ -596,12 +641,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
         this.wasEngineRunning = this.engineRunning();
 
-        if (!this.isVehicle() || !this.getFrontAttachment().canDrive(this.getFirstPassenger())) {
-            accelerating = false;
-            braking = false;
-            steeringLeft = false;
-            steeringRight = false;
-            holdingDrift = false;
+        var fAtt = this.getFrontAttachment();
+        boolean fAttDriving = fAtt != null && fAtt.isProvidingAlternativeInputs(this, getFirstPassenger());
+        if (!(this.isVehicle() || this.isDriving(this.getFirstPassenger()) || fAttDriving)) {
+            input.clearInputs();
         }
 
         if (this.jumpCooldown > 0) {
@@ -613,7 +656,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (!this.frontAttachment.type.isEmpty()) this.frontAttachment.tick();
 
         var prevPos = this.position();
+        this.prevYawForRotate = getYRot();
 
+        lerpAutomobileData();
         positionTrackingTick();
         collisionStateTick();
         steeringTick();
@@ -649,11 +694,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                     }
                 }
             }
-            if (this.isVehicle()) {
-                if (this.getFrontAttachment().canDrive(this.getFirstPassenger()) && this.getFirstPassenger() instanceof Mob mob) {
-                    provideMobDriverInputs(mob);
-                }
-
+            if (fAttDriving) {
+                fAtt.provideAlternativeInputs(this, this.input, this.getFirstPassenger());
+                this.despawnCountdown = 0;
+            } else if (this.isVehicle()) {
                 this.despawnCountdown = 0;
             } else if (this.despawnTime > 0) {
                 this.despawnCountdown++;
@@ -674,6 +718,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 this.standStillTime = AUtils.shift(this.standStillTime, 0.05f, 1f);
             } else {
                 this.standStillTime = AUtils.shift(this.standStillTime, 0.15f, -1.3f);
+            }
+
+            this.clientSyncTicks--;
+            if (this.clientSyncTicks <= 0) {
+                this.clientSyncTicks = CLIENT_SYNC_INTERVAL;
+
+                ClientPackets.sendServerboundAutomobileSyncPacket(this);
             }
         }
 
@@ -701,11 +752,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     private void syncData() {
-        forNearbyPlayers(200, true, player -> CommonPackets.sendSyncAutomobileDataPacket(this, player));
+        forPlayersTrackingMe(true, player -> CommonPackets.sendClientboundAutomobileSyncPacket(this, player));
     }
 
     private void syncAttachments() {
-        forNearbyPlayers(200, false, player -> CommonPackets.sendSyncAutomobileAttachmentsPacket(this, player));
+        forPlayersTrackingMe(false, player -> CommonPackets.sendSyncAutomobileAttachmentsPacket(this, player));
     }
 
     public ItemStack asPrefabItem() {
@@ -716,70 +767,20 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         ).asStack();
     }
 
-    // making mobs drive automobiles
-    // technically the mobs don't drive, instead the automobile
-    // self-drives to the mob's destination...
-    public void provideMobDriverInputs(Mob driver) {
-        // Don't move if the driver doesn't exist or can't drive
-        if (driver == null || driver.isDeadOrDying() || driver.isRemoved()) {
-            if (accelerating || steeringLeft || steeringRight) markDirty();
-            accelerating = false;
-            steeringLeft = false;
-            steeringRight = false;
+    public void updateEngineSpeed(float speed) {
+         if (!this.isControlledByLocalInstance()) {
+             return;
+         }
+
+         this.engineSpeed = speed;
+    }
+
+    public void updateBoostSpeed(float speed) {
+        if (!this.isControlledByLocalInstance()) {
             return;
         }
 
-        var path = driver.getNavigation().getPath();
-        // checks if there is a current, incomplete path that the entity has targeted
-        if (path != null && !path.isDone() && path.getEndNode() != null) {
-            // determines the relative position to drive to, based on the end of the path
-            var pos = path.getEndNode().asVec3().subtract(position());
-            // determines the angle to that position
-            double target = Mth.wrapDegrees(Math.toDegrees(Math.atan2(pos.x(), pos.z())));
-            // determines another relative position, this time to the path's current node (in the case of the path directly to the end being obstructed)
-            var fnPos = path.getNextNode().asVec3().subtract(position());
-            // determines the angle to that current node's position
-            double fnTarget = Mth.wrapDegrees(Math.toDegrees(Math.atan2(fnPos.x(), fnPos.z())));
-            // if the difference in angle between the end position and the current node's position is too great,
-            // the automobile will drive to that current node under the assumption that the path directly to the
-            // end is obstructed
-            if (Math.abs(target - fnTarget) > 69) {
-                pos = fnPos;
-                target = fnTarget;
-            }
-            // fixes up the automobile's own yaw value
-            float yaw = Mth.wrapDegrees(-getYRot());
-            // finds the difference between the target angle and the yaw
-            double offset = Mth.wrapDegrees(yaw - target);
-            // whether the automobile should go in reverse
-            boolean reverse = false;
-            // a value to determine the threshold used to determine whether the automobile is moving
-            // both slow enough and is at an extreme enough offset angle to incrementally move in reverse
-            float mul = 0.5f + (Mth.clamp(hSpeed, 0, 1) * 0.5f);
-            if (pos.length() < 20 * mul && Math.abs(offset) > 180 - (170 * mul)) {
-                long time = level().getGameTime();
-                // this is so that the automobile alternates between reverse and forward,
-                // like a driver would do in order to angle their vehicle toward a target location
-                reverse = (time % 80 <= 30);
-            }
-            // set the accel/brake inputs
-            accelerating = !reverse;
-            braking = reverse;
-            // set the steering inputs, with a bit of a dead zone to prevent jittering
-            if (offset < -7) {
-                steeringRight = reverse;
-                steeringLeft = !reverse;
-            } else if (offset > 7) {
-                steeringRight = !reverse;
-                steeringLeft = reverse;
-            }
-            markDirty();
-        } else {
-            if (accelerating || steeringLeft || steeringRight) markDirty();
-            accelerating = false;
-            steeringLeft = false;
-            steeringRight = false;
-        }
+        this.boostSpeed = speed;
     }
 
     public void movementTick() {
@@ -787,7 +788,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         lastBoostSpeed = boostSpeed;
         if (boostTimer > 0) {
             boostTimer--;
-            boostSpeed = Math.min(boostPower, boostSpeed + 0.09f);
+            this.updateBoostSpeed(Math.min(boostPower, boostSpeed + 0.09f));
             if (engineSpeed < stats.getComfortableSpeed()) {
                 engineSpeed += 0.012f;
             }
@@ -797,7 +798,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 controllerAction(c -> c.updateBoostingRumbleState(false, 0));
             }
         } else {
-            boostSpeed = AUtils.zero(boostSpeed, 0.09f);
+            this.updateBoostSpeed(AUtils.zero(boostSpeed, 0.09f));
         }
 
         // Get block below's friction
@@ -826,10 +827,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.speedDirection = getYRot() - (drifting ? Math.min(turboCharge * 6, 43 + (-steering * 12)) * driftDir : -steering * 12); //MathHelper.lerp(grip, getYaw(), getYaw() - (drifting ? Math.min(turboCharge * 6, 43 + (-steering * 12)) * driftDir : -steering * 12));
 
         // Handle acceleration
-        if (accelerating) {
+        if (input.accelerating) {
             float speed = Math.max(this.engineSpeed, 0);
             // yeah ...
-            this.engineSpeed +=
+            double acc =
                     // The following conditions check whether the automobile should NOT receive normal acceleration
                     // It will not receive this acceleration if the automobile is steering or tight-drifting
                     (
@@ -840,24 +841,25 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                     // Otherwise, it will receive acceleration as normal
                     // It will receive this acceleration if the automobile is moving straight or wide-drifting (the latter slightly reduces acceleration)
                     : calculateAcceleration(speed, stats) * (drifting ? 0.86 : 1) * (engineSpeed > stats.getComfortableSpeed() ? 0.25f : 1) * grip;
+            this.updateEngineSpeed(this.engineSpeed + (float) acc);
         }
 
         // Handle braking/reverse
-        if (braking) {
-            this.engineSpeed = Math.max(this.engineSpeed - 0.15f, -0.25f);
+        if (input.braking) {
+            this.updateEngineSpeed(Math.max(this.engineSpeed - 0.15f, -0.25f));
         }
         // Handle when the automobile is rolling to a stop
-        if (!accelerating && !braking) {
-            this.engineSpeed = AUtils.zero(this.engineSpeed, 0.025f);
+        if (!input.accelerating && !input.braking) {
+            this.updateEngineSpeed(AUtils.zero(this.engineSpeed, 0.025f));
         }
 
         // Slow the automobile a bit while steering and moving fast
         if (!drifting && steering != 0 && hSpeed > 0.8) {
-            engineSpeed -= engineSpeed * 0.00042f;
+            this.updateEngineSpeed(engineSpeed - (engineSpeed * 0.00042f));
         }
 
         if (this.burningOut()) {
-            engineSpeed -= (engineSpeed) * 0.5;
+            this.updateEngineSpeed(engineSpeed - (engineSpeed * 0.5f));
         }
 
         // Allows for the sticky slope effect to continue for a tick after not being on a slope
@@ -876,7 +878,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (boostSpeed < 0.4f && level().getBlockState(blockPosition()).getBlock() instanceof OffRoadBlock block) {
             int layers = level().getBlockState(blockPosition()).getValue(OffRoadBlock.LAYERS);
             float cap = stats.getComfortableSpeed() * (1 - ((float)layers / 3.5f));
-            engineSpeed = Math.min(cap, engineSpeed);
+            this.updateEngineSpeed(Math.min(cap, engineSpeed));
             this.debrisColor = block.color;
             this.offRoad = true;
         } else this.offRoad = false;
@@ -942,7 +944,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         for (var box : this.hitboxes) {
             var bbox = box.getBoundingBox().move(velocity.scale(0.5));
-            for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), bbox, entity -> entity != this && entity != getFirstPassenger())) {
+            for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), bbox, entity -> entity != this && entity.getVehicle() != this)) {
                 if (!entity.isInvulnerable()) {
                     if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
                         entitiesToHit.add(living);
@@ -969,7 +971,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         float angle = (float) Math.toRadians(-speedDirection);
         if (touchingWall && hSpeed > 0.1 && addedVelocity.length() <= 0) {
-            engineSpeed /= 3.6;
+            this.updateEngineSpeed(engineSpeed / 3.6f);
             double knockSpeed = ((-0.2 * hSpeed) - 0.5);
             addedVelocity = addedVelocity.add(Math.sin(angle) * knockSpeed, 0, Math.cos(angle) * knockSpeed);
 
@@ -1033,47 +1035,47 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.angularSpeed = 0;
         }
 
-        // Turns the automobile based on steering/drifting
-        if (hSpeed != 0 || this.burningOut()) {
-            float yawInc = angularSpeed;// + (drifting ? (((this.steering + (driftDir)) * driftDir * 2.5f + 1.5f) * driftDir) * (((1 - stats.getGrip()) + 2) / 2.5f) : this.steering * ((4f * Math.min(hSpeed, 1)) + (hSpeed > 0 ? 2 : -3.5f))) * ((stats.getHandling() + 1) / 2);
-            float prevYaw = getYRot();
+        float yawInc = angularSpeed;
+        if (hSpeed == 0 && !this.burningOut()) {
+            yawInc = 0;
+        }
+
+        // Turns the automobile
+        if (this.isControlledByLocalInstance()) {
             this.setYRot(getYRot() + yawInc);
-            if (level().isClientSide) {
-                var passenger = getFirstPassenger();
-                if (passenger instanceof Player player) {
-                    if (inLockedViewMode()) {
-                        double lockStrength = 0.36;
 
-                        if (this.drifting) {
-                            lockStrength = 0.16;
-                        } else if (this.burningOut()) {
-                            lockStrength = 0.43;
-                        }
-
-                        var selfDir = new Vec3(0, 0, 1).yRot((float) Math.toRadians(180 - this.getYRot()));
-                        var playerDir = new Vec3(0, 0, 1).yRot((float) Math.toRadians(180 - player.getYRot()));
-                        var newDir = playerDir.add(selfDir.scale(lockStrength));
-
-                        float rot = 180 - (float) Math.toDegrees(Math.atan2(newDir.x, newDir.z));
-                        player.setYRot(rot);
-                        player.setYBodyRot(rot);
-                    } else {
-                        player.setYRot(Mth.wrapDegrees(player.getYRot() + yawInc));
-                        player.setYBodyRot(Mth.wrapDegrees(player.getYRot() + yawInc));
-                    }
+            var first = this.getFirstPassenger();
+            if (first != null && this.isDriving(first)) {
+                if (inLockedViewMode()) {
+                    whenRotatedSmooth(first);
+                } else {
+                    whenRotated(yawInc, first);
                 }
-            } else {
-                for (Entity e : getPassengers()) {
-                    if (e == getFirstPassenger()) {
-                        e.setYRot(Mth.wrapDegrees(e.getYRot() + yawInc));
-                        e.setYBodyRot(Mth.wrapDegrees(e.getYRot() + yawInc));
-                    }
-                }
-            }
-            if (level().isClientSide()) {
-                this.yRotO = prevYaw;
             }
         }
+    }
+
+    public void whenRotated(float dYaw, Entity e) {
+        e.setYRot(Mth.wrapDegrees(e.getYRot() + dYaw));
+        e.setYBodyRot(Mth.wrapDegrees(e.getYRot() + dYaw));
+    }
+
+    private void whenRotatedSmooth(Entity passenger) {
+        double lockStrength = 0.36;
+
+        if (this.drifting) {
+            lockStrength = 0.16;
+        } else if (this.burningOut()) {
+            lockStrength = 0.43;
+        }
+
+        var selfDir = new Vec3(0, 0, 1).yRot((float) Math.toRadians(180 - this.getYRot()));
+        var playerDir = new Vec3(0, 0, 1).yRot((float) Math.toRadians(180 - passenger.getYRot()));
+        var newDir = playerDir.add(selfDir.scale(lockStrength));
+
+        float rot = 180 - (float) Math.toDegrees(Math.atan2(newDir.x, newDir.z));
+        passenger.setYRot(rot);
+        passenger.setYBodyRot(rot);
     }
 
     @Override
@@ -1106,7 +1108,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public void displacementTick(boolean tick) {
         if (this.level().isClientSide()) {
-            this.displacement.preTick(this);
+            this.displacement.preTick();
 
             if (tick) {
                 this.displacement.otherColliders.clear();
@@ -1119,7 +1121,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 this.displacement.lastVertical = this.displacement.verticalTarget = (this.getY() - this.getWheels().model().radius() / 16);
             }
 
-            this.displacement.postTick(this);
+            this.displacement.postTick();
         } else {
             this.displacement.lastVertical = this.displacement.currVertical = this.displacement.verticalTarget = this.getY();
         }
@@ -1185,26 +1187,15 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return (1 / ((300 * speed) + (18.5f - (stats.getAcceleration() * 5.3f)))) * (0.9f * ((stats.getAcceleration() + 1) / 2));
     }
 
-    public void provideClientInput(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
-        // Receives inputs client-side and sends them to the server
-        if (!(
-                fwd == accelerating &&
-                back == braking &&
-                left == steeringLeft &&
-                right == steeringRight &&
-                space == holdingDrift
-        )) {
-            setInputs(fwd, back, left, right, space);
-            ClientPackets.sendSyncAutomobileInputPacket(this, accelerating, braking, steeringLeft, steeringRight, holdingDrift);
-        }
+    public float getHandling() {
+        return stats.getHandling();
     }
 
-    public void setInputs(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
-        this.accelerating = fwd;
-        this.braking = back;
-        this.steeringLeft = left;
-        this.steeringRight = right;
-        this.holdingDrift = space;
+    public void provideClientInput(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
+        // Receives inputs client-side and sends them to the server
+        if (this.input.setDigitalInputs(fwd, back, left, right, space)) {
+            ClientPackets.sendServerboundAutomobileSyncPacket(this);
+        }
     }
 
     public void boost(float power, int time) {
@@ -1213,7 +1204,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             boostPower = power;
         }
         if (this.isControlledByLocalInstance()) {
-            this.engineSpeed = Math.max(this.engineSpeed, this.stats.getComfortableSpeed() * 0.5f);
+            this.updateEngineSpeed(Math.max(this.engineSpeed, this.stats.getComfortableSpeed() * 0.5f));
         }
 
         controllerAction(c -> c.updateBoostingRumbleState(true, power));
@@ -1222,15 +1213,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private void steeringTick() {
         // Adjust the steering based on the left/right inputs
         this.lastSteering = steering;
-        if (steeringLeft == steeringRight) {
-            this.steering = AUtils.zero(this.steering, 0.42f);
-        } else if (steeringLeft) {
-            this.steering -= 0.42f;
-            this.steering = Math.max(-1, this.steering);
-        } else {
-            this.steering += 0.42f;
-            this.steering = Math.min(1, this.steering);
-        }
+        this.steering = AUtils.shift(this.steering, 0.42f, this.input.steering);
     }
 
     private void consumeTurboCharge() {
@@ -1248,14 +1231,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         int prevTurboCharge = turboCharge;
 
         // Handles starting a drift
-        if (!prevHoldDrift && holdingDrift) {
+        if (!prevHoldDrift && input.holdingDrift) {
             if (steering != 0 && !drifting && hSpeed > 0.4f && automobileOnGround) {
                 setDrifting(true);
                 controllerAction(AutomobileController::driftChargeRumble);
                 driftDir = steering > 0 ? 1 : -1;
                 // Reduce speed when a drift starts, based on how long the last drift was for
                 // This allows you to do a series of short drifts without tanking all your speed, while still reducing your speed when you begin the drift(s)
-                engineSpeed -= 0.028 * engineSpeed;
+                this.updateEngineSpeed(engineSpeed - (0.028f * engineSpeed));
             } else if (steering == 0 && !this.level().isClientSide() && this.getRearAttachment() instanceof DeployableRearAttachment att) {
                 att.deploy();
             }
@@ -1265,7 +1248,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (drifting) {
             if (this.automobileOnGround()) createDriftParticles();
             // Ending a drift successfully, giving you a turbo boost
-            if (prevHoldDrift && !holdingDrift) {
+            if (prevHoldDrift && !input.holdingDrift) {
                 setDrifting(false);
                 controllerAction(c -> c.updateMaxChargeRumbleState(false));
                 consumeTurboCharge();
@@ -1275,7 +1258,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 controllerAction(c -> c.updateMaxChargeRumbleState(false));
                 turboCharge = 0;
             }
-            if (automobileOnGround) turboCharge += ((steeringLeft && driftDir < 0) || (steeringRight && driftDir > 0)) ? 2 : 1;
+            if (automobileOnGround) turboCharge += (input.steering * driftDir > 0) ? 2 : 1;
         }
 
         if (turboCharge == SMALL_TURBO_TIME || turboCharge == MEDIUM_TURBO_TIME || turboCharge == LARGE_TURBO_TIME) {
@@ -1288,12 +1271,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             controllerAction(c -> c.updateMaxChargeRumbleState(false));
         }
 
-        this.prevHoldDrift = this.holdingDrift;
+        this.prevHoldDrift = input.holdingDrift;
     }
 
     private void endBurnout() {
         setBurningOut(false);
-        this.engineSpeed = 0;
+        this.updateEngineSpeed(0);
     }
 
     private void burnoutTick() {
@@ -1304,15 +1287,15 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 }
                 if (hSpeed < 0.08 && turboCharge <= SMALL_TURBO_TIME) turboCharge += 1;
             }
-            if (!this.braking) {
+            if (!input.braking) {
                 endBurnout();
                 consumeTurboCharge();
-            } else if (!this.accelerating) {
+            } else if (!input.accelerating) {
                 endBurnout();
                 this.turboCharge = 0;
             }
             this.wheelAngle += 20;
-        } else if ((this.accelerating || hSpeed > 0.05) && this.braking) {
+        } else if ((input.accelerating || hSpeed > 0.05) && input.braking) {
             setBurningOut(true);
             this.turboCharge = 0;
         }
@@ -1351,7 +1334,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     public LivingEntity getControllingPassenger() {
         final var firstPassenger = getFirstPassenger();
 
-        if (firstPassenger instanceof LivingEntity living) {
+        boolean canDrive = true;
+        var fAtt = getFrontAttachment();
+        if (fAtt != null) {
+            canDrive = fAtt.canDrive(firstPassenger);
+        }
+
+        if (firstPassenger instanceof LivingEntity living && canDrive) {
             return living;
         } else {
             return null;
@@ -1520,6 +1509,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             pos.sub(attPoint.x(), attPoint.y() + attYOffset, attPoint.z());
 
             moveFunc.accept(passenger, pos.x(), pos.y(), pos.z());
+
+            if (getControllingPassenger() != passenger) whenRotated(this.getYRot() - this.prevYawForRotate, passenger);
         }
     }
 
@@ -1655,52 +1646,29 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         var myCollider = this.getBoundingBox();
 
         var entityColliders = this.level().getEntityCollisions(this, myCollider.expandTowards(mvmt));
-        var collidedMvmt = mvmt.lengthSqr() == 0 ? mvmt : collideBoundingBox(this, mvmt, myCollider, this.level(), entityColliders);
+        var mvmtHit = mvmt.lengthSqr() == 0 ? mvmt : collideBoundingBox(this, mvmt, myCollider, this.level(), entityColliders);
 
-        boolean movedIntoGround = mvmt.y != collidedMvmt.y && mvmt.y < 0;
+        boolean movedIntoGround = mvmt.y != mvmtHit.y && mvmt.y < 0;
 
         if (this.maxUpStep() > 0 &&
                 (movedIntoGround || this.onGround()) &&
-                (mvmt.x != collidedMvmt.x || mvmt.z != collidedMvmt.z)) {
-//            var groundSnappedCollider = movedIntoGround ? myCollider.move(0, collidedMvmt.y, 0) : myCollider;
-//            var stepTestCollider = groundSnappedCollider.expandTowards(mvmt.x, this.maxUpStep(), mvmt.z);
-//
-//            if (!movedIntoGround) {
-//                stepTestCollider = stepTestCollider.expandTowards(0, -1e-5, 0);
-//            }
-//
-//            var colliders = collectColliders(this, this.level(), entityColliders, stepTestCollider);
-//            var stepHeights = collectCandidateStepUpHeights(groundSnappedCollider, colliders, this.maxUpStep(), (float) collidedMvmt.y);
-//
-//            double maxHMoveDist = mvmt.horizontalDistanceSqr();
-//            double maxCandidateHMoveDist = collidedMvmt.horizontalDistanceSqr();
-//            var resultMvmt = collidedMvmt;
-//
-//            for (float step : stepHeights) {
-//                var stepUpMvmt = collideWithShapes(new Vec3(mvmt.x, step, mvmt.z), groundSnappedCollider, colliders);
-//                double dist = stepUpMvmt.horizontalDistanceSqr();
-//                if (dist > maxCandidateHMoveDist && dist <= maxHMoveDist) {
-//                    double toFloor = myCollider.minY - groundSnappedCollider.minY;
-//                    resultMvmt = stepUpMvmt.add(0, -toFloor, 0);
-//                }
-//            }
-//            return resultMvmt;
+                (mvmt.x != mvmtHit.x || mvmt.z != mvmtHit.z)) {
             double upStep = this.maxUpStep();
-            var vec3d2 = moveAndCollide(this, new Vec3(mvmt.x, upStep, mvmt.z), myCollider, this.level(), entityColliders);
-            var vec3d3 = moveAndCollide(this, new Vec3(0, upStep, 0), myCollider.expandTowards(mvmt.x, (double)0.0F, mvmt.z), this.level(), entityColliders);
-            if (vec3d3.y < upStep) {
-                var vec3d4 = moveAndCollide(this, new Vec3(mvmt.x, (double)0.0F, mvmt.z), myCollider.move(vec3d3), this.level(), entityColliders).add(vec3d3);
-                if (vec3d4.horizontalDistanceSqr() > vec3d2.horizontalDistanceSqr()) {
-                    vec3d2 = vec3d4;
+            var mvmtUpHit = moveAndCollide(this, new Vec3(mvmt.x, upStep, mvmt.z), myCollider, this.level(), entityColliders);
+            var mvmtHorizHit = moveAndCollide(this, new Vec3(0, upStep, 0), myCollider.expandTowards(mvmt.x, 0, mvmt.z), this.level(), entityColliders);
+            if (mvmtHorizHit.y < upStep) {
+                var mvmtHorizThenUp = moveAndCollide(this, new Vec3(mvmt.x, 0, mvmt.z), myCollider.move(mvmtHorizHit), this.level(), entityColliders).add(mvmtHorizHit);
+                if (mvmtHorizThenUp.horizontalDistanceSqr() > mvmtUpHit.horizontalDistanceSqr()) {
+                    mvmtUpHit = mvmtHorizThenUp;
                 }
             }
 
-            if (vec3d2.horizontalDistanceSqr() > collidedMvmt.horizontalDistanceSqr()) {
-                return vec3d2.add(moveAndCollide(this, new Vec3(0, mvmt.y - vec3d2.y, 0), myCollider.move(vec3d2), this.level(), entityColliders));
+            if (mvmtUpHit.horizontalDistanceSqr() > mvmtHit.horizontalDistanceSqr()) {
+                return mvmtUpHit.add(moveAndCollide(this, new Vec3(0, mvmt.y - mvmtUpHit.y, 0), myCollider.move(mvmtUpHit), this.level(), entityColliders));
             }
         }
 
-        return collidedMvmt;
+        return mvmtHit;
     }
 
     public static Vec3 moveAndCollide(Entity entity, Vec3 mvmt, AABB myCollider, Level level, List<VoxelShape> nearbyEntities) {
@@ -1733,7 +1701,6 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         private static final int SCAN_STEPS_PER_BLOCK = 20;
         private static final double INV_SCAN_STEPS = 1d / SCAN_STEPS_PER_BLOCK;
 
-        private double lastY = Double.NaN;
         private boolean wereAllOnGround = true;
         private double lastVertical = 0;
         private double currVertical = 0;
@@ -1744,12 +1711,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         private final List<Vec3> scanPoints = new ArrayList<>();
         public final Set<CollisionArea> otherColliders = new HashSet<>();
 
-        public void preTick(AutomobileEntity entity) {
+        public void preTick() {
             this.lastVertical = currVertical;
             this.lastAngular.set(this.currAngular);
         }
 
-        public void postTick(AutomobileEntity entity) {
+        public void postTick() {
             float lerpAmount = 1;
 
             var rotation = angularTarget.mul(currAngular.invert(new Quaternionf()), new Quaternionf());
@@ -1934,6 +1901,57 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         public void getAngular(float tickDelta, Quaternionf rot) {
             this.lastAngular.slerp(this.currAngular, tickDelta, rot);
+        }
+    }
+
+    public static class Input {
+        public boolean accelerating, braking, holdingDrift;
+        public float steering;
+
+        public boolean setDigitalInputs(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
+            boolean isLeft = steering < 0;
+            boolean isRight = steering > 0;
+
+            boolean changed = fwd != this.accelerating || back != this.braking || left != isLeft || right != isRight || space != this.holdingDrift;
+
+            this.accelerating = fwd;
+            this.braking = back;
+            this.steering = (left ? -1 : 0) + (right ? 1 : 0);
+            this.holdingDrift = space;
+
+            return changed;
+        }
+
+        public boolean setInputs(boolean fwd, boolean back, float side, boolean space) {
+            boolean changed = fwd != this.accelerating || back != this.braking || this.steering != side || space != this.holdingDrift;
+
+            this.accelerating = fwd;
+            this.braking = back;
+            this.steering = side;
+            this.holdingDrift = space;
+
+            return changed;
+        }
+
+        public void clearInputs() {
+            this.accelerating = false;
+            this.braking = false;
+            this.steering = 0;
+            this.holdingDrift = false;
+        }
+
+        public void writePacket(FriendlyByteBuf buf) {
+            buf.writeBoolean(this.accelerating);
+            buf.writeBoolean(this.braking);
+            buf.writeFloat(this.steering);
+            buf.writeBoolean(this.holdingDrift);
+        }
+
+        public void readPacket(FriendlyByteBuf buf) {
+            this.accelerating = buf.readBoolean();
+            this.braking = buf.readBoolean();
+            this.steering = buf.readFloat();
+            this.holdingDrift = buf.readBoolean();
         }
     }
 }

@@ -89,40 +89,6 @@ public enum AutomobileRenderer {;
         }
         pose.popPose();
 
-        // Rear Attachment
-        var rearAtt = automobile.getRearAttachmentType();
-        if (!rearAtt.isEmpty() && rearAttachmentModel != null) {
-            pose.pushPose();
-            pose.translate(0, chassisRaise, frame.model().rearAttachmentPos() / 16);
-            pose.mulPose(Axis.YN.rotationDegrees(automobile.getAutomobileYaw(tickDelta) - automobile.getRearAttachmentYaw(tickDelta)));
-
-            pose.translate(0, 0, rearAtt.model().pivotDistPx() / 16);
-            if (rearAttachmentModel instanceof RearAttachmentRenderModel rm) {
-                rm.setRenderState(automobile.getRearAttachment(), (float) Math.toRadians(automobile.getWheelAngle(tickDelta)), tickDelta);
-            }
-            rearAttachmentModel.renderToBuffer(pose, buffers.getBuffer(rearAttachmentModel.renderType(rearAtt.model().texture())), light, overlay, 0xFFFFFFFF);
-            if (rearAttachmentModel instanceof BaseModel base) {
-                base.doOtherLayerRender(pose, buffers, light, overlay);
-            }
-            pose.popPose();
-        }
-
-        // Front Attachment
-        var frontAtt = automobile.getFrontAttachmentType();
-        if (!frontAtt.isEmpty() && frontAttachmentModel != null) {
-            pose.pushPose();
-            pose.translate(0, 0, frame.model().frontAttachmentPos() / -16);
-
-            if (frontAttachmentModel instanceof FrontAttachmentRenderModel fm) {
-                fm.setRenderState(automobile.getFrontAttachment(), chassisRaise, tickDelta);
-            }
-            frontAttachmentModel.renderToBuffer(pose, buffers.getBuffer(frontAttachmentModel.renderType(frontAtt.model().texture())), light, overlay, 0xFFFFFFFF);
-            if (frontAttachmentModel instanceof BaseModel base) {
-                base.doOtherLayerRender(pose, buffers, light, overlay);
-            }
-            pose.popPose();
-        }
-
         // WHEELS ----------------------------------------
         var wPoses = frame.model().wheelBase().wheels();
 
@@ -158,6 +124,40 @@ public enum AutomobileRenderer {;
 
                 wheelCount--;
             }
+        }
+
+        // Rear Attachment
+        var rearAtt = automobile.getRearAttachmentType();
+        if (!rearAtt.isEmpty() && rearAttachmentModel != null) {
+            pose.pushPose();
+            pose.translate(0, chassisRaise, frame.model().rearAttachmentPos() / 16);
+            pose.mulPose(Axis.YN.rotationDegrees(automobile.getAutomobileYaw(tickDelta) - automobile.getRearAttachmentYaw(tickDelta)));
+
+            pose.translate(0, 0, rearAtt.model().pivotDistPx() / 16);
+            if (rearAttachmentModel instanceof RearAttachmentRenderModel rm) {
+                rm.setRenderState(automobile.getRearAttachment(), (float) Math.toRadians(automobile.getWheelAngle(tickDelta)), tickDelta);
+            }
+            rearAttachmentModel.renderToBuffer(pose, buffers.getBuffer(rearAttachmentModel.renderType(rearAtt.model().texture())), light, overlay, 0xFFFFFFFF);
+            if (rearAttachmentModel instanceof BaseModel base) {
+                base.doOtherLayerRender(pose, buffers, light, overlay);
+            }
+            pose.popPose();
+        }
+
+        // Front Attachment
+        var frontAtt = automobile.getFrontAttachmentType();
+        if (!frontAtt.isEmpty() && frontAttachmentModel != null) {
+            pose.pushPose();
+            pose.translate(0, 0, frame.model().frontAttachmentPos() / -16);
+
+            if (frontAttachmentModel instanceof FrontAttachmentRenderModel fm) {
+                fm.setRenderState(automobile.getFrontAttachment(), chassisRaise, tickDelta);
+            }
+            frontAttachmentModel.renderToBuffer(pose, buffers.getBuffer(frontAttachmentModel.renderType(frontAtt.model().texture())), light, overlay, 0xFFFFFFFF);
+            if (frontAttachmentModel instanceof BaseModel base) {
+                base.doOtherLayerRender(pose, buffers, light, overlay);
+            }
+            pose.popPose();
         }
 
         // Skid effects

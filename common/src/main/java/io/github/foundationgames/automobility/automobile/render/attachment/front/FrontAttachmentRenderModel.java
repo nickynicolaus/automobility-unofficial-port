@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public class FrontAttachmentRenderModel extends BaseModel {
-    protected final @Nullable ModelPart ground;
+    protected final ModelPart ground;
     private float groundHeight = 0;
 
     public FrontAttachmentRenderModel(EntityRendererProvider.Context ctx,
@@ -21,6 +21,13 @@ public class FrontAttachmentRenderModel extends BaseModel {
                                       Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
         this.ground = getChildSafe(ctx.bakeLayer(layer), "ground");
+    }
+
+    @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.groundHeight = 0;
     }
 
     public void setRenderState(@Nullable FrontAttachment attachment, float groundHeight, float tickDelta) {

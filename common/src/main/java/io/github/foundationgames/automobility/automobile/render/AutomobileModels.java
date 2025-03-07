@@ -8,6 +8,7 @@ import com.mojang.serialization.JsonOps;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import io.github.foundationgames.automobility.automobile.model.ModelType;
+import io.github.foundationgames.automobility.automobile.render.attachment.front.AutopilotFrontAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.HarvesterFrontAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.BannerPostRearAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.ChestRearAttachmentModel;
@@ -159,6 +160,10 @@ public class AutomobileModels implements ResourceManagerReloadListener {
             ModelType.FRONT_ATTACHMENT, ModelDefinition.RenderMaterial.CUTOUT,
             new ModelLayerLocation(Automobility.rl("automobile/front_attachment/mob_controller"), "main")
     );
+    public static final ModelDefinition FRONT_ATT_AUTOPILOT = ModelDefinition.of(
+            ModelType.AUTOPILOT_FRONT_ATTACHMENT, ModelDefinition.RenderMaterial.CUTOUT,
+            AutopilotFrontAttachmentModel.MODEL_LAYER
+    );
     public static final ModelDefinition FRONT_ATT_HARVESTER = ModelDefinition.of(
             ModelType.HARVESTER_FRONT_ATTACHMENT, ModelDefinition.RenderMaterial.CUTOUT,
             HarvesterFrontAttachmentModel.MODEL_LAYER
@@ -219,6 +224,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
         register(Automobility.rl("rear_attachment/plow"), REAR_ATT_PLOW);
 
         register(Automobility.rl("front_attachment/mob_controller"), FRONT_ATT_MOB_CONTROLLER);
+        register(Automobility.rl("front_attachment/autopilot"), FRONT_ATT_AUTOPILOT);
         register(Automobility.rl("front_attachment/harvester"), FRONT_ATT_HARVESTER);
     }
 

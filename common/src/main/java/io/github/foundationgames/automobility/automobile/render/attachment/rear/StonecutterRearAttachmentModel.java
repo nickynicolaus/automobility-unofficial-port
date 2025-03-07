@@ -23,6 +23,13 @@ public class StonecutterRearAttachmentModel extends RearAttachmentRenderModel {
     }
 
     @Override
+    public void setDefaultState(float tickDelta) {
+        super.setDefaultState(tickDelta);
+
+        this.blade.setRotation(0, 0, 0);
+    }
+
+    @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 
