@@ -87,6 +87,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -129,7 +130,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private static final int CLIENT_SYNC_INTERVAL = 4;
     private int clientSyncTicks = CLIENT_SYNC_INTERVAL;
 
-    private final List<HitboxEntity> hitboxes = new ArrayList<>();
+    public final List<HitboxEntity> hitboxes = new ArrayList<>();
     private EntityDimensions size;
 
     private boolean dirty = false;
@@ -174,9 +175,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private boolean wasOnGround = automobileOnGround;
     private boolean isFloorDirectlyBelow = true;
     private boolean touchingWall = false;
+    private int hadVehicleCollision = 0;
 
     private Vec3 lastVelocity = Vec3.ZERO;
-    private Vec3 lastPosForDisplacement = Vec3.ZERO;
+    private Vec3 lastMeasuredPos = Vec3.ZERO;
 
     private Vec3 prevTailPos = null;
     private float prevYawForRotate = 0;
@@ -534,12 +536,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void verifyHitboxesFor(AutomobileFrame frame) {
-        if (this.level().isClientSide()) return;
+        this.hitboxes.removeIf(Entity::isRemoved);
+
+        if (this.level().isClientSide()) {
+            return;
+        }
 
         var boxes = frame.hitboxes();
         if (boxes.isEmpty()) boxes = List.of(AutomobileFrame.Hitbox.DEFAULT);
-
-        this.hitboxes.removeIf(Entity::isRemoved);
 
         if (this.hitboxes.size() != boxes.size()) {
             this.hitboxes.forEach(e -> e.remove(RemovalReason.DISCARDED));
@@ -665,15 +669,15 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         driftingTick();
         burnoutTick();
 
+        receiveVehicleCollisions();
         movementTick();
         if (this.isControlledByLocalInstance()) {
             this.move(MoverType.SELF, this.getDeltaMovement());
         }
         postMovementTick();
 
+        this.verifyHitboxesFor(getFrame());
         if (!level().isClientSide()) {
-            this.verifyHitboxesFor(getFrame());
-
             var prevTailPos = this.prevTailPos != null ? this.prevTailPos : this.getTailPos();
             var tailPos = this.getTailPos();
 
@@ -814,7 +818,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         // Track the last position of the automobile
-        this.lastPosForDisplacement = position();
+        this.lastMeasuredPos = position();
 
         // cumulative will be modified by the following code and then the automobile will be moved by it
         // Currently initialized with the value of addedVelocity (which is a general velocity vector applied to the automobile, i.e. for when it bumps into a wall and is pushed back)
@@ -959,6 +963,48 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         });
     }
 
+    public void receiveVehicleCollisions() {
+        var collisions = new HashMap<AutomobileEntity, IncomingCollision>();
+
+        for (var box : this.hitboxes) {
+            var bbox = box.getBoundingBox().inflate(0.15);
+            for (var hitbox : level().getEntities(EntityTypeTest.forClass(HitboxEntity.class), bbox, h -> h.automobile() != this)) {
+                var auto = hitbox.automobile();
+                var intersect = hitbox.getBoundingBox().inflate(0.15).intersect(bbox);
+
+                var collDepth = new Vec3(intersect.getXsize(), 0, intersect.getZsize());
+                if (auto == null || collisions.containsKey(auto) && collisions.get(auto).depth().lengthSqr() > collDepth.lengthSqr()) {
+                    continue;
+                }
+
+                var momentum = auto.getMeasuredMovement();
+                var origin = intersect.getCenter();
+
+                collisions.put(auto, new IncomingCollision(collDepth, momentum, origin, auto.getFrame().weight()));
+            }
+        }
+
+        hadVehicleCollision = Math.max(0, hadVehicleCollision - 1);
+        for (var col : collisions.values()) {
+            var meToCollision = col.origin().subtract(this.position()).multiply(1, 0, 1);
+            double hitScale = hadVehicleCollision <= 0 ? 0.15 : 0.07;
+            hitScale *= (1 + col.inertia() / this.getFrame().weight()) * 0.5;
+            this.addedVelocity = this.addedVelocity.add(
+                    meToCollision.reverse().normalize().scale(hitScale * (1 + 0.1 * Math.sqrt(col.velocity().length())) * col.depth().lengthSqr())
+                            .add(0, col.velocity().length() * 0.2, 0));
+
+            if (hadVehicleCollision <= 0) {
+                level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.22f, 0.7f + (0.06f * (this.level().random.nextFloat() - 0.5f)), false);
+                this.engineSpeed *= 0.6f;
+                hadVehicleCollision = 12;
+            }
+        }
+    }
+
+    public Vec3 getMeasuredMovement() {
+        return position().subtract(lastMeasuredPos);
+    }
+
     public void postMovementTick() {
         float addedVelReduction = 0.1f;
         if (this.burningOut()) {
@@ -985,7 +1031,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         }
 
-        double yDisp = position().subtract(this.lastPosForDisplacement).y();
+        this.touchingWall = false;
+        double yDisp = getMeasuredMovement().y();
 
         // Increment the falling timer
         if (!automobileOnGround && yDisp < 0) {
@@ -1135,7 +1182,6 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         wasOnGround = automobileOnGround;
         automobileOnGround = false;
         isFloorDirectlyBelow = false;
-        touchingWall = false;
         var b = getBoundingBox();
         var groundBox = new AABB(b.minX, b.minY - 0.04, b.minZ, b.maxX, b.minY, b.maxZ);
         var wid = (b.getXsize() + b.getZsize()) * 0.5f;
@@ -1431,7 +1477,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         var stack = player.getItemInHand(hand);
-        if ((!this.decorative || player.isCreative()) && stack.is(AutomobilityItems.CROWBAR.require())) {
+        if ((!this.isInvulnerable() || player.isCreative()) && stack.is(AutomobilityItems.CROWBAR.require())) {
             double playerAngle = Math.toDegrees(Math.atan2(player.getZ() - this.getZ(), player.getX() - this.getX()));
             double angleDiff = Mth.wrapDegrees(this.getYRot() - playerAngle);
 
@@ -1453,11 +1499,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             }
         }
 
-        if (!decorative) {
+        if (!this.isInvulnerable() || player.isCreative()) {
             if (stack.getItem() instanceof AutomobileInteractable interactable) {
                 return interactable.interactAutomobile(stack, player, hand, this);
             }
+        }
 
+        if (!this.decorative) {
             if (!this.hasSpaceForPassengers()) {
                 if (!(this.getFirstPassenger() instanceof Player)) {
                     if (!level().isClientSide()) {
@@ -1570,7 +1618,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public boolean canCollideWith(Entity entity) {
-        return false;
+        return entity instanceof HitboxEntity hitbox && hitbox.automobile() != this;
     }
 
     @Override
@@ -1953,5 +2001,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.steering = buf.readFloat();
             this.holdingDrift = buf.readBoolean();
         }
+    }
+
+    public record IncomingCollision(Vec3 depth, Vec3 velocity, Vec3 origin, float inertia) {
     }
 }

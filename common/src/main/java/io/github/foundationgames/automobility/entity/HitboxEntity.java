@@ -81,6 +81,10 @@ public class HitboxEntity extends Entity {
                 this.remove(RemovalReason.DISCARDED);
                 return;
             }
+        } else {
+            if (!automobile.hitboxes.contains(this)) {
+                automobile.hitboxes.add(this);
+            }
         }
 
         var pos = this.boxOrigin();

@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.fabricmc.fabric.mixin.object.builder.client.ModelPredicateProviderRegistrySpecificAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -25,6 +26,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
@@ -81,6 +83,11 @@ public class FabricPlatform implements Platform {
     @Override
     public void builtinItemRenderer(Item item, HexCons<ItemStack, ItemDisplayContext, PoseStack, MultiBufferSource, Integer, Integer> renderer) {
         BuiltinItemRendererRegistry.INSTANCE.register(item, renderer::accept);
+    }
+
+    @Override
+    public void itemModelPredicate(Item item, ResourceLocation id, ItemPropertyFunction predicate) {
+        ModelPredicateProviderRegistrySpecificAccessor.callRegister(item, id, predicate::call);
     }
 
     @Override

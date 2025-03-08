@@ -31,5 +31,37 @@
 				"down": {"uv": [15, 0, 12, 6], "rotation": 270, "texture": "#sign"}
 			}
 		}
-	]
+	],
+	"display": {
+		"gui": {
+			"rotation": [ 30, 135, 0 ],
+			"translation": [ 0, 0, 0],
+			"scale":[ 0.8, 0.8, 0.8 ]
+		},
+		"ground": {
+			"rotation": [ 0, 0, 0 ],
+			"translation": [ 0, 3, 0],
+			"scale":[ 0.3, 0.3, 0.3 ]
+		},
+		"fixed": {
+			"rotation": [ 0, 0, 0 ],
+			"translation": [ 0, 0, 0],
+			"scale":[ 0.5, 0.5, 0.5 ]
+		},
+		"thirdperson_righthand": {
+			"rotation": [ 0, 90, 0 ],
+			"translation": [ 0, 4, 0],
+			"scale": [ 0.75, 0.75, 0.75 ]
+		},
+		"firstperson_righthand": {
+			"rotation": [ 0, 135, 0 ],
+			"translation": [ 0, 0, 0 ],
+			"scale": [ 0.7, 0.7, 0.7 ]
+		},
+		"firstperson_lefthand": {
+			"rotation": [ 0, 135, 0 ],
+			"translation": [ 0, 0, 0 ],
+			"scale": [ 0.7, 0.7, 0.7 ]
+		}
+	}
 }

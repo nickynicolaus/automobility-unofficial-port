@@ -8,9 +8,12 @@ import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.entity.AutomobilityEntities;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 
 import java.util.ArrayList;
@@ -50,6 +53,17 @@ public class AutomobileItem extends Item implements CustomCreativeOutput {
 
     public static void addPrefabs(AutomobileData ... prefabs) {
         PREFABS.addAll(Arrays.asList(prefabs));
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        var data = stack.get(AutomobilityItems.COMPONENT_AUTOMOBILE_DATA.require());
+
+        if (data != null) {
+            data.addToTooltip(context, tooltipComponents::add, tooltipFlag);
+        }
+
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
     }
 
     @Override

@@ -93,6 +93,7 @@ public class AutomobilityClientFabric implements ClientModInitializer {
 
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.LAUNCH_GEL.require(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.AUTOMOBILE_ASSEMBLER.require(), RenderType.cutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.AUTOMOBILE_PRESSURE_PLATE.require(), RenderType.cutout());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.SLOPE.require(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.STEEP_SLOPE.require(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(AutomobilityBlocks.SLOPE_WITH_DASH_PANEL.require(), RenderType.translucent());

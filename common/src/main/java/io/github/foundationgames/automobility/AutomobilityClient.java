@@ -115,6 +115,9 @@ public class AutomobilityClient {
                 t -> AutomobileModels.getModel(t.model().modelId()),
                 t -> t.model().texture(), t -> t.model().scale()
         );
+
+        Platform.get().itemModelPredicate(AutomobilityBlocks.AUTOPILOT_SIGN.require().asItem(), Automobility.rl("stop"),
+                (stack, lvl, user, i) -> user != null && user.isUsingItem() ? 1 : 0);
     }
 
     public static void initMenuScreens(MenuScreenRegistrar screens) {

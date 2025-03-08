@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.block;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.block.entity.AutomobileAssemblerBlockEntity;
 import io.github.foundationgames.automobility.block.entity.AutopilotSignBlockEntity;
+import io.github.foundationgames.automobility.item.AutopilotSignBlockItem;
 import io.github.foundationgames.automobility.item.CreativeTabQueue;
 import io.github.foundationgames.automobility.item.DashPanelItem;
 import io.github.foundationgames.automobility.item.SlopeBlockItem;
@@ -30,7 +31,9 @@ public enum AutomobilityBlocks {;
     public static final Eventual<Block> AUTO_MECHANIC_TABLE = register("auto_mechanic_table", () -> new AutoMechanicTableBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK)), Automobility.TAB);
     public static final Eventual<Block> AUTOMOBILE_ASSEMBLER = register("automobile_assembler", () -> new AutomobileAssemblerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.ANVIL)), Automobility.TAB);
     public static final Eventual<Block> AUTOPILOT_SIGN = register("autopilot_sign", () -> new AutopilotSignBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_TRAPDOOR)
-            .lightLevel(s -> 1).emissiveRendering((s,l,p) -> true).noCollission()), Automobility.TAB);
+            .lightLevel(s -> 1).emissiveRendering((s,l,p) -> true).noCollission()),
+            b -> new AutopilotSignBlockItem(b, new Item.Properties()), Automobility.TAB);
+    public static final Eventual<Block> AUTOMOBILE_PRESSURE_PLATE = register("automobile_pressure_plate", () -> new AutomobilePressurePlateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.HEAVY_WEIGHTED_PRESSURE_PLATE)), Automobility.TAB);
 
     public static final Eventual<Block> SLOPE = register("slope", () -> new SlopeBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)), b -> new SlopeBlockItem(b, new Item.Properties()), Automobility.TAB);
     public static final Eventual<Block> STEEP_SLOPE = register("steep_slope", () -> new SteepSlopeBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)), b -> new SteepSlopeBlockItem(b, new Item.Properties()), Automobility.TAB);

@@ -233,7 +233,6 @@ public class AutopilotSignBlock extends BaseEntityBlock implements SimpleWaterlo
 
         public Vec3 pathToPath(Vec3 pos) {
             var originToPos = pos.subtract(origin());
-
             return originToPos.cross(dir()).cross(dir()).reverse();
         }
 

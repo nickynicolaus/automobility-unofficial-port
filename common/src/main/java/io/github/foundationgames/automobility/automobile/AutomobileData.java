@@ -66,7 +66,7 @@ public record AutomobileData(Optional<ResourceLocation> prefabName,
             );
             stats.appendTexts(tooltip, stats);
         } else {
-            if (prefabName() == null) {
+            if (prefabName().isEmpty()) {
                 tooltip.accept(
                         Component.translatable("tooltip.automobility.frameLabel").withStyle(ChatFormatting.BLUE)
                                 .append(Component.translatable(AutomobileFrame.getTranslationKey(frame().location())).withStyle(ChatFormatting.DARK_GREEN))

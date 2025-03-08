@@ -20,6 +20,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
@@ -85,6 +87,11 @@ public class NeoForgePlatform implements Platform {
     @Override
     public void builtinItemRenderer(Item item, HexCons<ItemStack, ItemDisplayContext, PoseStack, MultiBufferSource, Integer, Integer> renderer) {
         BEWLRs.add(item, renderer);
+    }
+
+    @Override
+    public void itemModelPredicate(Item item, ResourceLocation id, ItemPropertyFunction predicate) {
+        ItemProperties.register(item, id, predicate);
     }
 
     @Override

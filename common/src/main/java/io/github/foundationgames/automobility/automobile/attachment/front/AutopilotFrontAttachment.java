@@ -15,16 +15,12 @@ public class AutopilotFrontAttachment extends FrontAttachment {
     public static final int MAX_HEADING_COMMAND_TIME = 6000;
 
     private @Nullable AutopilotSignBlock.Heading currentHeading = null;
+    private int playerStopTimer = 0;
     private int headingTimeLimit = 0;
     private int animationTimer = 0;
 
-    private Vec3 lastAutoPos;
-    double lastHeadingToPathDir = 0;
-
     public AutopilotFrontAttachment(FrontAttachmentType<?> type, AutomobileEntity automobile) {
         super(type, automobile);
-
-        lastAutoPos = automobile.position();
     }
 
     @Override
@@ -43,7 +39,10 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             input.clearInputs();
         } else {
             var autoPos = autoPos();
-            var autoMovement = automobile.position().subtract(lastAutoPos);
+            var autoMovement = automobile.getMeasuredMovement();
+
+            var dirAlongPath = currentHeading.dir();
+            var dirHeading = automobile.getLookAngle();
 
             var pathToPath = currentHeading.pathToPath(autoPos);
             double distToPath = pathToPath.length();
@@ -53,7 +52,8 @@ public class AutopilotFrontAttachment extends FrontAttachment {
 
             double favorDirToPath = Math.clamp(distToPath * 0.1, 0, 1);
 
-            if (currentHeading.stop() && currentHeading.origin().distanceToSqr(autoPos) < 25 + 100 * autoMovement.lengthSqr()) {
+            if (this.playerStopTimer > 0 || (
+                    currentHeading.stop() && currentHeading.origin().distanceToSqr(autoPos) < 25 + 100 * autoMovement.lengthSqr())) {
                 input.accelerating = false;
                 input.braking = autoSpeedIntoPath > distToPath * 0.2;
                 favorDirToPath = Math.sqrt(favorDirToPath);
@@ -62,22 +62,16 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                 input.braking = false;
             }
 
-            var dirAlongPath = currentHeading.dir();
+            var dirHeadingF = dirHeading.toVector3f().mul(1, 0, 1);
+            var dirDesiredHeadingF = dirAlongPath.lerp(dirToPath, favorDirToPath).normalize().toVector3f().mul(1, 0, 1);
 
-            var dirHeading = automobile.getLookAngle().toVector3f().mul(1, 0, 1);
-            var dirDesiredHeading = dirAlongPath.lerp(dirToPath, favorDirToPath).normalize().toVector3f().mul(1, 0, 1);
+            double headingToPathDir = dirHeadingF.angleSigned(dirDesiredHeadingF, new Vector3f(0, 1, 0)) / Mth.HALF_PI;
+            input.steering = (float) Math.clamp(headingToPathDir, -1, 1);
 
-            double headingToPathDir = dirHeading.angleSigned(dirDesiredHeading, new Vector3f(0, 1, 0)) / Mth.HALF_PI;
-            double dHeadingToPathDir = headingToPathDir - this.lastHeadingToPathDir;
-            input.steering = (float) Math.clamp(2 * headingToPathDir, -1, 1);
-
-            float damp = (float) Mth.clamp(Math.abs(distToPath) + autoSpeedIntoPath, 0, 1);
+            float offset = (float) dirAlongPath.cross(dirHeading).length();
+            float damp = (float) Mth.clamp(Math.abs(distToPath * 0.2) + Math.sqrt(offset), 0, 1);
             input.steering *= damp * damp;
-
-            this.lastHeadingToPathDir = headingToPathDir;
         }
-
-        lastAutoPos = automobile.position();
     }
 
     protected Vec3 autoPos() {
@@ -96,6 +90,10 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             currentHeading = heading;
             headingTimeLimit = MAX_HEADING_COMMAND_TIME;
         }
+    }
+
+    public void notifyPlayerStop() {
+        this.playerStopTimer = 8;
     }
 
     @Override
@@ -121,6 +119,10 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                     this.currentHeading = null;
                 }
             }
+
+            if (this.playerStopTimer > 0) {
+                this.playerStopTimer--;
+            }
         }
 
         this.animationTimer++;
@@ -139,6 +141,7 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         nbt.putInt("timeout", this.headingTimeLimit);
+        nbt.putInt("player_stop_time", this.playerStopTimer);
     }
 
     @Override
@@ -152,6 +155,7 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         this.headingTimeLimit = nbt.getInt("timeout");
+        this.playerStopTimer = nbt.getInt("player_stop_time");
     }
 
     public int getAnimationTimer() {
