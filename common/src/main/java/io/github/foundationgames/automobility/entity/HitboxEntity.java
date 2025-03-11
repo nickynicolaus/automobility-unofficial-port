@@ -2,9 +2,11 @@ package io.github.foundationgames.automobility.entity;
 
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-public class HitboxEntity extends Entity {
+public class HitboxEntity extends Entity implements EntityWithContainer {
     public static final EntityDataAccessor<Integer> AUTOMOBILE = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Vector3f> ORIGIN = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.VECTOR3);
     public static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.FLOAT);
@@ -116,6 +118,16 @@ public class HitboxEntity extends Entity {
     }
 
     @Override
+    public Component getName() {
+        var auto = automobile();
+        if (auto != null) {
+            return auto.getName();
+        }
+
+        return super.getName();
+    }
+
+    @Override
     public boolean canCollideWith(Entity other) {
         return !(other instanceof AutomobileEntity) && Boat.canVehicleCollide(this, other);
     }
@@ -162,5 +174,15 @@ public class HitboxEntity extends Entity {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
+    }
+
+    @Override
+    public Container underlyingContainer() {
+        var auto = automobile();
+        if (auto != null) {
+            return auto.underlyingContainer();
+        }
+
+        return null;
     }
 }

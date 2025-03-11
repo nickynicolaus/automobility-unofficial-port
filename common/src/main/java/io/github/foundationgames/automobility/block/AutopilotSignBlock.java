@@ -185,7 +185,7 @@ public class AutopilotSignBlock extends BaseEntityBlock implements SimpleWaterlo
     }
 
     public double getDetectBoxOffset(BlockState state) {
-        return state.getValue(TYPE).standing() ? 6 : 1.5;
+        return state.getValue(TYPE).standing() ? 7.5 : 2;
     }
 
     @Override

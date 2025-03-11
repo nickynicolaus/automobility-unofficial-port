@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipe;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.language.I18n;
@@ -13,6 +14,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.lwjgl.glfw.GLFW;
 
@@ -53,6 +55,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
     private final Map<ResourceLocation, List<RecipeEntry>> recipes = new HashMap<>();
 
     private FormattedCharSequence categoryTitle;
+    private ItemStack hoveredMissingIngredient = null;
 
     public AutoMechanicTableScreen(AutoMechanicTableScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
@@ -135,6 +138,20 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         }
     }
 
+    @Override
+    protected void renderTooltip(GuiGraphics graphics, int mx, int my) {
+        super.renderTooltip(graphics, mx, my);
+
+        if (this.hoveredMissingIngredient != null) {
+            var tt = getTooltipFromItem(minecraft, hoveredMissingIngredient);
+            if (!tt.isEmpty()) {
+                tt.set(0, tt.getFirst().copy().withStyle(ChatFormatting.RED));
+            }
+
+            graphics.renderTooltip(minecraft.font, tt, hoveredMissingIngredient.getTooltipImage(), mx, my);
+        }
+    }
+
     private void changeCategory(int by) {
         this.currentCategory = Math.floorMod((this.currentCategory + by), this.orderedCategories.size());
         this.categoryTitle = createCategoryTitle(this.orderedCategories.get(this.currentCategory));
@@ -198,27 +215,34 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         return false;
     }
 
-    protected final void drawMissingIngredient(GuiGraphics graphics, Ingredient ing, int x, int y) {
+    protected final void drawMissingIngredient(GuiGraphics graphics, Ingredient ing, int x, int y, boolean hovered) {
         graphics.fill(x, y, x + 16, y + 16, 0x45FF0000);
 
         var stacks = ing.getItems();
-        graphics.renderFakeItem(stacks[Mth.floor((float)this.time / 30) % stacks.length], x, y);
+        var stack = stacks[Mth.floor((float)this.time / 30) % stacks.length];
+        graphics.renderFakeItem(stack, x, y);
 
-        RenderSystem.depthFunc(516);
+        RenderSystem.depthMask(false);
         graphics.fill(x, y, x + 16, y + 16, 0x30FFFFFF);
-        RenderSystem.depthFunc(515);
+        RenderSystem.depthMask(true);
+
+        if (hovered) {
+            this.hoveredMissingIngredient = stack;
+        }
     }
 
     protected void drawMissingIngredients(GuiGraphics graphics) {
         var inputInv = this.menu.inputInv;
         var missingIngs = new ArrayDeque<>(this.menu.missingIngredients);
+        this.hoveredMissingIngredient = null;
 
-        for (int i = 0; i < inputInv.getContainerSize(); i++) if (missingIngs.size() > 0) {
+        for (int i = 0; i < inputInv.getContainerSize(); i++) if (!missingIngs.isEmpty()) {
             int x = this.leftPos + 8 + (i * 18);
             int y = this.topPos + 88;
 
             if (inputInv.getItem(i).isEmpty()) {
-                this.drawMissingIngredient(graphics, missingIngs.removeFirst(), x, y);
+                var ing = missingIngs.removeFirst();
+                this.drawMissingIngredient(graphics, ing, x, y, hoveredSlot != null && hoveredSlot.index == i);
             }
         }
     }

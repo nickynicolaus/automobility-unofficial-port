@@ -24,7 +24,7 @@ public class ControlifyCompat implements ControlifyEntrypoint {
         BindContext drivingCtx = new BindContext(Automobility.rl("driving"), mc -> {
             if (mc.player != null) {
                 var veh = mc.player.getVehicle();
-                return veh != null && veh instanceof AutomobileEntity;
+                return veh != null && veh instanceof AutomobileEntity && veh.getControllingPassenger() == mc.player;
             }
             return false;
         });

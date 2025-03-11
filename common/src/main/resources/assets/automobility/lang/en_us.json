@@ -1,5 +1,6 @@
 {
   "entity.automobility.automobile": "Automobile",
+  "entity.automobility.hitbox": "Automobile Hitbox",
 
   "itemGroup.automobility.automobility": "Automobility",
   "itemGroup.automobility.automobility_prefabs": "Automobility: Prefabs",

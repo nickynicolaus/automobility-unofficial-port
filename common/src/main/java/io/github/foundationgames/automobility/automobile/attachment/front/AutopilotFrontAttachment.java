@@ -3,10 +3,14 @@ package io.github.foundationgames.automobility.automobile.attachment.front;
 import io.github.foundationgames.automobility.automobile.attachment.FrontAttachmentType;
 import io.github.foundationgames.automobility.block.AutopilotSignBlock;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import io.github.foundationgames.automobility.entity.HitboxEntity;
+import io.github.foundationgames.automobility.item.AutopilotSignBlockItem;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -15,7 +19,6 @@ public class AutopilotFrontAttachment extends FrontAttachment {
     public static final int MAX_HEADING_COMMAND_TIME = 6000;
 
     private @Nullable AutopilotSignBlock.Heading currentHeading = null;
-    private int playerStopTimer = 0;
     private int headingTimeLimit = 0;
     private int animationTimer = 0;
 
@@ -38,28 +41,57 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         if (currentHeading == null) {
             input.clearInputs();
         } else {
+            var dirHeading = automobile.getLookAngle();
+            boolean somethingInTheWay = false;
+
+            double width = 0.8 * automobile.getBbWidth();
+            var box = new AABB(-width, -2, -width, width, 4, width);
+            box = box.move(pos().add(dirHeading.scale(1 + 1.75 * width)));
+
+            for (var e : world().getEntitiesOfClass(HitboxEntity.class, box)) {
+                if (!automobile.isOneOfMyHitboxes(e) && (!automobile.isInvulnerable() || e.automobile().isInvulnerable())) {
+                    somethingInTheWay = true;
+                    break;
+                }
+            }
+
+            if (!somethingInTheWay) for (var e : world().getEntitiesOfClass(LivingEntity.class, box.inflate(1.25))) {
+                if (e.isUsingItem() && e.getItemInHand(e.getUsedItemHand()).getItem() instanceof AutopilotSignBlockItem) {
+                    var eLooking = e.getLookAngle();
+                    var meToE = e.position().subtract(pos()).normalize();
+
+                    if (eLooking.dot(meToE) < 0) {
+                        somethingInTheWay = true;
+                        break;
+                    }
+                }
+            }
+
             var autoPos = autoPos();
             var autoMovement = automobile.getMeasuredMovement();
 
             var dirAlongPath = currentHeading.dir();
-            var dirHeading = automobile.getLookAngle();
+            double offCosine = dirHeading.dot(dirAlongPath);
 
             var pathToPath = currentHeading.pathToPath(autoPos);
             double distToPath = pathToPath.length();
 
             var dirToPath = pathToPath.normalize();
-            double autoSpeedIntoPath = currentHeading.stop() ? autoMovement.length() : Math.max(0, -autoMovement.dot(dirToPath));
+            double autoSpeedIntoPath = currentHeading.stop() || somethingInTheWay ? autoMovement.length() : Math.max(0, -autoMovement.dot(dirToPath));
 
             double favorDirToPath = Math.clamp(distToPath * 0.1, 0, 1);
 
-            if (this.playerStopTimer > 0 || (
-                    currentHeading.stop() && currentHeading.origin().distanceToSqr(autoPos) < 25 + 100 * autoMovement.lengthSqr())) {
-                input.accelerating = false;
-                input.braking = autoSpeedIntoPath > distToPath * 0.2;
+            boolean burnout;
+            if (somethingInTheWay || (
+                    currentHeading.stop() && currentHeading.origin().distanceToSqr(autoPos) < 25 + 49 * autoMovement.lengthSqr())) {
+                burnout = offCosine > 0 && automobile.getTurboCharge() < AutomobileEntity.SMALL_TURBO_TIME - 5;
+                input.accelerating = burnout;
+                input.braking = burnout || autoSpeedIntoPath > 0.2;
                 favorDirToPath = Math.sqrt(favorDirToPath);
             } else {
-                input.accelerating = autoSpeedIntoPath * autoSpeedIntoPath * distToPath * distToPath < 6;
-                input.braking = false;
+                burnout = automobile.burningOut() ? offCosine > -0.8 : offCosine > 0.2;
+                input.accelerating = burnout || autoSpeedIntoPath * autoSpeedIntoPath * distToPath * distToPath < 5 + (2 / automobile.getHandling());
+                input.braking = burnout;
             }
 
             var dirHeadingF = dirHeading.toVector3f().mul(1, 0, 1);
@@ -68,9 +100,11 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             double headingToPathDir = dirHeadingF.angleSigned(dirDesiredHeadingF, new Vector3f(0, 1, 0)) / Mth.HALF_PI;
             input.steering = (float) Math.clamp(headingToPathDir, -1, 1);
 
-            float offset = (float) dirAlongPath.cross(dirHeading).length();
-            float damp = (float) Mth.clamp(Math.abs(distToPath * 0.2) + Math.sqrt(offset), 0, 1);
-            input.steering *= damp * damp;
+            if (!burnout) {
+                float offset = (float) dirAlongPath.cross(dirHeading).length();
+                float damp = (float) Mth.clamp(Math.abs(distToPath * 0.2) + Math.sqrt(offset), 0, 1);
+                input.steering *= damp * damp;
+            }
         }
     }
 
@@ -90,10 +124,6 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             currentHeading = heading;
             headingTimeLimit = MAX_HEADING_COMMAND_TIME;
         }
-    }
-
-    public void notifyPlayerStop() {
-        this.playerStopTimer = 8;
     }
 
     @Override
@@ -119,10 +149,6 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                     this.currentHeading = null;
                 }
             }
-
-            if (this.playerStopTimer > 0) {
-                this.playerStopTimer--;
-            }
         }
 
         this.animationTimer++;
@@ -141,7 +167,6 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         nbt.putInt("timeout", this.headingTimeLimit);
-        nbt.putInt("player_stop_time", this.playerStopTimer);
     }
 
     @Override
@@ -155,7 +180,6 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         this.headingTimeLimit = nbt.getInt("timeout");
-        this.playerStopTimer = nbt.getInt("player_stop_time");
     }
 
     public int getAnimationTimer() {

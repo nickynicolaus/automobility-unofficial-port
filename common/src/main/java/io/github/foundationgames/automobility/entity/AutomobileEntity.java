@@ -1,5 +1,7 @@
 package io.github.foundationgames.automobility.entity;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileData;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
@@ -49,6 +51,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -94,7 +97,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class AutomobileEntity extends Entity implements RenderableAutomobile, EntityWithInventory {
+public class AutomobileEntity extends Entity implements RenderableAutomobile, EntityWithInventory, EntityWithContainer {
     public static Consumer<AutomobileEntity> engineSound = e -> {};
     public static Consumer<AutomobileEntity> skidSound = e -> {};
 
@@ -132,6 +135,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public final List<HitboxEntity> hitboxes = new ArrayList<>();
     private EntityDimensions size;
+    private AABB cullingBox = new AABB(0, 0, 0, 0, 0, 0);
 
     private boolean dirty = false;
 
@@ -590,6 +594,18 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 );
     }
 
+    public void updateCullingBox() {
+        this.cullingBox = super.getBoundingBoxForCulling();
+        for (var hitbox : this.hitboxes) {
+            this.cullingBox = this.cullingBox.minmax(hitbox.getBoundingBox());
+        }
+    }
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return this.cullingBox;
+    }
+
     public boolean hasSpaceForPassengers() {
         var frame = this.getFrame();
         int maxPassengers = this.rearAttachment.isRideable() ? 2 : 1;
@@ -730,6 +746,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
                 ClientPackets.sendServerboundAutomobileSyncPacket(this);
             }
+
+            updateCullingBox();
         }
 
         displacementTick(first || (this.position().subtract(prevPos).length() > 0 || this.getYRot() != this.yRotO));
@@ -1399,6 +1417,27 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     @Override
+    protected void addPassenger(Entity passenger) {
+        if (passenger.getVehicle() != this) {
+            super.addPassenger(passenger);
+        } else {
+            if (this.passengers.isEmpty()) {
+                this.passengers = ImmutableList.of(passenger);
+            } else {
+                var newPassengerList = Lists.newArrayList(this.passengers);
+                if (!this.level().isClientSide() && passenger instanceof Player player &&
+                        this.canKickPassengerOut(getFirstPassenger(), player)) {
+                    newPassengerList.addFirst(passenger);
+                } else newPassengerList.add(passenger);
+
+                this.passengers = ImmutableList.copyOf(newPassengerList);
+            }
+
+            this.gameEvent(GameEvent.ENTITY_MOUNT, passenger);
+        }
+    }
+
+    @Override
     public boolean hasInventory() {
         return this.getRearAttachment().hasMenu();
     }
@@ -1464,6 +1503,20 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.remove(reason);
     }
 
+    public boolean canKickPassengerOut(@Nullable Entity passenger, Player kickerOuter) {
+        if (passenger != null) {
+            if (passenger instanceof Player) {
+                return false;
+            }
+
+            if (passenger.isInvulnerable()) {
+                return !this.canAddPassenger(kickerOuter) && kickerOuter.isCreative();
+            }
+        }
+
+        return true;
+    }
+
     public InteractionResult handleInteraction(Player player, InteractionHand hand) {
         if (player.isShiftKeyDown()) {
             if (this.hasInventory()) {
@@ -1477,7 +1530,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         var stack = player.getItemInHand(hand);
-        if ((!this.isInvulnerable() || player.isCreative()) && stack.is(AutomobilityItems.CROWBAR.require())) {
+        boolean vulnerable = !this.isInvulnerable() || player.isCreative();
+
+        if (vulnerable && stack.is(AutomobilityItems.CROWBAR.require())) {
             double playerAngle = Math.toDegrees(Math.atan2(player.getZ() - this.getZ(), player.getX() - this.getX()));
             double angleDiff = Mth.wrapDegrees(this.getYRot() - playerAngle);
 
@@ -1499,15 +1554,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             }
         }
 
-        if (!this.isInvulnerable() || player.isCreative()) {
-            if (stack.getItem() instanceof AutomobileInteractable interactable) {
-                return interactable.interactAutomobile(stack, player, hand, this);
-            }
+        if (vulnerable && stack.getItem() instanceof AutomobileInteractable interactable) {
+            return interactable.interactAutomobile(stack, player, hand, this);
         }
 
         if (!this.decorative) {
             if (!this.hasSpaceForPassengers()) {
-                if (!(this.getFirstPassenger() instanceof Player)) {
+                if (canKickPassengerOut(this.getFirstPassenger(), player)) {
                     if (!level().isClientSide()) {
                         this.getFirstPassenger().stopRiding();
                     }
@@ -1564,11 +1617,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        float maxWidth = 1.1f;
-        float maxHeight = 0.7f;
+        float maxWidth = this.getBbWidth();
+        float maxHeight = this.getBbHeight();
 
-        for (var box : this.hitboxes) {
-            var origin = box.boxOrigin();
+        for (var box : this.getFrame().hitboxes()) {
+            var origin = box.origin();
             if (Math.abs(origin.z()) > 0.5f * box.width()) {
                 continue;
             }
@@ -1581,8 +1634,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         float yaw = this.getYRot() + (passenger.getMainArm() == HumanoidArm.RIGHT ? 90 : -90);
-        var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth, passenger.getBbWidth(), yaw);
-        dir = dir.yRot(this.getYRot());
+        var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth + 0.25, passenger.getBbWidth(), yaw);
 
         var scanPos = new Vector3d(
                 dir.x() + getX(),
@@ -1613,7 +1665,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             }
         }
 
-        return super.getDismountLocationForPassenger(passenger);
+        return new Vec3(this.getX(), this.getY() + maxHeight, this.getZ());
     }
 
     @Override
@@ -1745,6 +1797,15 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return size;
     }
 
+    @Override
+    public Container underlyingContainer() {
+        if (getRearAttachment() instanceof Container container) {
+            return container;
+        }
+
+        return null;
+    }
+
     public static final class Displacement {
         private static final int SCAN_STEPS_PER_BLOCK = 20;
         private static final double INV_SCAN_STEPS = 1d / SCAN_STEPS_PER_BLOCK;
@@ -1770,7 +1831,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             var rotation = angularTarget.mul(currAngular.invert(new Quaternionf()), new Quaternionf());
             var rotationInfo = new AxisAngle4f(rotation);
             if (rotationInfo.angle > 0) {
-                lerpAmount = (float) Math.min(rotationInfo.angle, Math.toRadians(9)) / rotationInfo.angle;
+                lerpAmount = (float) Math.min(rotationInfo.angle, Math.toRadians(7)) / rotationInfo.angle;
                 lerpAmount = Mth.clamp(lerpAmount, 0, 1);
                 this.currAngular.slerp(this.angularTarget, lerpAmount);
             }
@@ -1830,15 +1891,19 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 for (int i = 0; i < Math.ceil(scanDist * SCAN_STEPS_PER_BLOCK); i++) {
                     double pointX = centerPos.x + (i * pointDir.x);
                     double pointZ = centerPos.z + (i * pointDir.z);
+                    double originalPointY = pointY;
                     pointY -= INV_SCAN_STEPS * 1.5;
 
                     boolean ground = false;
                     double nextPointY = pointY;
-                    for (var col : colliders) {
-                        if (col.isPointInside(pointX, pointY, pointZ)) {
-                            nextPointY = Math.max(nextPointY, col.highestY(pointX, pointY, pointZ));
+
+                    for (int j = 0; j < 2; j++) for (var col : colliders) {
+                        if (col.isPointInside(pointX, nextPointY, pointZ)) {
+                            nextPointY = Math.max(nextPointY, col.highestY(pointX, nextPointY, pointZ));
+                            pointY = originalPointY;
                         }
                     }
+
                     if (nextPointY - pointY < (stepHeight + (INV_SCAN_STEPS * 1.5))) {
                         pointY = nextPointY;
                         ground = true;

@@ -25,7 +25,7 @@ public class AutopilotSignBlockEntity extends BlockEntity {
             sign.broadcastDelay = BROADCAST_INTERVAL;
 
             if (state.getBlock() instanceof AutopilotSignBlock block) {
-                var box = new AABB(-16, -1.5, -16, 16, 1.5, 16);
+                var box = new AABB(-16, -2, -16, 16, 2, 16);
                 var heading = block.getHeading(state, pos);
 
                 var boxOrigin = heading.planeOrigin().add(heading.limitPlane().scale(block.getDetectBoxOffset(state)));
