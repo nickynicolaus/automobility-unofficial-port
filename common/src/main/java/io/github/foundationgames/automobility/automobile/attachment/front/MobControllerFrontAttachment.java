@@ -28,7 +28,7 @@ public class MobControllerFrontAttachment extends FrontAttachment {
 
         // Don't move if the driver doesn't exist or can't drive
         if (driver.isDeadOrDying() || driver.isRemoved()) {
-            if (input.setInputs(false, false, 0, false)) {
+            if (input.setInputs(false, false, 0, false, false)) {
                 auto.markDirty();
             }
             return;
@@ -78,7 +78,7 @@ public class MobControllerFrontAttachment extends FrontAttachment {
                 input.steering = -steer;
             }
             auto.markDirty();
-        } else if (input.setInputs(false, false, 0, false)) {
+        } else if (input.setInputs(false, false, 0, false, false)) {
             auto.markDirty();
         }
     }

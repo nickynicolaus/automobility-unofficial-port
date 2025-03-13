@@ -20,7 +20,8 @@ public enum AutomobileHud {;
             new ControlHint("brake", options -> options.keyDown),
             new ControlHint("steer_left", options -> options.keyLeft),
             new ControlHint("steer_right", options -> options.keyRight),
-            new ControlHint("drift", options -> options.keyJump)
+            new ControlHint("drift", options -> options.keyJump),
+            new ControlHint("honk", options -> options.keySprint)
     );
 
     public static void render(GuiGraphics graphics, Player player, AutomobileEntity auto, float tickDelta) {

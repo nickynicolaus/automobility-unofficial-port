@@ -17,7 +17,9 @@
     "EntityRenderDispatcherMixin",
     "EntityRenderersMixin",
     "LocalPlayerMixin",
-    "MultiPlayerGameModeMixin"
+    "MultiPlayerGameModeMixin",
+    "SoundChannelAccess",
+    "SoundEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

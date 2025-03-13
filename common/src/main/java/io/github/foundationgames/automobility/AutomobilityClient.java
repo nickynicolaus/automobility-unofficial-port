@@ -21,6 +21,7 @@ import io.github.foundationgames.automobility.screen.AutoMechanicTableScreen;
 import io.github.foundationgames.automobility.screen.MenuScreenRegistrar;
 import io.github.foundationgames.automobility.screen.SingleSlotScreen;
 import io.github.foundationgames.automobility.sound.AutomobileSoundInstance;
+import io.github.foundationgames.automobility.sound.SlicedLoopingAutomobileSoundInstance;
 import io.github.foundationgames.automobility.util.FloatFunc;
 import io.github.foundationgames.automobility.util.network.ClientPackets;
 import net.minecraft.client.Minecraft;
@@ -167,6 +168,13 @@ public class AutomobilityClient {
         AutomobileEntity.skidSound = auto -> {
             var client = Minecraft.getInstance();
             client.getSoundManager().play(new AutomobileSoundInstance.SkiddingSound(client, auto));
+        };
+        AutomobileEntity.hornSound = auto -> {
+            var client = Minecraft.getInstance();
+            var horn = auto.getFrame().horn();
+            for (float pitch : horn.pitches()) {
+                client.getSoundManager().play(new SlicedLoopingAutomobileSoundInstance.HornSound(client, auto, horn, pitch));
+            }
         };
     }
 

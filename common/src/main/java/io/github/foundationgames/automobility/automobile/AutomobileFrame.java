@@ -26,6 +26,7 @@ public record AutomobileFrame(
         float weight,
         float width,
         List<Hitbox> hitboxes,
+        HornSoundDefinition horn,
         FrameModel model
 ) implements AutomobileComponent<AutomobileFrame> {
     public static final ResourceLocation ID = Automobility.rl("frame");
@@ -38,6 +39,7 @@ public record AutomobileFrame(
             Codec.FLOAT.fieldOf("weight").forGetter(AutomobileFrame::weight),
             Codec.FLOAT.optionalFieldOf("width", 1f).forGetter(AutomobileFrame::width),
             Codec.list(Hitbox.CODEC).optionalFieldOf("hitboxes", List.of()).forGetter(AutomobileFrame::hitboxes),
+            HornSoundDefinition.CODEC.optionalFieldOf("horn", HornSoundDefinition.DEFAULT).forGetter(AutomobileFrame::horn),
             FrameModel.CODEC.fieldOf("display").forGetter(AutomobileFrame::model)
     ).apply(inst, AutomobileFrame::new));
     public static final Codec<ResourceKey<AutomobileFrame>> CODEC = ResourceKey.codec(REGISTRY);
@@ -47,6 +49,7 @@ public record AutomobileFrame(
             ByteBufCodecs.FLOAT, AutomobileFrame::weight,
             ByteBufCodecs.FLOAT, AutomobileFrame::width,
             ByteBufCodecs.<ByteBuf, Hitbox>list().apply(Hitbox.STREAM_CODEC), AutomobileFrame::hitboxes,
+            HornSoundDefinition.STREAM_CODEC, AutomobileFrame::horn,
             FrameModel.STREAM_CODEC, AutomobileFrame::model,
             AutomobileFrame::new
     );
@@ -58,6 +61,7 @@ public record AutomobileFrame(
             0.25f,
             1f,
             List.of(),
+            HornSoundDefinition.DEFAULT,
             FrameModel.legacy(
                     ResourceLocation.parse("empty"),
                     Automobility.rl("empty"),
@@ -70,16 +74,12 @@ public record AutomobileFrame(
             Automobility.rl("empty"), EMPTY
     );
 
-    public static AutomobileFrame of(float weight, float width, List<Hitbox> hitboxes, FrameModel model) {
-        return new AutomobileFrame(false, weight, width, hitboxes, model);
+    public static AutomobileFrame of(float weight, float width, List<Hitbox> hitboxes, HornSoundDefinition horn, FrameModel model) {
+        return new AutomobileFrame(false, weight, width, hitboxes, horn, model);
     }
 
-    public static AutomobileFrame of(float weight, List<Hitbox> hitboxes, FrameModel model) {
-        return of(weight, 1f, hitboxes, model);
-    }
-
-    public static AutomobileFrame of(float weight, FrameModel model) {
-        return of(weight, List.of(), model);
+    public static AutomobileFrame of(float weight, List<Hitbox> hitboxes, HornSoundDefinition horn, FrameModel model) {
+        return of(weight, 1f, hitboxes, horn, model);
     }
 
     public static AutomobileFrame get(ResourceKey<AutomobileFrame> key, HolderLookup.Provider registries) {
@@ -90,38 +90,38 @@ public record AutomobileFrame(
         return EntityDimensions.scalable(this.width(), 0.66f);
     }
 
-    public static final ResourceKey<AutomobileFrame> WOODEN_MOTORCAR = BOOTSTRAP.register(motorcar("wooden", 0.3f));
-    public static final ResourceKey<AutomobileFrame> COPPER_MOTORCAR = BOOTSTRAP.register(motorcar("copper", 0.4f));
-    public static final ResourceKey<AutomobileFrame> STEEL_MOTORCAR = BOOTSTRAP.register(motorcar("steel", 0.475f));
-    public static final ResourceKey<AutomobileFrame> GOLDEN_MOTORCAR = BOOTSTRAP.register(motorcar("golden", 0.525f));
-    public static final ResourceKey<AutomobileFrame> BEJEWELED_MOTORCAR = BOOTSTRAP.register(motorcar("bejeweled", 0.555f));
+    public static final ResourceKey<AutomobileFrame> WOODEN_MOTORCAR = BOOTSTRAP.register(motorcar("wooden", 0.3f, HornSoundDefinition.klaxon(10)));
+    public static final ResourceKey<AutomobileFrame> COPPER_MOTORCAR = BOOTSTRAP.register(motorcar("copper", 0.4f, HornSoundDefinition.klaxon(16)));
+    public static final ResourceKey<AutomobileFrame> STEEL_MOTORCAR = BOOTSTRAP.register(motorcar("steel", 0.475f, HornSoundDefinition.brass(16, 19)));
+    public static final ResourceKey<AutomobileFrame> GOLDEN_MOTORCAR = BOOTSTRAP.register(motorcar("golden", 0.525f, HornSoundDefinition.disc(20, 23)));
+    public static final ResourceKey<AutomobileFrame> BEJEWELED_MOTORCAR = BOOTSTRAP.register(motorcar("bejeweled", 0.555f, HornSoundDefinition.trumpet(14, 17)));
 
-    public static final ResourceKey<AutomobileFrame> STANDARD_WHITE = BOOTSTRAP.register(standard("white"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_ORANGE = BOOTSTRAP.register(standard("orange"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_MAGENTA = BOOTSTRAP.register(standard("magenta"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_BLUE = BOOTSTRAP.register(standard("light_blue"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_YELLOW = BOOTSTRAP.register(standard("yellow"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_LIME = BOOTSTRAP.register(standard("lime"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_PINK = BOOTSTRAP.register(standard("pink"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_GRAY = BOOTSTRAP.register(standard("gray"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_GRAY = BOOTSTRAP.register(standard("light_gray"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_CYAN = BOOTSTRAP.register(standard("cyan"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_PURPLE = BOOTSTRAP.register(standard("purple"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_BLUE = BOOTSTRAP.register(standard("blue"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_BROWN = BOOTSTRAP.register(standard("brown"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_GREEN = BOOTSTRAP.register(standard("green"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_RED = BOOTSTRAP.register(standard("red"));
-    public static final ResourceKey<AutomobileFrame> STANDARD_BLACK = BOOTSTRAP.register(standard("black"));
+    public static final ResourceKey<AutomobileFrame> STANDARD_WHITE = BOOTSTRAP.register(standard("white", 1, 13));
+    public static final ResourceKey<AutomobileFrame> STANDARD_ORANGE = BOOTSTRAP.register(standard("orange", 7, 8, 11));
+    public static final ResourceKey<AutomobileFrame> STANDARD_MAGENTA = BOOTSTRAP.register(standard("magenta", 8, 10, 12));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_BLUE = BOOTSTRAP.register(standard("light_blue", 11, 13, 17));
+    public static final ResourceKey<AutomobileFrame> STANDARD_YELLOW = BOOTSTRAP.register(standard("yellow", 9, 12, 14));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIME = BOOTSTRAP.register(standard("lime", 10, 14, 17, 19));
+    public static final ResourceKey<AutomobileFrame> STANDARD_PINK = BOOTSTRAP.register(standard("pink", 5, 7, 12));
+    public static final ResourceKey<AutomobileFrame> STANDARD_GRAY = BOOTSTRAP.register(standard("gray", 0, 6));
+    public static final ResourceKey<AutomobileFrame> STANDARD_LIGHT_GRAY = BOOTSTRAP.register(standard("light_gray", 12, 18));
+    public static final ResourceKey<AutomobileFrame> STANDARD_CYAN = BOOTSTRAP.register(standard("cyan", 8, 12, 15));
+    public static final ResourceKey<AutomobileFrame> STANDARD_PURPLE = BOOTSTRAP.register(standard("purple", 4, 6, 11));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BLUE = BOOTSTRAP.register(standard("blue", 10, 13));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BROWN = BOOTSTRAP.register(standard("brown", 0, 4));
+    public static final ResourceKey<AutomobileFrame> STANDARD_GREEN = BOOTSTRAP.register(standard("green", 7, 10, 13, 15));
+    public static final ResourceKey<AutomobileFrame> STANDARD_RED = BOOTSTRAP.register(standard("red", 3, 6));
+    public static final ResourceKey<AutomobileFrame> STANDARD_BLACK = BOOTSTRAP.register(standard("black", 1, 4, 7, 9));
 
-    public static final ResourceKey<AutomobileFrame> AMETHYST_RICKSHAW = BOOTSTRAP.register(rickshaw("amethyst", 0.2f));
-    public static final ResourceKey<AutomobileFrame> QUARTZ_RICKSHAW = BOOTSTRAP.register(rickshaw("quartz", 0.25f));
-    public static final ResourceKey<AutomobileFrame> PRISMARINE_RICKSHAW = BOOTSTRAP.register(rickshaw("prismarine", 0.14f));
-    public static final ResourceKey<AutomobileFrame> ECHO_RICKSHAW = BOOTSTRAP.register(rickshaw("echo", 0.1f));
+    public static final ResourceKey<AutomobileFrame> AMETHYST_RICKSHAW = BOOTSTRAP.register(rickshaw("amethyst", 0.2f, 21));
+    public static final ResourceKey<AutomobileFrame> QUARTZ_RICKSHAW = BOOTSTRAP.register(rickshaw("quartz", 0.25f, 10, 13));
+    public static final ResourceKey<AutomobileFrame> PRISMARINE_RICKSHAW = BOOTSTRAP.register(rickshaw("prismarine", 0.14f, 18, 21));
+    public static final ResourceKey<AutomobileFrame> ECHO_RICKSHAW = BOOTSTRAP.register(rickshaw("echo", 0.1f, 8, 19));
 
-    public static final ResourceKey<AutomobileFrame> RED_TRACTOR = BOOTSTRAP.register(tractor("red"));
-    public static final ResourceKey<AutomobileFrame> YELLOW_TRACTOR = BOOTSTRAP.register(tractor("yellow"));
-    public static final ResourceKey<AutomobileFrame> GREEN_TRACTOR = BOOTSTRAP.register(tractor("green"));
-    public static final ResourceKey<AutomobileFrame> BLUE_TRACTOR = BOOTSTRAP.register(tractor("blue"));
+    public static final ResourceKey<AutomobileFrame> RED_TRACTOR = BOOTSTRAP.register(tractor("red", 13, 16));
+    public static final ResourceKey<AutomobileFrame> YELLOW_TRACTOR = BOOTSTRAP.register(tractor("yellow", 9, 12));
+    public static final ResourceKey<AutomobileFrame> GREEN_TRACTOR = BOOTSTRAP.register(tractor("green", 7, 13, 15));
+    public static final ResourceKey<AutomobileFrame> BLUE_TRACTOR = BOOTSTRAP.register(tractor("blue", 10, 13));
 
     public static final ResourceKey<AutomobileFrame> SHOPPING_CART = BOOTSTRAP.register(
             Automobility.rl("shopping_cart"),
@@ -130,6 +130,7 @@ public record AutomobileFrame(
                     List.of(
                             new Hitbox(new Vec3(0, 0.8, 0), 1.1f, 1.6f)
                     ),
+                    HornSoundDefinition.disc(19),
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/shopping_cart.png"),
                             Automobility.rl("frame/shopping_cart"),
@@ -154,6 +155,7 @@ public record AutomobileFrame(
                             new Hitbox(new Vec3(0, 0.4, 1.5), 1.1f, 0.8f),
                             new Hitbox(new Vec3(0, 0.4, -1.5), 1.1f, 0.8f)
                     ),
+                    HornSoundDefinition.brass(6),
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/c_arr.png"),
                             Automobility.rl("frame/c_arr"),
@@ -175,6 +177,7 @@ public record AutomobileFrame(
                     List.of(
                             new Hitbox(new Vec3(0, 0.6, 0), 1.1f, 1.2f)
                     ),
+                    HornSoundDefinition.party(12),
                     FrameModel.legacy(
                             Automobility.rl("textures/entity/automobile/frame/pineapple.png"),
                             Automobility.rl("frame/pineapple"),
@@ -189,7 +192,7 @@ public record AutomobileFrame(
             )
     );
 
-    private static DefaultRegistrar.Candidate<AutomobileFrame> standard(String color) {
+    private static DefaultRegistrar.Candidate<AutomobileFrame> standard(String color, int... hornNotes) {
         return DefaultRegistrar.cand(Automobility.rl("standard_"+color), of(
                 0.6f,
                 List.of(
@@ -197,6 +200,7 @@ public record AutomobileFrame(
                         new Hitbox(new Vec3(0, 0.3, 0.8), 1f, 0.6f),
                         new Hitbox(new Vec3(0, 0.45, -0.65), 0.8f, 0.85f)
                 ),
+                HornSoundDefinition.disc(hornNotes),
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/standard_"+color+".png"),
                         Automobility.rl("frame/standard"),
@@ -211,7 +215,7 @@ public record AutomobileFrame(
         ));
     }
 
-    private static DefaultRegistrar.Candidate<AutomobileFrame> motorcar(String variant, float weight) {
+    private static DefaultRegistrar.Candidate<AutomobileFrame> motorcar(String variant, float weight, HornSoundDefinition horn) {
         return DefaultRegistrar.cand(Automobility.rl(variant+"_motorcar"), of(
                 weight,
                 List.of(
@@ -219,6 +223,7 @@ public record AutomobileFrame(
                         new Hitbox(new Vec3(0, 0.45, 1), 0.9f, 0.9f),
                         new Hitbox(new Vec3(0, 0.45, -1), 0.9f, 1f)
                 ),
+                horn,
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+variant+"_motorcar.png"),
                         Automobility.rl("frame/motorcar"),
@@ -233,13 +238,14 @@ public record AutomobileFrame(
         ));
     }
 
-    private static DefaultRegistrar.Candidate<AutomobileFrame> tractor(String color) {
+    private static DefaultRegistrar.Candidate<AutomobileFrame> tractor(String color, int... hornNotes) {
         return DefaultRegistrar.cand(Automobility.rl(color+"_tractor"), of(
                 0.9f,
                 List.of(
                         new Hitbox(new Vec3(0, 0.4, 0), 1.1f, 0.8f),
                         new Hitbox(new Vec3(0, 0.6, 0.7), 0.9f, 1.2f)
                 ),
+                HornSoundDefinition.brass(hornNotes),
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+color+"_tractor.png"),
                         Automobility.rl("frame/tractor"),
@@ -259,7 +265,7 @@ public record AutomobileFrame(
         ));
     }
 
-    private static DefaultRegistrar.Candidate<AutomobileFrame> rickshaw(String prefix, float weight) {
+    private static DefaultRegistrar.Candidate<AutomobileFrame> rickshaw(String prefix, float weight, int... hornNotes) {
         return DefaultRegistrar.cand(Automobility.rl(prefix+"_rickshaw"), of(
                 weight,
                 List.of(
@@ -267,6 +273,7 @@ public record AutomobileFrame(
                         new Hitbox(new Vec3(0, 0.4, 0.6), 0.7f, 0.8f),
                         new Hitbox(new Vec3(0, 0.8, -0.8), 0.9f, 1.6f)
                 ),
+                HornSoundDefinition.trumpet(hornNotes),
                 FrameModel.legacy(
                         Automobility.rl("textures/entity/automobile/frame/"+prefix+"_rickshaw.png"),
                         Automobility.rl("frame/rickshaw"),

@@ -22,6 +22,9 @@ public class AutopilotFrontAttachment extends FrontAttachment {
     private int headingTimeLimit = 0;
     private int animationTimer = 0;
 
+    private int honkTimer = -6;
+    private int impatience = 0;
+
     public AutopilotFrontAttachment(FrontAttachmentType<?> type, AutomobileEntity automobile) {
         super(type, automobile);
     }
@@ -38,6 +41,13 @@ public class AutopilotFrontAttachment extends FrontAttachment {
 
     @Override
     public void provideAlternativeInputs(AutomobileEntity automobile, AutomobileEntity.Input input, @Nullable Entity driver) {
+        honkTimer -= input.accelerating ? 6 : 1;
+        if (honkTimer < -10) {
+            honkTimer = -10;
+        }
+
+        boolean beingInterrupted = false;
+
         if (currentHeading == null) {
             input.clearInputs();
         } else {
@@ -54,6 +64,7 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                     break;
                 }
             }
+            beingInterrupted |= somethingInTheWay;
 
             if (!somethingInTheWay) for (var e : world().getEntitiesOfClass(LivingEntity.class, box.inflate(1.25))) {
                 if (e.isUsingItem() && e.getItemInHand(e.getUsedItemHand()).getItem() instanceof AutopilotSignBlockItem) {
@@ -64,6 +75,9 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                         somethingInTheWay = true;
                         break;
                     }
+                } else if (this.honkTimer < -3) {
+                    this.honkTimer = 10 + world().getRandom().nextInt(15);
+                    beingInterrupted = true;
                 }
             }
 
@@ -106,6 +120,27 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                 input.steering *= damp * damp;
             }
         }
+
+        if (beingInterrupted) {
+            this.impatience++;
+        } else if (this.impatience > 0) {
+            if (input.accelerating) {
+                this.impatience = Math.max(0, (int)(0.9 * this.impatience) - 4);
+            } else this.impatience--;
+        }
+
+        float wantsToHonk = 1 + 1f / (-1 - 0.007f * Math.max(0, this.impatience - 60));
+
+        if (world().getRandom().nextFloat() < wantsToHonk * wantsToHonk) {
+            int threshold = (int) (-10 + 5 * (world().getRandom().nextFloat() * wantsToHonk));
+
+            if (this.honkTimer <= threshold) {
+                int duration = (int) (3 + wantsToHonk * world().getRandom().nextInt(17));
+                this.honkTimer = duration;
+            }
+        }
+
+        input.holdingHorn = this.honkTimer > 0;
     }
 
     protected Vec3 autoPos() {
@@ -167,6 +202,8 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         nbt.putInt("timeout", this.headingTimeLimit);
+        nbt.putInt("honk_time", this.honkTimer);
+        nbt.putInt("impatience", this.impatience);
     }
 
     @Override
@@ -180,6 +217,8 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         }
 
         this.headingTimeLimit = nbt.getInt("timeout");
+        this.honkTimer = nbt.getInt("honk_time");
+        this.impatience = nbt.getInt("impatience");
     }
 
     public int getAnimationTimer() {

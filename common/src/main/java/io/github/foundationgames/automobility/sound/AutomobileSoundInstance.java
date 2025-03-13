@@ -7,8 +7,8 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 
 public abstract class AutomobileSoundInstance extends AbstractTickableSoundInstance {
-    private final Minecraft client;
-    private final AutomobileEntity automobile;
+    protected final Minecraft client;
+    protected final AutomobileEntity automobile;
 
     private double lastDistance;
 

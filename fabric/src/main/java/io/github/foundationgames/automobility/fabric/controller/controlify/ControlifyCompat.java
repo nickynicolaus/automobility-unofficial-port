@@ -10,6 +10,7 @@ import dev.isxander.controlify.api.ingameguide.ActionLocation;
 import dev.isxander.controlify.bindings.BindContext;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 
 import java.util.HashSet;
@@ -21,13 +22,15 @@ public class ControlifyCompat implements ControlifyEntrypoint {
 
     @Override
     public void onControlifyPreInit(ControlifyApi controlify) {
-        BindContext drivingCtx = new BindContext(Automobility.rl("driving"), mc -> {
+        var drivingContextId = Automobility.rl("driving");
+        BindContext drivingCtx = Registry.register(BindContext.REGISTRY, drivingContextId, new BindContext(drivingContextId, mc -> {
             if (mc.player != null) {
                 var veh = mc.player.getVehicle();
-                return veh != null && veh instanceof AutomobileEntity && veh.getControllingPassenger() == mc.player;
+                return veh instanceof AutomobileEntity auto && auto.isDriving(mc.player);
             }
             return false;
-        });
+        }));
+
         Component category = Component.translatable("controlify.binding_category.driving");
 
         ControlifyController.accelerateBinding = ControlifyBindApi.get().registerBinding(builder -> builder
@@ -71,6 +74,5 @@ public class ControlifyCompat implements ControlifyEntrypoint {
 
     @Override
     public void onControllersDiscovered(ControlifyApi controlify) {
-
     }
 }

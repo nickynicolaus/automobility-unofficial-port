@@ -79,5 +79,18 @@
       "width": 0.8
     }
   ],
+  "horn": {
+    "loop_end": 0.6605,
+    "loop_start": 0.09435,
+    "pitches": [
+      0.5297316,
+      0.62996054,
+      0.74915355,
+      0.8408964
+    ],
+    "sound": {
+      "sound_id": "automobility:entity.automobile.disc_horn"
+    }
+  },
   "weight": 0.6
 }

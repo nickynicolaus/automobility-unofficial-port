@@ -31,6 +31,7 @@ public class AutomobilityFabric implements ModInitializer {
         Automobility.init();
 
         PayloadTypeRegistry.playC2S().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
         ServerPlayNetworking.registerGlobalReceiver(AutomobilityPacketPayload.TYPE, (payload, context) ->
                 CommonPackets.SERVERBOUND_HANDLERS.getOrDefault(payload.id(), (x,y,z)->{}).accept(context.server(), context.player(), payload.buf()));
 

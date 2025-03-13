@@ -21,9 +21,7 @@
     "client": [
       "io.github.foundationgames.automobility.fabric.AutomobilityClientFabric"
     ],
-    "controlify": [
-      "io.github.foundationgames.automobility.fabric.controller.controlify.ControlifyCompat"
-    ]
+    "controlify": []
   },
   "mixins": [
     "automobility.mixins.json",

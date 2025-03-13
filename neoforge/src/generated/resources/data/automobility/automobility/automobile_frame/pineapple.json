@@ -61,5 +61,15 @@
       "width": 1.1
     }
   ],
+  "horn": {
+    "loop_end": -1.0,
+    "loop_start": -1.0,
+    "pitches": [
+      1.0
+    ],
+    "sound": {
+      "sound_id": "automobility:entity.automobile.party_horn"
+    }
+  },
   "weight": 0.75
 }

@@ -2,13 +2,11 @@ package io.github.foundationgames.automobility.neoforge;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.controller.AutomobileController;
 import io.github.foundationgames.automobility.neoforge.client.BEWLRs;
 import io.github.foundationgames.automobility.neoforge.mixin.BlockColorsAccess;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.util.AUtils;
-import io.github.foundationgames.automobility.util.DefaultRegistrar;
 import io.github.foundationgames.automobility.util.HexCons;
 import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
 import net.minecraft.client.Minecraft;
@@ -25,12 +23,10 @@ import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -162,8 +158,5 @@ public class NeoForgePlatform implements Platform {
     @Override
     public Path getGameDir() {
         return FMLLoader.getGamePath();
-    }
-
-    public record SyncedRegistryCandidate<T>(ResourceKey<? extends Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults) {
     }
 }

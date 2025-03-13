@@ -46,3 +46,8 @@ All sound effects used (originals licensed under CC0) from [freesound.org](https
 - [metalbang0.wav](https://freesound.org/people/SamsterBirdies/sounds/435699/) *by SamsterBirdies* <br/>
 - [Hollow Bang](https://freesound.org/people/qubodup/sounds/157609/) *by qubodup* <br/>
 - [car park skiding corner.wav](https://freesound.org/people/martian/sounds/178889/) *by martian* <br/>
+- [Mini Klaxon Horn "Ahooga" sound](https://freesound.org/people/Mastersoundboy2005/sounds/719876/) *by Mastersoundboy2005* <br/>
+- [Honk Alarm Repeat loop.mp3](https://freesound.org/people/bowlingballout/sounds/400894/) *by bowlingballout* <br/>
+- [Vuvuzela](https://freesound.org/people/nomerodin1/sounds/557277/) *by nomerodin1* <br/>
+- [small horn.wav](https://freesound.org/people/tm1000/sounds/94868/) *by tm1000* <br/>
+- [Car horn (Ford Fiesta)](https://freesound.org/people/Jokerman83/sounds/732545/) *by Jokerman83* <br/>

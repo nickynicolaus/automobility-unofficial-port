@@ -25,7 +25,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -55,7 +54,6 @@ public class AutomobilityClientFabric implements ClientModInitializer {
             }
         });
 
-        PayloadTypeRegistry.playS2C().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
         ClientPlayNetworking.registerGlobalReceiver(AutomobilityPacketPayload.TYPE, (payload, context) ->
                 ClientPackets.CLIENTBOUND_HANDLERS.getOrDefault(payload.id(), (x,y)->{}).accept(context.client(), payload.buf()));
 

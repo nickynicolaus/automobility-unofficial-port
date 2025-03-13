@@ -29,7 +29,8 @@ public class LocalPlayerMixin {
                         Platform.get().controller().braking(),
                         input.left,
                         input.right,
-                        Platform.get().controller().drifting()
+                        Platform.get().controller().drifting(),
+                        minecraft.options.keySprint.isDown()
                 );
             } else {
                 vehicle.provideClientInput(
@@ -37,7 +38,8 @@ public class LocalPlayerMixin {
                         input.down,
                         input.left,
                         input.right,
-                        input.jumping
+                        input.jumping,
+                        minecraft.options.keySprint.isDown()
                 );
             }
         }

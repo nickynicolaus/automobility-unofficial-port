@@ -18,6 +18,12 @@ public class AutomobilitySounds {
     public static final Eventual<SoundEvent> DIAMOND_ENGINE = register("entity.automobile.diamond_engine");
     public static final Eventual<SoundEvent> CREATIVE_ENGINE = register("entity.automobile.creative_engine");
 
+    public static final Eventual<SoundEvent> KLAXON_HORN = register("entity.automobile.klaxon_horn");
+    public static final Eventual<SoundEvent> DISC_HORN = register("entity.automobile.disc_horn");
+    public static final Eventual<SoundEvent> TRUMPET_HORN = register("entity.automobile.trumpet_horn");
+    public static final Eventual<SoundEvent> BRASS_HORN = register("entity.automobile.brass_horn");
+    public static final Eventual<SoundEvent> PARTY_HORN = register("entity.automobile.party_horn");
+
     private static Eventual<SoundEvent> register(String path) {
         var id = Automobility.rl(path);
         return RegistryQueue.register(BuiltInRegistries.SOUND_EVENT, id, () -> SoundEvent.createVariableRangeEvent(id));

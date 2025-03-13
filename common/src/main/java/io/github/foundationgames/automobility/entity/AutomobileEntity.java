@@ -100,6 +100,7 @@ import java.util.function.Consumer;
 public class AutomobileEntity extends Entity implements RenderableAutomobile, EntityWithInventory, EntityWithContainer {
     public static Consumer<AutomobileEntity> engineSound = e -> {};
     public static Consumer<AutomobileEntity> skidSound = e -> {};
+    public static Consumer<AutomobileEntity> hornSound = e -> {};
 
     private static final EntityDataAccessor<Float> REAR_ATTACHMENT_YAW = SynchedEntityData.defineId(AutomobileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> REAR_ATTACHMENT_ANIMATION = SynchedEntityData.defineId(AutomobileEntity.class, EntityDataSerializers.FLOAT);
@@ -174,6 +175,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private boolean burningOut = false;
     private int driftDir = 0;
     private int turboCharge = 0;
+
+    private boolean honking = false;
 
     private boolean automobileOnGround = true;
     private boolean wasOnGround = automobileOnGround;
@@ -271,11 +274,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         drifting = nbt.getBoolean("drifting");
         driftDir = nbt.getInt("driftDir");
         burningOut = nbt.getBoolean("burningOut");
+        honking = nbt.getBoolean("honking");
         turboCharge = nbt.getInt("turboCharge");
         input.accelerating = nbt.getBoolean("accelerating");
         input.braking = nbt.getBoolean("braking");
         input.steering = nbt.getFloat("steeringInput");
         input.holdingDrift = nbt.getBoolean("holdingDrift");
+        input.holdingHorn = nbt.getBoolean("holdingHorn");
         fallTicks = nbt.getInt("fallTicks");
         despawnTime = nbt.getInt("despawnTime");
         despawnCountdown = nbt.getInt("despawnCountdown");
@@ -304,11 +309,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         nbt.putBoolean("drifting", drifting);
         nbt.putInt("driftDir", driftDir);
         nbt.putBoolean("burningOut", burningOut);
+        nbt.putBoolean("honking", honking);
         nbt.putInt("turboCharge", turboCharge);
         nbt.putBoolean("accelerating", input.accelerating);
         nbt.putBoolean("braking", input.braking);
         nbt.putFloat("steeringInput", input.steering);
         nbt.putBoolean("holdingDrift", input.holdingDrift);
+        nbt.putBoolean("holdingHorn", input.holdingHorn);
         nbt.putInt("fallTicks", fallTicks);
         nbt.putInt("despawnTime", despawnTime);
         nbt.putInt("despawnCountdown", despawnCountdown);
@@ -468,6 +475,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return burningOut;
     }
 
+    public boolean honking() {
+        return honking;
+    }
+
     private void setDrifting(boolean drifting) {
         if (this.level().isClientSide()) {
             if (!this.drifting && drifting) {
@@ -488,6 +499,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         this.burningOut = burningOut;
+    }
+
+    private void setHonking(boolean honking) {
+        if (this.level().isClientSide() && !this.honking && honking) {
+            hornSound.accept(this);
+        }
+
+        this.honking = honking;
     }
 
     public boolean isDrifting() {
@@ -678,6 +697,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         var prevPos = this.position();
         this.prevYawForRotate = getYRot();
 
+        this.setHonking(this.input.holdingHorn);
+
         lerpAutomobileData();
         positionTrackingTick();
         collisionStateTick();
@@ -715,8 +736,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 }
             }
             if (fAttDriving) {
+                boolean wasHoldingHorn = this.input.holdingHorn;
                 fAtt.provideAlternativeInputs(this, this.input, this.getFirstPassenger());
                 this.despawnCountdown = 0;
+
+                if (wasHoldingHorn != this.input.holdingHorn) {
+                    this.syncData();
+                }
             } else if (this.isVehicle()) {
                 this.despawnCountdown = 0;
             } else if (this.despawnTime > 0) {
@@ -1255,9 +1281,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return stats.getHandling();
     }
 
-    public void provideClientInput(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
+    public void provideClientInput(boolean fwd, boolean back, boolean left, boolean right, boolean space, boolean ctrl) {
         // Receives inputs client-side and sends them to the server
-        if (this.input.setDigitalInputs(fwd, back, left, right, space)) {
+        if (this.input.setDigitalInputs(fwd, back, left, right, space, ctrl)) {
             ClientPackets.sendServerboundAutomobileSyncPacket(this);
         }
     }
@@ -2018,30 +2044,34 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public static class Input {
-        public boolean accelerating, braking, holdingDrift;
+        public boolean accelerating, braking, holdingDrift, holdingHorn;
         public float steering;
 
-        public boolean setDigitalInputs(boolean fwd, boolean back, boolean left, boolean right, boolean space) {
+        public boolean setDigitalInputs(boolean fwd, boolean back, boolean left, boolean right, boolean space, boolean ctrl) {
             boolean isLeft = steering < 0;
             boolean isRight = steering > 0;
 
-            boolean changed = fwd != this.accelerating || back != this.braking || left != isLeft || right != isRight || space != this.holdingDrift;
+            boolean changed = fwd != this.accelerating || back != this.braking || left != isLeft || right != isRight ||
+                    space != this.holdingDrift || ctrl != this.holdingHorn;
 
             this.accelerating = fwd;
             this.braking = back;
             this.steering = (left ? -1 : 0) + (right ? 1 : 0);
             this.holdingDrift = space;
+            this.holdingHorn = ctrl;
 
             return changed;
         }
 
-        public boolean setInputs(boolean fwd, boolean back, float side, boolean space) {
-            boolean changed = fwd != this.accelerating || back != this.braking || this.steering != side || space != this.holdingDrift;
+        public boolean setInputs(boolean fwd, boolean back, float side, boolean space, boolean ctrl) {
+            boolean changed = fwd != this.accelerating || back != this.braking || this.steering != side ||
+                    space != this.holdingDrift || ctrl != this.holdingHorn;
 
             this.accelerating = fwd;
             this.braking = back;
             this.steering = side;
             this.holdingDrift = space;
+            this.holdingHorn = ctrl;
 
             return changed;
         }
@@ -2051,6 +2081,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.braking = false;
             this.steering = 0;
             this.holdingDrift = false;
+            this.holdingHorn = false;
         }
 
         public void writePacket(FriendlyByteBuf buf) {
@@ -2058,6 +2089,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             buf.writeBoolean(this.braking);
             buf.writeFloat(this.steering);
             buf.writeBoolean(this.holdingDrift);
+            buf.writeBoolean(this.holdingHorn);
         }
 
         public void readPacket(FriendlyByteBuf buf) {
@@ -2065,6 +2097,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.braking = buf.readBoolean();
             this.steering = buf.readFloat();
             this.holdingDrift = buf.readBoolean();
+            this.holdingHorn = buf.readBoolean();
         }
     }
 

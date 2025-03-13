@@ -70,5 +70,16 @@
       "width": 0.9
     }
   ],
+  "horn": {
+    "loop_end": 0.3138,
+    "loop_start": 0.2019,
+    "pitches": [
+      0.8408964,
+      1.0
+    ],
+    "sound": {
+      "sound_id": "automobility:entity.automobile.brass_horn"
+    }
+  },
   "weight": 0.9
 }

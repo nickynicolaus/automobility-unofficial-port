@@ -6,9 +6,6 @@
   "itemGroup.automobility.automobility_prefabs": "Automobility: Prefabs",
 
   "automobility.automobility": "Automobility",
-  "midnightcontrols.action.automobility.accelerate_automobile": "Accelerate",
-  "midnightcontrols.action.automobility.brake_automobile": "Brake/Reverse",
-  "midnightcontrols.action.automobility.drift_automobile": "Drift",
 
   "controlify.binding_category.driving": "Automobility",
   "controlify.binding.automobility.accelerate_automobile": "Accelerate",
@@ -56,6 +53,8 @@
   "death.attack.automobile.player": "%1$s was hit by a moving vehicle in an attempt to escape %2$s",
 
   "subtitles.automobility.automobile_engine": "Engine runs",
+  "subtitles.automobility.horn_honks": "Horn honks",
+  "subtitles.automobility.horn_blares": "Horn blares",
   "subtitles.automobility.collision": "Automobile bonks",
   "subtitles.automobility.landing": "Automobile thuds",
   "subtitles.automobility.skid": "Automobile skids",
@@ -68,6 +67,7 @@
   "automobile_control.steer_left": "Steer Left",
   "automobile_control.steer_right": "Steer Right",
   "automobile_control.drift": "Drift",
+  "automobile_control.honk": "Honk",
 
   "prefab.automobility.wooden_motorcar": "Wooden Motorcar",
   "prefab.automobility.copper_motorcar": "Copper Motorcar",
