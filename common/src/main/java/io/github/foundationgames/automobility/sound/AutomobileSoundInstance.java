@@ -5,8 +5,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+import org.lwjgl.openal.AL10;
 
-public abstract class AutomobileSoundInstance extends AbstractTickableSoundInstance {
+import java.util.function.IntConsumer;
+
+public abstract class AutomobileSoundInstance extends AbstractTickableSoundInstance implements AdvancedSoundInstance {
     protected final Minecraft client;
     protected final AutomobileEntity automobile;
 
@@ -21,6 +26,8 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
         this.automobile = automobile;
         this.looping = true;
         this.delay = 0;
+
+        this.lastDistance = getPosition(automobile).subtract(client.player.position()).length();
     }
 
     protected abstract boolean canPlay(AutomobileEntity automobile);
@@ -28,6 +35,18 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
     protected abstract float getPitch(AutomobileEntity automobile);
 
     protected abstract float getVolume(AutomobileEntity automobile);
+
+    protected double dopplerScale() {
+        return 0.16;
+    }
+
+    protected float audibleDistance() {
+        return 18;
+    }
+
+    protected Vec3 getPosition(AutomobileEntity auto) {
+        return auto.position();
+    }
 
     @Override
     public void tick() {
@@ -50,20 +69,28 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
         }
         this.volume = this.getVolume(this.automobile) * (float)fade / 3;
 
-        this.x = this.automobile.getX();
-        this.y = this.automobile.getY();
-        this.z = this.automobile.getZ();
+        var pos = getPosition(this.automobile);
+        this.x = pos.x();
+        this.y = pos.y();
+        this.z = pos.z();
 
         this.pitch = this.getPitch(this.automobile);
 
         if (player.getVehicle() != this.automobile) {
-            double distance = this.automobile.position().subtract(player.position()).length();
-            this.pitch += (float) (0.16 * Math.atan(lastDistance - distance));
+            double distance = pos.subtract(player.position()).length();
+            double dDist = Math.clamp(this.lastDistance - distance, -1.5, 1.5);
+            this.pitch += (float) (dopplerScale() * dDist);
 
-            this.lastDistance = distance;
+            this.lastDistance -= dDist;
         } else {
             this.lastDistance = 0;
         }
+    }
+
+    @Override
+    public IntConsumer setupALState() {
+        float dist = audibleDistance();
+        return source -> AL10.alSourcef(source, AL10.AL_MAX_DISTANCE, dist);
     }
 
     public static class EngineSound extends AutomobileSoundInstance {
@@ -84,6 +111,14 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
         @Override
         protected float getVolume(AutomobileEntity automobile) {
             return 1;
+        }
+
+        @Override
+        protected Vec3 getPosition(AutomobileEntity auto) {
+            var ePos = auto.getFrame().model().enginePos().scale(1d/16);
+            var ePosD = new Vector3d(ePos.x(), ePos.y(), ePos.z());
+            auto.localPosToWorldSpace(ePosD);
+            return new Vec3(ePosD.x(), ePosD.y(), ePosD.z());
         }
     }
 
@@ -106,6 +141,11 @@ public abstract class AutomobileSoundInstance extends AbstractTickableSoundInsta
         @Override
         protected float getVolume(AutomobileEntity automobile) {
             return automobile.automobileOnGround() ? 1 : 0;
+        }
+
+        @Override
+        protected Vec3 getPosition(AutomobileEntity auto) {
+            return auto.getTailPos();
         }
     }
 }

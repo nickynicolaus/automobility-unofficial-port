@@ -4,10 +4,13 @@ import io.github.foundationgames.automobility.automobile.HornSoundDefinition;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.AL11;
 
-public abstract class SlicedLoopingAutomobileSoundInstance extends AutomobileSoundInstance implements AdvancedTickableSoundInstance {
+import java.util.function.IntConsumer;
+
+public abstract class SlicedLoopingAutomobileSoundInstance extends AutomobileSoundInstance {
     public static final float TICK_LENGTH = 1f / 20;
 
     public final float loopStart;
@@ -22,37 +25,40 @@ public abstract class SlicedLoopingAutomobileSoundInstance extends AutomobileSou
     }
 
     @Override
-    public void updateALState(int source) {
-        int buffer = AL10.alGetSourcei(source, AL10.AL_BUFFER);
+    public IntConsumer updateALState() {
+        final float lStart = this.loopStart;
+        final float lEnd = this.loopEnd;
+        final boolean mayContinue = this.continueSlicedLoop;
 
-        int size = AL10.alGetBufferi(buffer, AL10.AL_SIZE);
-        int channels = AL10.alGetBufferi(buffer, AL10.AL_CHANNELS);
-        int bits = AL10.alGetBufferi(buffer, AL10.AL_BITS);
-        int freq = AL10.alGetBufferi(buffer, AL10.AL_FREQUENCY);
+        return source -> {
+            int buffer = AL10.alGetSourcei(source, AL10.AL_BUFFER);
 
-        float duration = (float) (size * 8) / (channels * bits * freq);
+            int size = AL10.alGetBufferi(buffer, AL10.AL_SIZE);
+            int channels = AL10.alGetBufferi(buffer, AL10.AL_CHANNELS);
+            int bits = AL10.alGetBufferi(buffer, AL10.AL_BITS);
+            int freq = AL10.alGetBufferi(buffer, AL10.AL_FREQUENCY);
 
-        float lStart = loopStart;
-        float lEnd = loopEnd;
-        boolean mayLoop = lStart > 0 && lEnd > 0;
+            float duration = (float) (size * 8) / (channels * bits * freq);
+            boolean mayLoop = lStart > 0 && lEnd > 0;
 
-        lStart = Math.max(0, lStart);
-        lEnd = Math.min(duration, lEnd);
+            float s = Math.max(0, lStart);
+            float e = Math.min(duration, lEnd);
 
-        if (mayLoop) {
-            float os = AL10.alGetSourcef(source, AL11.AL_SEC_OFFSET);
-            if (continueSlicedLoop) {
-                if (os > lEnd - TICK_LENGTH) {
-                    AL10.alSourcef(source, AL11.AL_SEC_OFFSET, lStart);
-                }
-            } else {
-                if (os < lStart) {
-                    AL10.alSourcef(source, AL11.AL_SEC_OFFSET, Math.clamp(duration - lStart, lEnd, duration));
-                } else if (os < lEnd) {
-                    AL10.alSourcef(source, AL11.AL_SEC_OFFSET, lEnd);
+            if (mayLoop) {
+                float os = AL10.alGetSourcef(source, AL11.AL_SEC_OFFSET);
+                if (mayContinue) {
+                    if (os > e - TICK_LENGTH) {
+                        AL10.alSourcef(source, AL11.AL_SEC_OFFSET, s);
+                    }
+                } else {
+                    if (os < s) {
+                        AL10.alSourcef(source, AL11.AL_SEC_OFFSET, Math.clamp(duration - s, e, duration));
+                    } else if (os < e) {
+                        AL10.alSourcef(source, AL11.AL_SEC_OFFSET, e);
+                    }
                 }
             }
-        }
+        };
     }
 
     public static class HornSound extends SlicedLoopingAutomobileSoundInstance {
@@ -86,6 +92,16 @@ public abstract class SlicedLoopingAutomobileSoundInstance extends AutomobileSou
         @Override
         protected float getVolume(AutomobileEntity automobile) {
             return 2;
+        }
+
+        @Override
+        protected Vec3 getPosition(AutomobileEntity auto) {
+            return auto.getHeadPos();
+        }
+
+        @Override
+        protected double dopplerScale() {
+            return 0.1;
         }
     }
 }

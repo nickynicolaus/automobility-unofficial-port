@@ -66,7 +66,11 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             }
             beingInterrupted |= somethingInTheWay;
 
-            if (!somethingInTheWay) for (var e : world().getEntitiesOfClass(LivingEntity.class, box.inflate(1.25))) {
+            if (somethingInTheWay) {
+                if (input.accelerating && world().getRandom().nextFloat() < 0.06) {
+                    this.honkTimer = 8 + world().getRandom().nextInt(5);
+                }
+            } else for (var e : world().getEntitiesOfClass(LivingEntity.class, box.inflate(1.25, -0.5, 1.25))) {
                 if (e.isUsingItem() && e.getItemInHand(e.getUsedItemHand()).getItem() instanceof AutopilotSignBlockItem) {
                     var eLooking = e.getLookAngle();
                     var meToE = e.position().subtract(pos()).normalize();
@@ -75,8 +79,8 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                         somethingInTheWay = true;
                         break;
                     }
-                } else if (this.honkTimer < -3) {
-                    this.honkTimer = 10 + world().getRandom().nextInt(15);
+                } else if (!(e.getVehicle() instanceof AutomobileEntity) && this.honkTimer < -3) {
+                    this.honkTimer = 15 + world().getRandom().nextInt(25);
                     beingInterrupted = true;
                 }
             }
@@ -129,13 +133,13 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             } else this.impatience--;
         }
 
-        float wantsToHonk = 1 + 1f / (-1 - 0.007f * Math.max(0, this.impatience - 60));
+        float wantsToHonk = 1 + 1f / (-1 - 0.0003f * Math.max(0, this.impatience - 60));
 
         if (world().getRandom().nextFloat() < wantsToHonk * wantsToHonk) {
-            int threshold = (int) (-10 + 5 * (world().getRandom().nextFloat() * wantsToHonk));
+            int threshold = (int) (-10 + 8 * (world().getRandom().nextFloat() * wantsToHonk));
 
             if (this.honkTimer <= threshold) {
-                int duration = (int) (3 + wantsToHonk * world().getRandom().nextInt(17));
+                int duration = (int) (5 + wantsToHonk * wantsToHonk * world().getRandom().nextInt(17));
                 this.honkTimer = duration;
             }
         }

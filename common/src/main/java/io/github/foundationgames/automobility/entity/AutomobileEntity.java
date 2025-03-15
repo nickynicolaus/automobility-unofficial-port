@@ -993,7 +993,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         for (var box : this.hitboxes) {
             var bbox = box.getBoundingBox().move(velocity.scale(0.5));
             for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), bbox, entity -> entity != this && entity.getVehicle() != this)) {
-                if (!entity.isInvulnerable()) {
+                if (!entity.isInvulnerable() && !entity.isSpectator()) {
                     if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
                         entitiesToHit.add(living);
                     }
@@ -1533,6 +1533,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (passenger != null) {
             if (passenger instanceof Player) {
                 return false;
+            }
+
+            var fAtt = getFrontAttachment();
+            if (fAtt != null && fAtt.canDrive(passenger)) {
+                return kickerOuter.isCreative();
             }
 
             if (passenger.isInvulnerable()) {
