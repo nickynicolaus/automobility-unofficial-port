@@ -39,6 +39,11 @@ public abstract class SlicedLoopingAutomobileSoundInstance extends AutomobileSou
             int freq = AL10.alGetBufferi(buffer, AL10.AL_FREQUENCY);
 
             float duration = (float) (size * 8) / (channels * bits * freq);
+
+            if (Float.isNaN(duration)) {
+                return;
+            }
+
             boolean mayLoop = lStart > 0 && lEnd > 0;
 
             float s = Math.max(0, lStart);

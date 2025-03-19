@@ -180,7 +180,7 @@ public enum AutomobileRenderer {;
                 bright = false;
             }
             int index = (int)Math.floor(((automobile.getTime() + tickDelta) / 1.5f) % skidTexes.length);
-            var skidEffectBuffer = buffers.getBuffer(bright ? RenderType.eyes(skidTexes[index]) : RenderType.entitySmoothCutout(skidTexes[index]));
+            var skidEffectBuffer = buffers.getBuffer(bright ? RenderType.eyes(skidTexes[index]) : RenderType.entityCutout(skidTexes[index]));
 
             for (var pos : wPoses) {
                 if (pos.end() == WheelBase.WheelEnd.BACK) {

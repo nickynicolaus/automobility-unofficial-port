@@ -48,7 +48,7 @@ public enum AutomobilityBlocks {;
     public static final Eventual<Block> GRASS_OFF_ROAD = register("grass_off_road", () -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GRASS_BLOCK).noCollission(), AUtils.colorFromInt(0x406918)), Automobility.TAB);
     public static final Eventual<Block> DIRT_OFF_ROAD = register("dirt_off_road", () -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT).noCollission(), AUtils.colorFromInt(0x594227)), Automobility.TAB);
     public static final Eventual<Block> SAND_OFF_ROAD = register("sand_off_road", () -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SAND).noCollission(), AUtils.colorFromInt(0xC2B185)), Automobility.TAB);
-    public static final Eventual<Block> SNOW_OFF_ROAD = register("snow_off_road", () -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SNOW).noCollission(), AUtils.colorFromInt(0xD0E7ED)), Automobility.TAB);
+    public static final Eventual<Block> SNOW_OFF_ROAD = register("snow_off_road", () -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SNOW_BLOCK).noCollission(), AUtils.colorFromInt(0xD0E7ED)), Automobility.TAB);
 
     public static final Eventual<Block> LAUNCH_GEL = register("launch_gel", () -> new LaunchGelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.CLAY).strength(0.1f).sound(SoundType.HONEY_BLOCK).noCollission()), Automobility.TAB);
 

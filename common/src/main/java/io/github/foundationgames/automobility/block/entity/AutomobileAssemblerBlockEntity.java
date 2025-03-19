@@ -204,7 +204,7 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
 
         this.wheel.unwrapKey().ifPresent(key -> {
             var wheelStack = AutomobilityItems.AUTOMOBILE_WHEEL.require().createStack(key);
-            wheelStack.setCount(this.getFrame().model().wheelBase().wheelCount());
+            wheelStack.setCount(this.wheelCount);
             this.level.addFreshEntity(new ItemEntity(level, pos.x, pos.y, pos.z, wheelStack));
         });
 
