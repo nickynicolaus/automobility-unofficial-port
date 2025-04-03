@@ -7,6 +7,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,8 +23,16 @@ public record WheelBase(List<WheelPos> wheels) {
         return wheels().size();
     }
 
+    public double longLength() {
+        double min = wheels.stream().map(WheelPos::forward).min(Comparator.comparingDouble(f -> (double) f)).orElse(0f);
+        double max = wheels.stream().map(WheelPos::forward).max(Comparator.comparingDouble(f -> (double) f)).orElse(0f);
+
+        return (max - min) / 16;
+    }
+
     public enum WheelSide implements StringRepresentable {
         LEFT,
+        CENTER,
         RIGHT;
 
         public static final Codec<WheelSide> CODEC = StringRepresentable.fromEnum(WheelSide::values);

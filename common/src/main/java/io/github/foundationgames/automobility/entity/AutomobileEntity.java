@@ -187,6 +187,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private Vec3 lastVelocity = Vec3.ZERO;
     private Vec3 lastMeasuredPos = Vec3.ZERO;
 
+    private float measuredAngVel = 0;
+    private float smoothAngVel = 0;
+
     private Vec3 prevTailPos = null;
     private float prevYawForRotate = 0;
 
@@ -511,6 +514,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public boolean isDrifting() {
         return this.drifting;
+    }
+
+    public boolean isBike() {
+        return this.getFrame().model().wheelBase().wheelCount() == 2;
     }
 
     public <T extends RearAttachment> void setRearAttachment(RearAttachmentType<T> rearAttachment) {
@@ -1143,6 +1150,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                     whenRotated(yawInc, first);
                 }
             }
+        }
+
+        this.measuredAngVel = yawInc;
+        if (this.automobileOnGround()) {
+            this.smoothAngVel = Mth.lerp(0.34f, this.smoothAngVel, this.measuredAngVel);
         }
     }
 
@@ -1973,48 +1985,59 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
             if (lowestDisplacementPos != null) {
                 var displacementCenterPos = new Vec3(centerPos.x, (lowestDisplacementPos.y + highestDisplacementPos.y) * 0.5, centerPos.z);
-
                 var combinedNormals = Vec3.ZERO;
                 int normalCount = 0;
-                Vec3 positiveXOffset = null;
-                Vec3 negativeXOffset = null;
-                Vec3 positiveZOffset = null;
-                Vec3 negativeZOffset = null;
 
-                for (var pointPos : scannedPoints) {
-                    var pointOffset = pointPos.subtract(displacementCenterPos);
-                    if (pointOffset.x > 0) {
-                        if (positiveXOffset != null) {
-                            var normal = positiveXOffset.cross(pointOffset).normalize();
-                            if (normal.y < 0) normal = normal.reverse();
-                            combinedNormals = combinedNormals.add(normal);
-                            normalCount++;
-                            positiveXOffset = null;
-                        } else positiveXOffset = pointOffset;
-                    } else if (pointOffset.x < 0) {
-                        if (negativeXOffset != null) {
-                            var normal = negativeXOffset.cross(pointOffset).normalize();
-                            if (normal.y < 0) normal = normal.reverse();
-                            combinedNormals = combinedNormals.add(normal);
-                            normalCount++;
-                            negativeXOffset = null;
-                        } else negativeXOffset = pointOffset;
-                    } else if (pointOffset.z > 0) {
-                        if (positiveZOffset != null) {
-                            var normal = positiveZOffset.cross(pointOffset).normalize();
-                            if (normal.y < 0) normal = normal.reverse();
-                            combinedNormals = combinedNormals.add(normal);
-                            normalCount++;
-                            positiveZOffset = null;
-                        } else positiveZOffset = pointOffset;
-                    } else if (pointOffset.z < 0) {
-                        if (negativeZOffset != null) {
-                            var normal = negativeZOffset.cross(pointOffset).normalize();
-                            if (normal.y < 0) normal = normal.reverse();
-                            combinedNormals = combinedNormals.add(normal);
-                            normalCount++;
-                            negativeZOffset = null;
-                        } else negativeZOffset = pointOffset;
+                if (scannedPoints.size() == 2) {
+                    var forward = highestDisplacementPos.subtract(lowestDisplacementPos);
+                    var alongGround = forward.multiply(1, 0, 1);
+                    var side = forward.cross(alongGround).normalize();
+
+                    if (side.lengthSqr() > 0.0001) {
+                        combinedNormals = forward.cross(side).normalize();
+                        normalCount = 1;
+                    }
+                } else {
+                    Vec3 positiveXOffset = null;
+                    Vec3 negativeXOffset = null;
+                    Vec3 positiveZOffset = null;
+                    Vec3 negativeZOffset = null;
+
+                    for (var pointPos : scannedPoints) {
+                        var pointOffset = pointPos.subtract(displacementCenterPos);
+                        if (pointOffset.x > 0) {
+                            if (positiveXOffset != null) {
+                                var normal = positiveXOffset.cross(pointOffset).normalize();
+                                if (normal.y < 0) normal = normal.reverse();
+                                combinedNormals = combinedNormals.add(normal);
+                                normalCount++;
+                                positiveXOffset = null;
+                            } else positiveXOffset = pointOffset;
+                        } else if (pointOffset.x < 0) {
+                            if (negativeXOffset != null) {
+                                var normal = negativeXOffset.cross(pointOffset).normalize();
+                                if (normal.y < 0) normal = normal.reverse();
+                                combinedNormals = combinedNormals.add(normal);
+                                normalCount++;
+                                negativeXOffset = null;
+                            } else negativeXOffset = pointOffset;
+                        } else if (pointOffset.z > 0) {
+                            if (positiveZOffset != null) {
+                                var normal = positiveZOffset.cross(pointOffset).normalize();
+                                if (normal.y < 0) normal = normal.reverse();
+                                combinedNormals = combinedNormals.add(normal);
+                                normalCount++;
+                                positiveZOffset = null;
+                            } else positiveZOffset = pointOffset;
+                        } else if (pointOffset.z < 0) {
+                            if (negativeZOffset != null) {
+                                var normal = negativeZOffset.cross(pointOffset).normalize();
+                                if (normal.y < 0) normal = normal.reverse();
+                                combinedNormals = combinedNormals.add(normal);
+                                normalCount++;
+                                negativeZOffset = null;
+                            } else negativeZOffset = pointOffset;
+                        }
                     }
                 }
 
@@ -2022,6 +2045,26 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
                 var up = new Vector3f(0, 1, 0);
                 var rotatedUp = new Vector3f((float) combinedNormals.x(), (float) combinedNormals.y(), (float) combinedNormals.z());
+
+                if (entity.isBike()) {
+                    double sign = entity.input.braking && !entity.input.accelerating ? 1 : -1;
+                    var side = new Vec3(entity.smoothAngVel * sign * (entity.isDrifting() ? 0.16 : 0.08), 0, 0).yRot((float) -Math.toRadians(entity.getYRot()));
+                    rotatedUp.add((float) side.x(), (float) side.y(), (float) side.z());
+
+                    double overSpeed = entity.getMeasuredMovement().lengthSqr() - Math.pow(entity.stats.getComfortableSpeed() * 0.95, 2);
+                    double boost = entity.getBoostTimer() - 5;
+                    if (!entity.isDrifting() && boost > 0 && overSpeed > 0) {
+                        double wheelie = -overSpeed * 0.65 * Math.clamp(Math.sqrt(boost * 0.2), 0, 1);
+                        double base = entity.getFrame().model().wheelBase().longLength();
+                        double sine = -wheelie / Math.sqrt(rotatedUp.lengthSquared() + wheelie * wheelie);
+
+                        var back = new Vec3(0, 0, (float) wheelie).yRot((float) -Math.toRadians(entity.getYRot()));
+                        rotatedUp.add((float) back.x(), (float) back.y(), (float) back.z());
+                        displacementCenterPos = displacementCenterPos.add(0, base * sine * 0.5, 0);
+                    }
+                }
+
+                rotatedUp.normalize();
                 up.rotationTo(rotatedUp, this.angularTarget);
 
                 verticalTarget = (float) displacementCenterPos.y;

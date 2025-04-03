@@ -1,5 +1,6 @@
 package io.github.foundationgames.automobility.mixin;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.platform.Platform;
 import net.minecraft.client.Minecraft;
@@ -8,6 +9,7 @@ import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -30,7 +32,7 @@ public class LocalPlayerMixin {
                         input.left,
                         input.right,
                         Platform.get().controller().drifting(),
-                        minecraft.options.keySprint.isDown()
+                        automobility$isSprinting()
                 );
             } else {
                 vehicle.provideClientInput(
@@ -39,9 +41,14 @@ public class LocalPlayerMixin {
                         input.left,
                         input.right,
                         input.jumping,
-                        minecraft.options.keySprint.isDown()
+                        automobility$isSprinting()
                 );
             }
         }
+    }
+
+    @Unique
+    private boolean automobility$isSprinting() {
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), ((KeyMappingAccess) minecraft.options.keySprint).automobility$getKey().getValue());
     }
 }

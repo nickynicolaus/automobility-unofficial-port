@@ -190,9 +190,21 @@ public enum AutomobileRenderer {;
                     float wheelWidth =  (wheels.model().width() / 16) * scale;
                     float back = (wheelRadius > 2) ? (float) (Math.sqrt((wheelRadius * wheelRadius) - Math.pow(wheelRadius - 2, 2)) - 0.85) / 16 : 0.08f;
                     pose.pushPose();
-                    pose.translate((pos.right() / 16) + (wheelWidth * (pos.side() == WheelBase.WheelSide.RIGHT ? 1 : -1)), heightOffset / 16, (-pos.forward() / 16) + back);
-                    pose.scale(pos.side() == WheelBase.WheelSide.LEFT ? -1 : 1, 1, -1);
-                    skidEffectModel.renderToBuffer(pose, skidEffectBuffer, light, overlay, AUtils.colorToInt(0.6f, r, g, b));
+
+                    float[] skids;
+                    switch (pos.side()) {
+                        case RIGHT -> skids = new float[] {1};
+                        case LEFT -> skids = new float[] {-1};
+                        default -> skids = new float[] {-1, 1};
+                    }
+
+                    for (float s : skids) {
+                        pose.pushPose();
+                        pose.translate((pos.right() / 16) + (wheelWidth * s), heightOffset / 16, (-pos.forward() / 16) + back);
+                        pose.scale(s, 1, -1);
+                        skidEffectModel.renderToBuffer(pose, skidEffectBuffer, light, overlay, AUtils.colorToInt(0.6f, r, g, b));
+                        pose.popPose();
+                    }
                     pose.popPose();
                 }
             }
