@@ -18,7 +18,7 @@ public class ServerGamePacketListenerImplMixin {
     private void automobility$openAutomobileInventory(ServerboundPlayerCommandPacket packet, CallbackInfo ci) {
         var vehicle = this.player.getVehicle();
         if (packet.getAction() == ServerboundPlayerCommandPacket.Action.OPEN_INVENTORY && vehicle instanceof AutomobileEntity automobile) {
-            if (automobile.hasInventory()) {
+            if (automobile.hasInventory(this.player)) {
                 automobile.openInventory(this.player);
                 ci.cancel();
             }

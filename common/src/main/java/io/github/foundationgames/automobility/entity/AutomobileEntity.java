@@ -520,6 +520,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return this.getFrame().model().wheelBase().wheelCount() == 2;
     }
 
+    public boolean isDecorative() {
+        return this.decorative;
+    }
+
     public <T extends RearAttachment> void setRearAttachment(RearAttachmentType<T> rearAttachment) {
         if (rearAttachment == null) {
             return;
@@ -1015,6 +1019,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void receiveVehicleCollisions() {
+        if (this.decorative) {
+            return;
+        }
+
         var collisions = new HashMap<AutomobileEntity, IncomingCollision>();
 
         for (var box : this.hitboxes) {
@@ -1042,7 +1050,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             hitScale *= (1 + col.inertia() / this.getFrame().weight()) * 0.5;
             this.addedVelocity = this.addedVelocity.add(
                     meToCollision.reverse().normalize().scale(hitScale * (1 + 0.1 * Math.sqrt(col.velocity().length())) * col.depth().lengthSqr())
-                            .add(0, col.velocity().length() * 0.2, 0));
+                            .multiply(1, 0, 1));
 
             if (hadVehicleCollision <= 0) {
                 level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.22f, 0.7f + (0.06f * (this.level().random.nextFloat() - 0.5f)), false);
@@ -1476,8 +1484,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     @Override
-    public boolean hasInventory() {
-        return this.getRearAttachment().hasMenu();
+    public boolean hasInventory(@Nullable Player player) {
+        return this.getRearAttachment().hasMenu(player);
     }
 
     @Override
@@ -1562,7 +1570,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public InteractionResult handleInteraction(Player player, InteractionHand hand) {
         if (player.isShiftKeyDown()) {
-            if (this.hasInventory()) {
+            if (this.hasInventory(player)) {
                 if (!level().isClientSide()) {
                     openInventory(player);
                     return InteractionResult.PASS;
@@ -1580,20 +1588,32 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             double angleDiff = Mth.wrapDegrees(this.getYRot() - playerAngle);
 
             if (angleDiff < 0 && !this.frontAttachment.type.isEmpty()) {
+                if (level().isClientSide()) {
+                    return InteractionResult.SUCCESS;
+                }
+
                 this.destroyFrontAttachment(!player.isCreative());
                 this.playHitSound(this.getHeadPos());
 
-                return InteractionResult.sidedSuccess(level().isClientSide);
+                return InteractionResult.PASS;
             } else if (!this.rearAttachment.type.isEmpty()) {
+                if (level().isClientSide()) {
+                    return InteractionResult.SUCCESS;
+                }
+
                 this.destroyRearAttachment(!player.isCreative());
                 this.playHitSound(this.rearAttachment.pos());
 
-                return InteractionResult.sidedSuccess(level().isClientSide);
+                return InteractionResult.PASS;
             } else {
+                if (level().isClientSide()) {
+                    return InteractionResult.SUCCESS;
+                }
+
                 this.destroyAutomobile(!player.isCreative(), RemovalReason.KILLED);
                 this.playHitSound(this.position());
 
-                return InteractionResult.sidedSuccess(level().isClientSide);
+                return InteractionResult.PASS;
             }
         }
 

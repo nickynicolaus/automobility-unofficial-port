@@ -14,6 +14,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.DyeColor;
@@ -113,8 +114,8 @@ public class BannerPostRearAttachment extends RearAttachment {
     }
 
     @Override
-    public boolean hasMenu() {
-        return true;
+    public boolean hasMenu(@Nullable Player player) {
+        return (player != null && player.isCreative()) || !this.automobile().isDecorative();
     }
 
     @Override

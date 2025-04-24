@@ -16,7 +16,7 @@ public class MultiPlayerGameModeMixin {
 
     @Inject(method = "isServerControlledInventory", at = @At("HEAD"), cancellable = true)
     private void automobility$allowCustomRidingInventories(CallbackInfoReturnable<Boolean> cir) {
-        if (this.minecraft.player != null && this.minecraft.player.getVehicle() instanceof EntityWithInventory invEntity && invEntity.hasInventory()) {
+        if (this.minecraft.player != null && this.minecraft.player.getVehicle() instanceof EntityWithInventory invEntity && invEntity.hasInventory(this.minecraft.player)) {
             cir.setReturnValue(true);
         }
     }

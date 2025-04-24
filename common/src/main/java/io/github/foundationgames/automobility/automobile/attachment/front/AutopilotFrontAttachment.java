@@ -6,14 +6,25 @@ import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.entity.HitboxEntity;
 import io.github.foundationgames.automobility.item.AutopilotSignBlockItem;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AutopilotFrontAttachment extends FrontAttachment {
     public static final int MAX_HEADING_COMMAND_TIME = 6000;
@@ -24,6 +35,8 @@ public class AutopilotFrontAttachment extends FrontAttachment {
 
     private int honkTimer = -6;
     private int impatience = 0;
+
+    private final List<EntityType<?>> stopsFor = new ArrayList<>();
 
     public AutopilotFrontAttachment(FrontAttachmentType<?> type, AutomobileEntity automobile) {
         super(type, automobile);
@@ -71,7 +84,10 @@ public class AutopilotFrontAttachment extends FrontAttachment {
                     this.honkTimer = 8 + world().getRandom().nextInt(5);
                 }
             } else for (var e : world().getEntitiesOfClass(LivingEntity.class, box.inflate(1.25, -0.5, 1.25))) {
-                if (e.isUsingItem() && e.getItemInHand(e.getUsedItemHand()).getItem() instanceof AutopilotSignBlockItem) {
+                if (this.stopsFor.contains(e.getType())) {
+                    somethingInTheWay = true;
+                    break;
+                } else if (e.isUsingItem() && e.getItemInHand(e.getUsedItemHand()).getItem() instanceof AutopilotSignBlockItem) {
                     var eLooking = e.getLookAngle();
                     var meToE = e.position().subtract(pos()).normalize();
 
@@ -208,6 +224,16 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         nbt.putInt("timeout", this.headingTimeLimit);
         nbt.putInt("honk_time", this.honkTimer);
         nbt.putInt("impatience", this.impatience);
+
+        var stopsFor = new ListTag();
+        for (var type : this.stopsFor) {
+            var id = BuiltInRegistries.ENTITY_TYPE.getResourceKey(type).map(ResourceKey::location).orElse(null);
+
+            if (id != null) {
+                stopsFor.add(StringTag.valueOf(id.toString()));
+            }
+        }
+        nbt.put("StopsFor", stopsFor);
     }
 
     @Override
@@ -223,6 +249,18 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         this.headingTimeLimit = nbt.getInt("timeout");
         this.honkTimer = nbt.getInt("honk_time");
         this.impatience = nbt.getInt("impatience");
+
+        this.stopsFor.clear();
+        var stopsFor = nbt.getList("StopsFor", StringTag.TAG_STRING);
+        for (var tag : stopsFor) {
+            if (tag instanceof StringTag strTag) {
+                var id = ResourceLocation.tryParse(strTag.getAsString());
+
+                if (id != null) {
+                    BuiltInRegistries.ENTITY_TYPE.getOptional(id).ifPresent(this.stopsFor::add);
+                }
+            }
+        }
     }
 
     public int getAnimationTimer() {

@@ -8,6 +8,7 @@ import io.github.foundationgames.automobility.screen.AutoMechanicTableScreenHand
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CartographyTableMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
@@ -39,7 +40,7 @@ public class BlockRearAttachment extends RearAttachment {
     }
 
     @Override
-    public boolean hasMenu() {
+    public boolean hasMenu(@Nullable Player player) {
         return this.screenProvider != null;
     }
 

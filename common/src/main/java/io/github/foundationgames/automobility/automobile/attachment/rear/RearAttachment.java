@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +105,7 @@ public abstract class RearAttachment extends BaseAttachment<RearAttachmentType<?
         return 0.5;
     }
 
-    public boolean hasMenu() {
+    public boolean hasMenu(@Nullable Player player) {
         return false;
     }
 

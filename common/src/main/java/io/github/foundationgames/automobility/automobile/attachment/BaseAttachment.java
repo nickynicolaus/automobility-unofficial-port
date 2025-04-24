@@ -3,11 +3,13 @@ package io.github.foundationgames.automobility.automobile.attachment;
 import io.github.foundationgames.automobility.automobile.AutomobileComponent;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class BaseAttachment<T extends AutomobileComponent<T>> {
@@ -58,7 +60,7 @@ public abstract class BaseAttachment<T extends AutomobileComponent<T>> {
     public void updatePacketRequested(ServerPlayer player) {
     }
 
-    protected boolean canModifyBlocks() {
+    protected boolean canModify(BlockPos pos) {
         if (this.automobile.getFirstPassenger() instanceof Player player && player.mayBuild()) {
             return true;
         }
@@ -69,10 +71,11 @@ public abstract class BaseAttachment<T extends AutomobileComponent<T>> {
         }
 
         for (int i = 0; i < 4; i++) {
-            if (world().getBlockState(this.automobile.blockPosition().below(i)).is(AutomobilityBlocks.ALLOW.require())) {
+            if (world().getBlockState(pos.below(i)).is(AutomobilityBlocks.ALLOW.require())) {
                 return true;
             }
         }
+
         return false;
     }
 

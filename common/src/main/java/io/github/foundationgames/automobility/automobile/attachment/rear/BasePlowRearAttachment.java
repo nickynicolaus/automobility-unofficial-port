@@ -24,7 +24,7 @@ public abstract class BasePlowRearAttachment extends ExtendableRearAttachment {
         super.tick();
         var pos = this.origin().add(this.yawVec().scale(0.11 * this.type.model().pivotDistPx()));
 
-        if (this.extended() && canModifyBlocks() && lastPos != null && lastPos.subtract(pos).length() > 0.03 && this.world() instanceof ServerLevel world) {
+        if (this.extended() && lastPos != null && lastPos.subtract(pos).length() > 0.03 && this.world() instanceof ServerLevel world) {
             this.plow(pos, world);
         }
 
@@ -42,6 +42,10 @@ public abstract class BasePlowRearAttachment extends ExtendableRearAttachment {
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 blockIter.set(x, y, z);
+                if (!canModify(blockIter)) {
+                    continue;
+                }
+
                 var state = world.getBlockState(blockIter);
                 var result = this.plowResult(blockIter, state);
 

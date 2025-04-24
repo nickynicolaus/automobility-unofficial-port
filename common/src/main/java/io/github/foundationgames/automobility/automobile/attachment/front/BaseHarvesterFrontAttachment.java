@@ -25,7 +25,7 @@ public abstract class BaseHarvesterFrontAttachment extends FrontAttachment {
         super.tick();
         var pos = this.pos();
 
-        if (canModifyBlocks() && lastPos != null && lastPos.subtract(pos).length() > 0.03 && this.world() instanceof ServerLevel world) {
+        if (lastPos != null && lastPos.subtract(pos).length() > 0.03 && this.world() instanceof ServerLevel world) {
             this.harvest(pos, world);
         }
 
@@ -47,6 +47,10 @@ public abstract class BaseHarvesterFrontAttachment extends FrontAttachment {
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 blockIter.set(x, y, z);
+                if (!canModify(blockIter)) {
+                    continue;
+                }
+
                 var state = world.getBlockState(blockIter);
                 if (canHarvest(state)) {
                     var stacks = Block.getDrops(state, world, blockIter, null, entity, ItemStack.EMPTY);
