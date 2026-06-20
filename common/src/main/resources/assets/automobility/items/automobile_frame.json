@@ -1,0 +1,23 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:model",
+          "model": "automobility:item/automobile_frame"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "automobility:item/automobile_frame",
+      "model": {
+        "type": "automobility:automobile_item",
+        "kind": "frame"
+      }
+    },
+    "property": "minecraft:display_context"
+  }
+}

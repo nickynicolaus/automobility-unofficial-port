@@ -1,6 +1,6 @@
 plugins {
 	id("java")
-	id("fabric-loom") version "1.9-SNAPSHOT" apply false
+	id("net.fabricmc.fabric-loom") version "1.17.11" apply false
 }
 
 allprojects {
@@ -41,12 +41,12 @@ subprojects {
 		}
 	}
 
-	java.toolchain.languageVersion = JavaLanguageVersion.of("21")
+	java.toolchain.languageVersion = JavaLanguageVersion.of("25")
 
 	tasks {
 		withType<JavaCompile> {
 			options.encoding = "UTF-8"
-			options.release.set(21)
+			options.release.set(25)
 		}
 		withType<GenerateModuleMetadata>().configureEach {
 			enabled = false

@@ -12,11 +12,12 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ExtraCodecs;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -29,7 +30,7 @@ public record AutomobileEngine(
         Supplier<SoundEvent> sound,
         EngineModel model
 ) implements AutomobileComponent<AutomobileEngine> {
-    public static final ResourceLocation ID = Automobility.rl("engine");
+    public static final Identifier ID = Automobility.rl("engine");
 
     public static final ResourceKey<Registry<AutomobileEngine>> REGISTRY = ResourceKey.createRegistryKey(Automobility.rl("automobile_engine"));
     public static final DefaultRegistrar<AutomobileEngine> BOOTSTRAP = new DefaultRegistrar<>(REGISTRY);
@@ -56,7 +57,7 @@ public record AutomobileEngine(
 
     public static final AutomobileEngine EMPTY = new AutomobileEngine(true, 0.01f, 0.01f,
             () -> SoundEvents.MINECART_INSIDE,
-            model(ResourceLocation.parse("empty"), Automobility.rl("empty"))
+            model(Identifier.parse("empty"), Automobility.rl("empty"))
     );
 
     public static final ResourceKey<AutomobileEngine> EMPTY_KEY = BOOTSTRAP.register(Automobility.rl("empty"), EMPTY);
@@ -137,7 +138,7 @@ public record AutomobileEngine(
     }
 
     @Override
-    public ResourceLocation containerId() {
+    public Identifier containerId() {
         return ID;
     }
 
@@ -148,34 +149,34 @@ public record AutomobileEngine(
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return Automobility.rl("invalid");
     }
 
-    public static String getTranslationKey(ResourceLocation id) {
+    public static String getTranslationKey(Identifier id) {
         return "engine."+id.getNamespace()+"."+id.getPath();
     }
 
-    public static EngineModel model(ResourceLocation texture,
-                                    ResourceLocation modelId,
+    public static EngineModel model(Identifier texture,
+                                    Identifier modelId,
                                     ExhaustPos... exhausts) {
         return new EngineModel(texture, modelId, List.of(exhausts));
     }
 
     public record EngineModel(
-            ResourceLocation texture,
-            ResourceLocation modelId,
+            Identifier texture,
+            Identifier modelId,
             List<ExhaustPos> exhausts
     ) {
         public static final Codec<EngineModel> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-                ResourceLocation.CODEC.fieldOf("texture").forGetter(EngineModel::texture),
-                ResourceLocation.CODEC.fieldOf("model").forGetter(EngineModel::modelId),
+                Identifier.CODEC.fieldOf("texture").forGetter(EngineModel::texture),
+                Identifier.CODEC.fieldOf("model").forGetter(EngineModel::modelId),
                 Codec.list(ExhaustPos.CODEC).fieldOf("exhausts").forGetter(EngineModel::exhausts)
         ).apply(inst, EngineModel::new));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, EngineModel> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC, EngineModel::texture,
-                ResourceLocation.STREAM_CODEC, EngineModel::modelId,
+                Identifier.STREAM_CODEC, EngineModel::texture,
+                Identifier.STREAM_CODEC, EngineModel::modelId,
                 ByteBufCodecs.<RegistryFriendlyByteBuf, ExhaustPos>list().apply(ExhaustPos.STREAM_CODEC), EngineModel::exhausts,
                 EngineModel::new
         );
@@ -198,7 +199,7 @@ public record AutomobileEngine(
                 ExhaustPos::create
         );
 
-        public static ExhaustPos create(Vector3f pos, float pitch, float yaw) {
+        public static ExhaustPos create(Vector3fc pos, float pitch, float yaw) {
             return new ExhaustPos(pos.x(), pos.y(), pos.z(), pitch, yaw);
         }
 

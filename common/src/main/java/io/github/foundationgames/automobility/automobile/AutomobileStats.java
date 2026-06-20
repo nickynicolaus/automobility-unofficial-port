@@ -1,12 +1,12 @@
 package io.github.foundationgames.automobility.automobile;
 
 import io.github.foundationgames.automobility.Automobility;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.Consumer;
 
 public class AutomobileStats implements StatContainer<AutomobileStats> {
-    public static final ResourceLocation ID = Automobility.rl("automobile");
+    public static final Identifier ID = Automobility.rl("automobile");
     public static final DisplayStat<AutomobileStats> STAT_ACCELERATION = new DisplayStat<>("acceleration", AutomobileStats::getAcceleration);
     public static final DisplayStat<AutomobileStats> STAT_COMFORTABLE_SPEED = new DisplayStat<>("comfortable_speed", stats -> stats.getComfortableSpeed() * 20);
     public static final DisplayStat<AutomobileStats> STAT_HANDLING = new DisplayStat<>("handling", AutomobileStats::getHandling);
@@ -44,7 +44,7 @@ public class AutomobileStats implements StatContainer<AutomobileStats> {
     }
 
     @Override
-    public ResourceLocation containerId() {
+    public Identifier containerId() {
         return ID;
     }
 

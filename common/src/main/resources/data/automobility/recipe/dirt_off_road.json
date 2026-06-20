@@ -1,18 +1,14 @@
 {
-    "type": "minecraft:crafting_shaped",
-    "pattern": [
-        "ABA"
-    ],
-    "key": {
-        "A": {
-            "item": "minecraft:dirt"
-        },
-        "B": {
-            "item": "minecraft:gravel"
-        }
-    },
-    "result": {
-        "id": "automobility:dirt_off_road",
-        "count": 6
-    }
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ABA"
+  ],
+  "key": {
+    "A": "minecraft:dirt",
+    "B": "minecraft:gravel"
+  },
+  "result": {
+    "id": "automobility:dirt_off_road",
+    "count": 6
+  }
 }

@@ -4,11 +4,13 @@ import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -24,8 +26,8 @@ public class LaunchGelBlock extends Block {
     }
 
     @Override
-    public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
-        super.entityInside(state, world, pos, entity);
+    protected void entityInside(BlockState state, Level world, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isInside) {
+        super.entityInside(state, world, pos, entity, effectApplier, isInside);
 
         if (entity instanceof AutomobileEntity automobile && automobile.automobileOnGround()) {
             automobile.boost(0.14f, 7);
@@ -33,14 +35,12 @@ public class LaunchGelBlock extends Block {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
+    protected boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         return canExistAt(world, pos);
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
-        super.neighborChanged(state, world, pos, block, fromPos, notify);
-
+    protected void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, Orientation orientation, boolean notify) {
         if (!canExistAt(world, pos)) {
             world.destroyBlock(pos, true);
         }

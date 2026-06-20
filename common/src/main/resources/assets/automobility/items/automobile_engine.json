@@ -1,0 +1,23 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:model",
+          "model": "automobility:item/automobile_engine"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "automobility:item/automobile_engine",
+      "model": {
+        "type": "automobility:automobile_item",
+        "kind": "engine"
+      }
+    },
+    "property": "minecraft:display_context"
+  }
+}

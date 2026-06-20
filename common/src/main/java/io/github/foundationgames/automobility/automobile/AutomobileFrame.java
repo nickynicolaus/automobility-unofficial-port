@@ -14,7 +14,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.Vec3;
 
@@ -29,7 +29,7 @@ public record AutomobileFrame(
         HornSoundDefinition horn,
         FrameModel model
 ) implements AutomobileComponent<AutomobileFrame> {
-    public static final ResourceLocation ID = Automobility.rl("frame");
+    public static final Identifier ID = Automobility.rl("frame");
 
     public static final ResourceKey<Registry<AutomobileFrame>> REGISTRY = ResourceKey.createRegistryKey(Automobility.rl("automobile_frame"));
     public static final DefaultRegistrar<AutomobileFrame> BOOTSTRAP = new DefaultRegistrar<>(REGISTRY);
@@ -63,7 +63,7 @@ public record AutomobileFrame(
             List.of(),
             HornSoundDefinition.DEFAULT,
             FrameModel.legacy(
-                    ResourceLocation.parse("empty"),
+                    Identifier.parse("empty"),
                     Automobility.rl("empty"),
                     WheelBase.basic(16, 16),
                     16, 8, 8, 4, 8, 8
@@ -301,7 +301,7 @@ public record AutomobileFrame(
     }
 
     @Override
-    public ResourceLocation containerId() {
+    public Identifier containerId() {
         return ID;
     }
 
@@ -310,12 +310,12 @@ public record AutomobileFrame(
         action.accept(STAT_WEIGHT);
     }
 
-    public static String getTranslationKey(ResourceLocation id) {
+    public static String getTranslationKey(Identifier id) {
         return "frame."+id.getNamespace()+"."+id.getPath();
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return Automobility.rl("invalid");
     }
 
@@ -343,8 +343,8 @@ public record AutomobileFrame(
     }
 
     public record FrameModel(
-            ResourceLocation texture,
-            ResourceLocation modelId,
+            Identifier texture,
+            Identifier modelId,
             WheelBase wheelBase,
             float lengthPx,
             Vec3 driverSeatPos,
@@ -354,8 +354,8 @@ public record AutomobileFrame(
             float frontAttachmentPos
     ) {
         public static final Codec<FrameModel> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-                ResourceLocation.CODEC.fieldOf("texture").forGetter(FrameModel::texture),
-                ResourceLocation.CODEC.fieldOf("model").forGetter(FrameModel::modelId),
+                Identifier.CODEC.fieldOf("texture").forGetter(FrameModel::texture),
+                Identifier.CODEC.fieldOf("model").forGetter(FrameModel::modelId),
                 WheelBase.CODEC.fieldOf("wheels").forGetter(FrameModel::wheelBase),
                 Codec.FLOAT.fieldOf("length_pixels").forGetter(FrameModel::lengthPx),
                 Vec3.CODEC.fieldOf("driver_seat").forGetter(FrameModel::driverSeatPos),
@@ -367,8 +367,8 @@ public record AutomobileFrame(
 
         public static final StreamCodec<RegistryFriendlyByteBuf, FrameModel> STREAM_CODEC = StreamCodec.of(
                 (buf, m) -> {
-                    buf.writeResourceLocation(m.texture());
-                    buf.writeResourceLocation(m.modelId());
+                    buf.writeIdentifier(m.texture());
+                    buf.writeIdentifier(m.modelId());
                     WheelBase.STREAM_CODEC.encode(buf, m.wheelBase());
                     buf.writeFloat(m.lengthPx());
                     AUtils.STREAM_CODEC_VEC3.encode(buf, m.driverSeatPos());
@@ -378,8 +378,8 @@ public record AutomobileFrame(
                     buf.writeFloat(m.frontAttachmentPos());
                 },
                 buf -> new FrameModel(
-                        buf.readResourceLocation(),
-                        buf.readResourceLocation(),
+                        buf.readIdentifier(),
+                        buf.readIdentifier(),
                         WheelBase.STREAM_CODEC.decode(buf),
                         buf.readFloat(),
                         AUtils.STREAM_CODEC_VEC3.decode(buf),
@@ -390,8 +390,8 @@ public record AutomobileFrame(
                 )
         );
 
-        public static FrameModel legacy(ResourceLocation texture,
-                                        ResourceLocation modelId,
+        public static FrameModel legacy(Identifier texture,
+                                        Identifier modelId,
                                         WheelBase wheelBase,
                                         float lengthPx,
                                         float seatHeight,

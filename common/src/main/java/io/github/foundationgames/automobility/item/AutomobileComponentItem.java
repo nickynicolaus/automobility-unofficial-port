@@ -11,13 +11,14 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, V> extends Item implements CustomCreativeOutput {
     protected final String translationKey;
@@ -37,17 +38,17 @@ public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, 
 
     public abstract T getComponent(ItemStack stack, HolderLookup.Provider registries);
 
-    public abstract ResourceLocation getComponentId(ItemStack stack, T component);
+    public abstract Identifier getComponentId(ItemStack stack, T component);
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag tooltipFlag) {
-        super.appendHoverText(stack, context, tooltip, tooltipFlag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, display, tooltip, tooltipFlag);
         var component = this.getComponent(stack, context.registries());
         var id = this.getComponentId(stack, component);
         var compKey = id.getNamespace()+"."+id.getPath();
-        tooltip.add(Component.translatable(this.translationKey+"."+compKey).withStyle(ChatFormatting.BLUE));
+        tooltip.accept(Component.translatable(this.translationKey+"."+compKey).withStyle(ChatFormatting.BLUE));
 
-        component.appendTexts(tooltip::add, component);
+        component.appendTexts(tooltip, component);
     }
 
     public boolean isVisible(T component) {
@@ -86,11 +87,11 @@ public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, 
         }
 
         @Override
-        public ResourceLocation getComponentId(ItemStack stack, T component) {
+        public Identifier getComponentId(ItemStack stack, T component) {
             var key = stack.get(dataComponent.require());
             if (key == null) return Automobility.rl("empty");
 
-            return key.location();
+            return key.identifier();
         }
 
         public Holder<T> lookupComponent(ItemStack stack, HolderLookup.Provider registries) {
@@ -103,7 +104,7 @@ public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, 
         }
 
         @Override
-        public void provideCreativeOutput(CreativeModeTab.Output output, HolderLookup.Provider registries) {
+        public void provideCreativeOutput(Consumer<ItemStack> output, HolderLookup.Provider registries) {
             registries.lookupOrThrow(registryKey).listElements().forEach(ref ->
                     ref.unwrapKey().ifPresent(key -> {
                         var component = ref.value();
@@ -131,12 +132,12 @@ public abstract class AutomobileComponentItem<T extends AutomobileComponent<T>, 
         }
 
         @Override
-        public ResourceLocation getComponentId(ItemStack stack, T component) {
+        public Identifier getComponentId(ItemStack stack, T component) {
             return component.getId();
         }
 
         @Override
-        public void provideCreativeOutput(CreativeModeTab.Output output, HolderLookup.Provider registries) {
+        public void provideCreativeOutput(Consumer<ItemStack> output, HolderLookup.Provider registries) {
             this.registry.forEach(component -> {
                 if (addToCreative(component)) output.accept(this.createStack(component));
             });

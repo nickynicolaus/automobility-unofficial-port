@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.mixin;
 
 import io.github.foundationgames.automobility.automobile.attachment.rear.BaseChestRearAttachment;
 import io.github.foundationgames.automobility.util.duck.EnderChestContainerDuck;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import org.jetbrains.annotations.Nullable;
@@ -28,15 +29,15 @@ public class PlayerEnderChestContainerMixin implements EnderChestContainerDuck {
     }
 
     @Inject(method = "startOpen", at = @At("TAIL"))
-    private void automobility$openActiveAttachment(Player player, CallbackInfo ci) {
-        if (this.automobility$activeAttachment != null) {
+    private void automobility$openActiveAttachment(ContainerUser user, CallbackInfo ci) {
+        if (this.automobility$activeAttachment != null && user.getLivingEntity() instanceof Player player) {
             this.automobility$activeAttachment.open(player);
         }
     }
 
     @Inject(method = "stopOpen", at = @At("TAIL"))
-    private void automobility$closeActiveAttachment(Player player, CallbackInfo ci) {
-        if (this.automobility$activeAttachment != null) {
+    private void automobility$closeActiveAttachment(ContainerUser user, CallbackInfo ci) {
+        if (this.automobility$activeAttachment != null && user.getLivingEntity() instanceof Player player) {
             this.automobility$activeAttachment.close(player);
         }
         this.automobility$activeAttachment = null;

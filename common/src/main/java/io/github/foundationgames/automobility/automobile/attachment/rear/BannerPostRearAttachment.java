@@ -7,9 +7,9 @@ import io.github.foundationgames.automobility.util.network.CommonPackets;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
@@ -20,6 +20,8 @@ import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 public class BannerPostRearAttachment extends RearAttachment {
@@ -103,14 +105,17 @@ public class BannerPostRearAttachment extends RearAttachment {
     public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.writeNbt(nbt, registry);
 
-        nbt.put("Banner", this.inventory.createTag(registry));
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registry);
+        this.inventory.storeAsItemList(output.list("Items", ItemStack.CODEC));
+        nbt.put("Banner", output.buildResult());
     }
 
     @Override
     public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.readNbt(nbt, registry);
 
-        this.inventory.fromTag(nbt.getList("Banner", Tag.TAG_COMPOUND), registry);
+        var input = TagValueInput.create(ProblemReporter.DISCARDING, registry, nbt.getCompoundOrEmpty("Banner"));
+        this.inventory.fromItemList(input.listOrEmpty("Items", ItemStack.CODEC));
     }
 
     @Override

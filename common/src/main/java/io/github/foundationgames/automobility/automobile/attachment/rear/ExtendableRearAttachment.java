@@ -63,7 +63,7 @@ public abstract class ExtendableRearAttachment extends DeployableRearAttachment 
     public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.readNbt(nbt, registry);
 
-        this.setExtended(nbt.getBoolean("extended"));
+        this.setExtended(nbt.getBooleanOr("extended", false));
     }
 
     @Override

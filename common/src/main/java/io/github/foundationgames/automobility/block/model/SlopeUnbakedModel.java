@@ -9,7 +9,7 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -21,22 +21,22 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SlopeUnbakedModel implements UnbakedModel {
-    public static final ResourceLocation MODEL_SLOPE_BOTTOM = Automobility.rl("block/slope_bottom");
-    public static final ResourceLocation MODEL_SLOPE_TOP = Automobility.rl("block/slope_top");
-    public static final ResourceLocation MODEL_STEEP_SLOPE = Automobility.rl("block/steep_slope");
-    public static final ResourceLocation MODEL_SLOPE_BOTTOM_DASH_PANEL = Automobility.rl("block/slope_bottom_dash_panel");
-    public static final ResourceLocation MODEL_SLOPE_TOP_DASH_PANEL = Automobility.rl("block/slope_top_dash_panel");
-    public static final ResourceLocation MODEL_STEEP_SLOPE_DASH_PANEL = Automobility.rl("block/steep_slope_dash_panel");
-    public static final ResourceLocation MODEL_SLOPE_BOTTOM_DASH_PANEL_OFF = Automobility.rl("block/slope_bottom_dash_panel_off");
-    public static final ResourceLocation MODEL_SLOPE_TOP_DASH_PANEL_OFF = Automobility.rl("block/slope_top_dash_panel_off");
-    public static final ResourceLocation MODEL_STEEP_SLOPE_DASH_PANEL_OFF = Automobility.rl("block/steep_slope_dash_panel_off");
+    public static final Identifier MODEL_SLOPE_BOTTOM = Automobility.rl("block/slope_bottom");
+    public static final Identifier MODEL_SLOPE_TOP = Automobility.rl("block/slope_top");
+    public static final Identifier MODEL_STEEP_SLOPE = Automobility.rl("block/steep_slope");
+    public static final Identifier MODEL_SLOPE_BOTTOM_DASH_PANEL = Automobility.rl("block/slope_bottom_dash_panel");
+    public static final Identifier MODEL_SLOPE_TOP_DASH_PANEL = Automobility.rl("block/slope_top_dash_panel");
+    public static final Identifier MODEL_STEEP_SLOPE_DASH_PANEL = Automobility.rl("block/steep_slope_dash_panel");
+    public static final Identifier MODEL_SLOPE_BOTTOM_DASH_PANEL_OFF = Automobility.rl("block/slope_bottom_dash_panel_off");
+    public static final Identifier MODEL_SLOPE_TOP_DASH_PANEL_OFF = Automobility.rl("block/slope_top_dash_panel_off");
+    public static final Identifier MODEL_STEEP_SLOPE_DASH_PANEL_OFF = Automobility.rl("block/steep_slope_dash_panel_off");
 
-    public static final ResourceLocation TEX_FRAME = Automobility.rl("block/slope_frame");
-    public static final ResourceLocation TEX_DASH_PANEL = Automobility.rl("block/dash_panel");
-    public static final ResourceLocation TEX_DASH_PANEL_OFF = Automobility.rl("block/dash_panel_off");
-    public static final ResourceLocation TEX_DASH_PANEL_FRAME = Automobility.rl("block/dash_panel_frame");
+    public static final Identifier TEX_FRAME = Automobility.rl("block/slope_frame");
+    public static final Identifier TEX_DASH_PANEL = Automobility.rl("block/dash_panel");
+    public static final Identifier TEX_DASH_PANEL_OFF = Automobility.rl("block/dash_panel_off");
+    public static final Identifier TEX_DASH_PANEL_FRAME = Automobility.rl("block/dash_panel_frame");
 
-    public static final Map<ResourceLocation, Supplier<SlopeUnbakedModel>> DEFAULT_MODELS = ImmutableMap.of(
+    public static final Map<Identifier, Supplier<SlopeUnbakedModel>> DEFAULT_MODELS = ImmutableMap.of(
             MODEL_SLOPE_TOP, () -> new SlopeUnbakedModel(Type.TOP, TEX_FRAME, null, null),
             MODEL_SLOPE_BOTTOM, () -> new SlopeUnbakedModel(Type.BOTTOM, TEX_FRAME, null, null),
             MODEL_STEEP_SLOPE, () -> new SlopeUnbakedModel(Type.STEEP, TEX_FRAME, null, null),
@@ -48,15 +48,15 @@ public class SlopeUnbakedModel implements UnbakedModel {
             MODEL_STEEP_SLOPE_DASH_PANEL_OFF, () -> new SlopeUnbakedModel(Type.STEEP, TEX_FRAME, TEX_DASH_PANEL_OFF, TEX_DASH_PANEL_FRAME)
     );
 
-    private static final ResourceLocation PARENT = ResourceLocation.parse("block/block");
+    private static final Identifier PARENT = Identifier.parse("block/block");
 
     private final Type type;
     private final Material frameTex;
     private final @Nullable Material plateInnerTex;
     private final @Nullable Material plateOuterTex;
 
-    public SlopeUnbakedModel(Type type, ResourceLocation frameTex, @Nullable ResourceLocation plateInnerTex,
-                             @Nullable ResourceLocation plateOuterTex) {
+    public SlopeUnbakedModel(Type type, Identifier frameTex, @Nullable Identifier plateInnerTex,
+                             @Nullable Identifier plateOuterTex) {
         this.type = type;
         this.frameTex = new Material(TextureAtlas.LOCATION_BLOCKS, frameTex);
         this.plateInnerTex = plateInnerTex != null ? new Material(TextureAtlas.LOCATION_BLOCKS, plateInnerTex) : null;
@@ -64,12 +64,12 @@ public class SlopeUnbakedModel implements UnbakedModel {
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public Collection<Identifier> getDependencies() {
         return List.of(PARENT);
     }
 
     @Override
-    public void resolveParents(Function<ResourceLocation, UnbakedModel> function) {
+    public void resolveParents(Function<Identifier, UnbakedModel> function) {
     }
 
     // TODO: Something better than this that supports other mods and resource packs
@@ -92,7 +92,7 @@ public class SlopeUnbakedModel implements UnbakedModel {
     }
 
     private static TextureAtlasSprite vanillaSprite(Function<Material, TextureAtlasSprite> spriteGet, String name) {
-        return spriteGet.apply(new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.fromNamespaceAndPath("minecraft", name)));
+        return spriteGet.apply(new Material(TextureAtlas.LOCATION_BLOCKS, Identifier.fromNamespaceAndPath("minecraft", name)));
     }
 
     public enum Type {

@@ -11,7 +11,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 
@@ -20,9 +20,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public enum ClientPackets {;
-    public static final Map<ResourceLocation, BiConsumer<Minecraft, FriendlyByteBuf>> CLIENTBOUND_HANDLERS = new HashMap<>();
+    public static final Map<Identifier, BiConsumer<Minecraft, FriendlyByteBuf>> CLIENTBOUND_HANDLERS = new HashMap<>();
 
-    public static void registerReceiver(ResourceLocation rl, BiConsumer<Minecraft, FriendlyByteBuf> run) {
+    public static void registerReceiver(Identifier rl, BiConsumer<Minecraft, FriendlyByteBuf> run) {
         CLIENTBOUND_HANDLERS.put(rl, run);
     }
 
@@ -51,8 +51,8 @@ public enum ClientPackets {;
         });
         ClientPackets.registerReceiver(Automobility.rl("sync_automobile_attachments"), (client, buf) -> {
             int entityId = buf.readInt();
-            var rearAtt = RearAttachmentType.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
-            var frontAtt = FrontAttachmentType.REGISTRY.getOrDefault(ResourceLocation.tryParse(buf.readUtf()));
+            var rearAtt = RearAttachmentType.REGISTRY.getOrDefault(Identifier.tryParse(buf.readUtf()));
+            var frontAtt = FrontAttachmentType.REGISTRY.getOrDefault(Identifier.tryParse(buf.readUtf()));
             client.execute(() -> {
                 if (client.player.level().getEntity(entityId) instanceof AutomobileEntity automobile) {
                     automobile.setRearAttachment(rearAtt);

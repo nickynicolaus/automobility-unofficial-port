@@ -12,20 +12,20 @@ import io.github.foundationgames.automobility.automobile.attachment.front.GrassC
 import io.github.foundationgames.automobility.automobile.attachment.front.MobControllerFrontAttachment;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public record FrontAttachmentType<T extends FrontAttachment>(
-        ResourceLocation id, BiFunction<FrontAttachmentType<T>, AutomobileEntity, T> constructor, FrontAttachmentModel model
+        Identifier id, BiFunction<FrontAttachmentType<T>, AutomobileEntity, T> constructor, FrontAttachmentModel model
 ) implements AutomobileComponent<FrontAttachmentType<?>> {
-    public static final ResourceLocation ID = Automobility.rl("front_attachment");
+    public static final Identifier ID = Automobility.rl("front_attachment");
     public static final SimpleMapContentRegistry<FrontAttachmentType<?>> REGISTRY = new SimpleMapContentRegistry<>();
     public static final Codec<FrontAttachmentType<?>> CODEC = REGISTRY.codec();
 
     public static final FrontAttachmentType<EmptyFrontAttachment> EMPTY = register(new FrontAttachmentType<>(
-            Automobility.rl("empty"), EmptyFrontAttachment::new, new FrontAttachmentModel(ResourceLocation.parse("empty"), Automobility.rl("empty"), 1)
+            Automobility.rl("empty"), EmptyFrontAttachment::new, new FrontAttachmentModel(Identifier.parse("empty"), Automobility.rl("empty"), 1)
     ));
 
     public static final FrontAttachmentType<MobControllerFrontAttachment> MOB_CONTROLLER = register(new FrontAttachmentType<>(
@@ -54,7 +54,7 @@ public record FrontAttachmentType<T extends FrontAttachment>(
     }
 
     @Override
-    public ResourceLocation containerId() {
+    public Identifier containerId() {
         return ID;
     }
 
@@ -63,7 +63,7 @@ public record FrontAttachmentType<T extends FrontAttachment>(
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return this.id();
     }
 
@@ -72,5 +72,5 @@ public record FrontAttachmentType<T extends FrontAttachment>(
         return entry;
     }
 
-    public record FrontAttachmentModel(ResourceLocation texture, ResourceLocation modelId, float scale) {}
+    public record FrontAttachmentModel(Identifier texture, Identifier modelId, float scale) {}
 }

@@ -18,7 +18,7 @@ public class RearAttachmentRenderModel extends BaseModel {
                                      Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
 
-        this.wheels = getChildSafe(this.root, "wheels");
+        this.wheels = getChildSafe(this.main, "wheels");
     }
 
     @Override
@@ -29,12 +29,17 @@ public class RearAttachmentRenderModel extends BaseModel {
     }
 
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
-        if (this.wheels != null) {
+        if (this.wheels != PART_EMPTY) {
             this.wheels.setRotation(wheelAngle, 0, 0);
         }
     }
 
     public void resetModel() {
         this.setRenderState(null, 0, 0);
+    }
+
+    @Override
+    protected void applyState(RenderState state) {
+        this.setRenderState(state.rearAttachment, state.wheelAngle, state.tickDelta);
     }
 }

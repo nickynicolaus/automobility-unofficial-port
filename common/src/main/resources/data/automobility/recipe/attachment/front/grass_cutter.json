@@ -1,18 +1,18 @@
 {
-    "type": "automobility:auto_mechanic_table",
-    "category": "automobility:attachments",
-    "sortnum": 0,
-    "ingredients": [
-        {"item": "minecraft:stick"},
-        {"tag": "minecraft:planks"},
-        {"item": "minecraft:iron_ingot"},
-        {"item": "minecraft:iron_nugget"},
-        {"item": "minecraft:iron_ingot"},
-        {"tag": "minecraft:planks"},
-        {"item": "minecraft:stick"}
-    ],
-    "result": {
-        "item": "automobility:front_attachment",
-        "component": "automobility:grass_cutter"
-    }
+  "type": "automobility:auto_mechanic_table",
+  "category": "automobility:attachments",
+  "sortnum": 0,
+  "ingredients": [
+    "minecraft:stick",
+    "#minecraft:planks",
+    "minecraft:iron_ingot",
+    "minecraft:iron_nugget",
+    "minecraft:iron_ingot",
+    "#minecraft:planks",
+    "minecraft:stick"
+  ],
+  "result": {
+    "item": "automobility:front_attachment",
+    "component": "automobility:grass_cutter"
+  }
 }

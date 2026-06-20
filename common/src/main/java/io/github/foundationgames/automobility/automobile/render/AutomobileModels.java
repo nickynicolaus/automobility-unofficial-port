@@ -16,13 +16,12 @@ import io.github.foundationgames.automobility.automobile.render.attachment.rear.
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.PlowRearAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.rear.StonecutterRearAttachmentModel;
 import io.github.foundationgames.automobility.util.AutomobilityClientResourceDumper;
-import io.github.foundationgames.automobility.util.EntityRenderHelper;
-import net.minecraft.ResourceLocationException;
+import net.minecraft.IdentifierException;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 
@@ -34,16 +33,17 @@ import java.util.Map;
 import java.util.Optional;
 
 public class AutomobileModels implements ResourceManagerReloadListener {
-    public static final ResourceLocation RELOADER_ID = Automobility.rl("automobile_models");
-    private static final ResourceLocation EMPTY = Automobility.rl("empty");
+    public static final Identifier RELOADER_ID = Automobility.rl("automobile_models");
+    private static final Identifier EMPTY = Automobility.rl("empty");
     public static final Gson GSON = new Gson();
 
-    private static Model skidEffect = new EmptyModel();
-    private static Model exhaustFumes = new EmptyModel();
+    private static final Model EMPTY_MODEL = new EmptyModel();
+    private static Model skidEffect = EMPTY_MODEL;
+    private static Model exhaustFumes = EMPTY_MODEL;
 
-    private static final Map<ResourceLocation, ModelDefinition> modelDefinitions = new HashMap<>();
+    private static final Map<Identifier, ModelDefinition> modelDefinitions = new HashMap<>();
     private static EntityRendererProvider.Context modelProvider = null;
-    private static final Map<ResourceLocation, Model> models = new HashMap<>();
+    private static final Map<Identifier, Model> models = new HashMap<>();
 
     public static final ModelDefinition FRAME_STANDARD = ModelDefinition.ofYaw(
             ModelType.BASIC, ModelDefinition.RenderMaterial.CUTOUT,
@@ -170,27 +170,33 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     );
 
     public static Model getSkidEffectModel() {
+        if (skidEffect == EMPTY_MODEL && modelProvider != null) {
+            skidEffect = new SkidEffectModel(modelProvider);
+        }
         return skidEffect;
     }
 
     public static Model getExhaustFumesModel() {
+        if (exhaustFumes == EMPTY_MODEL && modelProvider != null) {
+            exhaustFumes = new ExhaustFumesModel(modelProvider);
+        }
         return exhaustFumes;
     }
     
-    public static void register(ResourceLocation location, ModelDefinition model) {
+    public static void register(Identifier location, ModelDefinition model) {
         modelDefinitions.put(location, model);
     }
 
     public static void init() {
-        EntityRenderHelper.registerContextListener(ctx -> {
-            models.clear();
-            modelProvider = ctx;
-
-            skidEffect = new SkidEffectModel(ctx);
-            exhaustFumes = new ExhaustFumesModel(ctx);
-        });
-
         registerDefaults();
+    }
+
+    public static void setModelProvider(EntityRendererProvider.Context ctx) {
+        models.clear();
+        modelProvider = ctx;
+
+        skidEffect = EMPTY_MODEL;
+        exhaustFumes = EMPTY_MODEL;
     }
 
     public static void registerDefaults() {
@@ -228,7 +234,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
         register(Automobility.rl("front_attachment/harvester"), FRONT_ATT_HARVESTER);
     }
 
-    public static Model getModelOrNull(ResourceLocation location) {
+    public static Model getModelOrNull(Identifier location) {
         if (modelProvider == null) {
             return null;
         }
@@ -241,7 +247,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
         return models.computeIfAbsent(location, l -> def.createModel(modelProvider));
     }
 
-    public static Model getModel(ResourceLocation location) {
+    public static Model getModel(Identifier location) {
         var result = getModelOrNull(location);
         if (result == null) {
             return getEmpty();
@@ -250,7 +256,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     }
 
     public static Model getEmpty() {
-        return getModelOrNull(EMPTY);
+        return EMPTY_MODEL;
     }
 
     public static Optional<ModelDefinition> readJson(InputStream data) {
@@ -262,6 +268,9 @@ public class AutomobileModels implements ResourceManagerReloadListener {
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
         modelDefinitions.clear();
+        models.clear();
+        skidEffect = EMPTY_MODEL;
+        exhaustFumes = EMPTY_MODEL;
         AutomobileModels.registerDefaults();
 
         FileToIdConverter.json("automobile_models").listMatchingResources(resourceManager).forEach((rl, res) -> {
@@ -270,8 +279,8 @@ public class AutomobileModels implements ResourceManagerReloadListener {
 
             try (var in = res.open()) {
                 var data = AutomobileModels.readJson(in);
-                data.ifPresent(model -> AutomobileModels.register(ResourceLocation.fromNamespaceAndPath(ns, pt), model));
-            } catch (IOException | ResourceLocationException e) {
+                data.ifPresent(model -> AutomobileModels.register(Identifier.fromNamespaceAndPath(ns, pt), model));
+            } catch (IOException | IdentifierException e) {
                 Automobility.LOG.error(e);
             }
         });

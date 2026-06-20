@@ -1,17 +1,17 @@
 {
-    "type": "automobility:auto_mechanic_table",
-    "category": "automobility:frames",
-    "sortnum": 4,
-    "ingredients": [
-        {"item": "minecraft:redstone"},
-        {"tag": "minecraft:stone_crafting_materials"},
-        {"item": "minecraft:leather"},
-        {"item": "minecraft:diamond_block"},
-        {"item": "minecraft:obsidian"},
-        {"item": "minecraft:iron_ingot"}
-    ],
-    "result": {
-        "item": "automobility:automobile_frame",
-        "component": "automobility:bejeweled_motorcar"
-    }
+  "type": "automobility:auto_mechanic_table",
+  "category": "automobility:frames",
+  "sortnum": 4,
+  "ingredients": [
+    "minecraft:redstone",
+    "#minecraft:stone_crafting_materials",
+    "minecraft:leather",
+    "minecraft:diamond_block",
+    "minecraft:obsidian",
+    "minecraft:iron_ingot"
+  ],
+  "result": {
+    "item": "automobility:automobile_frame",
+    "component": "automobility:bejeweled_motorcar"
+  }
 }

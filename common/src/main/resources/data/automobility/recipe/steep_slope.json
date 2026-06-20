@@ -1,23 +1,17 @@
 {
-    "type": "minecraft:crafting_shaped",
-    "pattern": [
-        "  A",
-        " AA",
-        "ABC"
-    ],
-    "key": {
-        "A": {
-            "item": "minecraft:iron_ingot"
-        },
-        "B": {
-            "item": "minecraft:glow_ink_sac"
-        },
-        "C": {
-            "item": "minecraft:slime_ball"
-        }
-    },
-    "result": {
-        "id": "automobility:steep_slope",
-        "count": 3
-    }
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  A",
+    " AA",
+    "ABC"
+  ],
+  "key": {
+    "A": "minecraft:iron_ingot",
+    "B": "minecraft:glow_ink_sac",
+    "C": "minecraft:slime_ball"
+  },
+  "result": {
+    "id": "automobility:steep_slope",
+    "count": 3
+  }
 }

@@ -1,16 +1,10 @@
 package io.github.foundationgames.automobility.automobile.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 
-public class EmptyModel extends Model {
+public class EmptyModel extends Model<BaseModel.RenderState> {
     public EmptyModel() {
-        super(RenderType::entitySolid);
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        super(BaseModel.PART_EMPTY, RenderTypes::entitySolid);
     }
 }

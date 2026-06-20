@@ -19,21 +19,23 @@ public class StonecutterRearAttachmentModel extends RearAttachmentRenderModel {
                                           ModelLayerLocation layer,
                                           Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.blade = getChildSafe(this.root, "blade");
+        this.blade = getChildSafe(this.main, "blade");
     }
 
     @Override
     public void setDefaultState(float tickDelta) {
         super.setDefaultState(tickDelta);
 
-        this.blade.setRotation(0, 0, 0);
+        if (this.blade != PART_EMPTY) {
+            this.blade.setRotation(0, 0, 0);
+        }
     }
 
     @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 
-        if (this.blade != null) {
+        if (this.blade != PART_EMPTY) {
             this.blade.setRotation(wheelAngle * 0.45f, 0, 0);
         }
     }

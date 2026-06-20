@@ -1,63 +1,51 @@
 package io.github.foundationgames.automobility.fabric;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.brigadier.CommandDispatcher;
+import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.controller.AutomobileController;
-import io.github.foundationgames.automobility.fabric.controller.controlify.ControlifyController;
+import io.github.foundationgames.automobility.item.CreativeTabQueue;
 import io.github.foundationgames.automobility.platform.Platform;
 import io.github.foundationgames.automobility.util.AUtils;
-import io.github.foundationgames.automobility.util.HexCons;
+import io.github.foundationgames.automobility.util.TriFunc;
 import io.github.foundationgames.automobility.util.network.AutomobilityPacketPayload;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityDataRegistry;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.fabricmc.fabric.mixin.object.builder.client.ModelPredicateProviderRegistrySpecificAccessor;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.item.ItemPropertyFunction;
-import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -72,22 +60,12 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public CreativeModeTab creativeTab(ResourceLocation rl, Supplier<ItemStack> icon, CreativeModeTab.DisplayItemsGenerator displayItemsGenerator) {
-        return FabricItemGroup.builder()
+    public CreativeModeTab creativeTab(Identifier rl, Supplier<ItemStack> icon, CreativeTabQueue displayItemsGenerator) {
+        return FabricCreativeModeTab.builder()
                 .icon(icon)
                 .title(Component.translatable("itemGroup." + rl.getNamespace() + "." + rl.getPath()))
-                .displayItems(displayItemsGenerator)
+                .displayItems((params, output) -> displayItemsGenerator.accept(output::accept, params.holders()))
                 .build();
-    }
-
-    @Override
-    public void builtinItemRenderer(Item item, HexCons<ItemStack, ItemDisplayContext, PoseStack, MultiBufferSource, Integer, Integer> renderer) {
-        BuiltinItemRendererRegistry.INSTANCE.register(item, renderer::accept);
-    }
-
-    @Override
-    public void itemModelPredicate(Item item, ResourceLocation id, ItemPropertyFunction predicate) {
-        ModelPredicateProviderRegistrySpecificAccessor.callRegister(item, id, predicate::call);
     }
 
     @Override
@@ -96,8 +74,33 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public @Nullable BlockColor blockColor(BlockState state) {
-        return ColorProviderRegistry.BLOCK.get(state.getBlock());
+    public <T extends AbstractContainerMenu, D> MenuType<T> extendedMenuType(
+            TriFunc<Integer, Inventory, D, T> factory,
+            StreamCodec<? super RegistryFriendlyByteBuf, D> streamCodec) {
+        return new ExtendedMenuType<>((syncId, inventory, data) -> factory.apply(syncId, inventory, data), streamCodec);
+    }
+
+    @Override
+    public <D> MenuProvider extendedMenuProvider(
+            Component title,
+            TriFunc<Integer, Inventory, Player, AbstractContainerMenu> factory,
+            Function<ServerPlayer, D> openingData) {
+        return new ExtendedMenuProvider<>() {
+            @Override
+            public D getScreenOpeningData(ServerPlayer player) {
+                return openingData.apply(player);
+            }
+
+            @Override
+            public Component getDisplayName() {
+                return title;
+            }
+
+            @Override
+            public AbstractContainerMenu createMenu(int syncId, Inventory inventory, Player player) {
+                return factory.apply(syncId, inventory, player);
+            }
+        };
     }
 
     @Override
@@ -106,17 +109,12 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public <T extends BlockEntity> void blockEntityRenderer(BlockEntityType<T> type, Function<BlockEntityRendererProvider.Context, BlockEntityRenderer<T>> provider) {
-        BlockEntityRendererRegistry.register(type, provider::apply);
-    }
-
-    @Override
-    public void serverSendPacket(ServerPlayer player, ResourceLocation rl, FriendlyByteBuf buf) {
+    public void serverSendPacket(ServerPlayer player, Identifier rl, FriendlyByteBuf buf) {
         ServerPlayNetworking.send(player, new AutomobilityPacketPayload(rl, AUtils.arrayOf(buf)));
     }
 
     @Override
-    public void clientSendPacket(ResourceLocation rl, FriendlyByteBuf buf) {
+    public void clientSendPacket(Identifier rl, FriendlyByteBuf buf) {
         ClientPlayNetworking.send(new AutomobilityPacketPayload(rl, AUtils.arrayOf(buf)));
     }
 
@@ -126,22 +124,12 @@ public class FabricPlatform implements Platform {
         if (internal) {
             builder.noSave().noSummon();
         }
-        return builder.build();
+        return builder.build(ResourceKey.create(Registries.ENTITY_TYPE, Automobility.rl(key)));
     }
 
     @Override
-    public <T extends Entity> void entityRenderer(EntityType<T> entity, Function<EntityRendererProvider.Context, EntityRenderer<T>> factory) {
-        EntityRendererRegistry.register(entity, factory::apply);
-    }
-
-    @Override
-    public void registerDataSerializer(ResourceLocation id, EntityDataSerializer<?> serializer) {
-        EntityDataSerializers.registerSerializer(serializer);
-    }
-
-    @Override
-    public void registerClientCommand(BiConsumer<CommandDispatcher<SharedSuggestionProvider>, CommandBuildContext> callback) {
-        ClientCommandRegistrationCallback.EVENT.register((d, r) -> callback.accept((CommandDispatcher) d, r));
+    public void registerDataSerializer(Identifier id, EntityDataSerializer<?> serializer) {
+        FabricEntityDataRegistry.register(id, serializer);
     }
 
     @Override
@@ -152,14 +140,23 @@ public class FabricPlatform implements Platform {
     @Override
     public AutomobileController controller() {
         if (automobileController == null) {
-            if (FabricLoader.getInstance().isModLoaded("controlify")) {
-                automobileController = new ControlifyController();
-            } else {
-                automobileController = AutomobileController.INCOMPATIBLE;
-            }
+            automobileController = FabricLoader.getInstance().isModLoaded("controlify")
+                    ? createControlifyController()
+                    : AutomobileController.INCOMPATIBLE;
         }
 
         return automobileController;
+    }
+
+    private AutomobileController createControlifyController() {
+        try {
+            return (AutomobileController) Class.forName("io.github.foundationgames.automobility.fabric.controller.controlify.ControlifyController")
+                    .getConstructor()
+                    .newInstance();
+        } catch (ReflectiveOperationException ex) {
+            Automobility.LOG.warn("Controlify is loaded, but Automobility could not initialize Controlify support", ex);
+            return AutomobileController.INCOMPATIBLE;
+        }
     }
 
     @Override

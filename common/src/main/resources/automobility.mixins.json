@@ -14,13 +14,7 @@
     "ShovelItemAccess"
   ],
   "client": [
-    "EntityRenderDispatcherMixin",
-    "EntityRenderersMixin",
-    "KeyMappingAccess",
-    "LocalPlayerMixin",
-    "MultiPlayerGameModeMixin",
-    "SoundChannelAccess",
-    "SoundEngineMixin"
+    "LocalPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -27,7 +27,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
@@ -49,7 +49,8 @@ public class Automobility {
     public static final TagKey<Block> STICKY_SLOPES = TagKey.create(Registries.BLOCK, rl("sticky_slopes"));
 
     public static final Eventual<MenuType<AutoMechanicTableScreenHandler>> AUTO_MECHANIC_SCREEN =
-            RegistryQueue.register(BuiltInRegistries.MENU, Automobility.rl("auto_mechanic_table"), () -> Platform.get().menuType(AutoMechanicTableScreenHandler::new));
+            RegistryQueue.register(BuiltInRegistries.MENU, Automobility.rl("auto_mechanic_table"), () -> Platform.get().extendedMenuType(
+                    AutoMechanicTableScreenHandler::new, AutoMechanicTableScreenHandler.OpeningData.STREAM_CODEC));
     public static final Eventual<MenuType<SingleSlotScreenHandler>> SINGLE_SLOT_SCREEN =
             RegistryQueue.register(BuiltInRegistries.MENU, Automobility.rl("single_slot"), () -> Platform.get().menuType(SingleSlotScreenHandler::new));
 
@@ -81,8 +82,8 @@ public class Automobility {
         handler.accept(AutomobileEngine.REGISTRY, AutomobileEngine.DIRECT_CODEC, AutomobileEngine.BOOTSTRAP);
     }
 
-    public static ResourceLocation rl(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    public static Identifier rl(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
     public static void dumpDynamicRegistries(HolderLookup.Provider registries) throws IOException {

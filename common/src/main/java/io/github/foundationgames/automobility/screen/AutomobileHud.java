@@ -7,7 +7,8 @@ import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
@@ -24,7 +25,7 @@ public enum AutomobileHud {;
             new ControlHint("honk", options -> options.keySprint)
     );
 
-    public static void render(GuiGraphics graphics, Player player, AutomobileEntity auto, float tickDelta) {
+    public static void render(GuiGraphicsExtractor graphics, Player player, AutomobileEntity auto, DeltaTracker tickDelta) {
         if (Minecraft.getInstance().options.hideGui) {
             return;
         }
@@ -43,17 +44,22 @@ public enum AutomobileHud {;
         }
     }
 
-    private static void renderSpeedometer(GuiGraphics graphics, AutomobileEntity auto) {
+    private static void renderSpeedometer(GuiGraphicsExtractor graphics, AutomobileEntity auto) {
         float speed = auto.getEffectiveSpeed() * 20;
-        int color = 0xFFFFFF;
-        if (auto.getBoostTimer() > 0) color = 0xFF6F00;
-        if (auto.getTurboCharge() > AutomobileEntity.SMALL_TURBO_TIME) color = 0xFFEA4A;
-        if (auto.getTurboCharge() > AutomobileEntity.MEDIUM_TURBO_TIME) color = 0x7DE9FF;
-        if (auto.getTurboCharge() > AutomobileEntity.LARGE_TURBO_TIME) color = 0x906EFF;
-        graphics.drawString(Minecraft.getInstance().font, Component.literal(AUtils.DEC_TWO_PLACES.format(speed) +" m/s"), 20, 20, color);
+        int color = 0xFFFFFFFF;
+        if (auto.getBoostTimer() > 0) color = 0xFFFF6F00;
+        if (auto.getTurboCharge() > AutomobileEntity.SMALL_TURBO_TIME) color = 0xFFFFEA4A;
+        if (auto.getTurboCharge() > AutomobileEntity.MEDIUM_TURBO_TIME) color = 0xFF7DE9FF;
+        if (auto.getTurboCharge() > AutomobileEntity.LARGE_TURBO_TIME) color = 0xFF906EFF;
+
+        var client = Minecraft.getInstance();
+        var font = client.font;
+        var text = Component.literal(AUtils.DEC_TWO_PLACES.format(speed) + " m/s");
+        int x = Math.max(20, client.getWindow().getGuiScaledWidth() - font.width(text) - 20);
+        graphics.text(font, text, x, 20, color);
     }
 
-    private static void renderControlHints(GuiGraphics graphics, float alpha) {
+    private static void renderControlHints(GuiGraphicsExtractor graphics, float alpha) {
         int x = 20;
         int y = 50;
         var options = Minecraft.getInstance().options;
@@ -66,8 +72,8 @@ public enum AutomobileHud {;
             graphics.fill(x, y, x + keyTxtWid + 6, y + 14, ((int)(alpha * 0xAB) << 24));
 
             int textColor = 0x00FFFFFF | ((int)(alpha * 0xFF) << 24);
-            graphics.drawString(font, keyTxt, x + 3, y + 3, textColor);
-            graphics.drawString(font, control.getText(), x + keyTxtWid + 9, y + 3, textColor);
+            graphics.text(font, keyTxt, x + 3, y + 3, textColor);
+            graphics.text(font, control.getText(), x + keyTxtWid + 9, y + 3, textColor);
 
             y += 17;
         }

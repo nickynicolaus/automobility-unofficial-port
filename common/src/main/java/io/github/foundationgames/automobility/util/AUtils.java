@@ -133,7 +133,7 @@ public enum AUtils {;
      * @return A Vec3d containing the values in the passed NbtCompound
      */
     public static Vec3 v3dFromNbt(CompoundTag nbt) {
-        return new Vec3(nbt.getDouble("x"), nbt.getDouble("y"), nbt.getDouble("z"));
+        return new Vec3(nbt.getDoubleOr("x", 0), nbt.getDoubleOr("y", 0), nbt.getDoubleOr("z", 0));
     }
 
     /**

@@ -6,7 +6,7 @@ import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.AUtils;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -63,6 +63,6 @@ public abstract class FrontAttachment extends BaseAttachment<FrontAttachmentType
     }
 
     public static FrontAttachmentType<?> fromNbt(CompoundTag nbt) {
-        return FrontAttachmentType.REGISTRY.get(ResourceLocation.tryParse(nbt.getString("type")));
+        return FrontAttachmentType.REGISTRY.get(Identifier.tryParse(nbt.getStringOr("type", "")));
     }
 }

@@ -1,14 +1,11 @@
 package io.github.foundationgames.automobility.automobile.render.attachment.front;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.attachment.front.AutopilotFrontAttachment;
 import io.github.foundationgames.automobility.automobile.attachment.front.FrontAttachment;
 import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -31,23 +28,8 @@ public class AutopilotFrontAttachmentModel extends FrontAttachmentRenderModel {
                                          ModelLayerLocation layer,
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.light = getChildSafe(this.root, "light");
-        this.glow = getChildSafe(this.root, "glow");
-    }
-
-    @Override
-    public void renderOtherLayer(PoseStack matrices, MultiBufferSource consumers, int light, int overlay) {
-        this.light.visible = true;
-
-        var buffer = consumers.getBuffer(this.on ? RenderType.eyes(TEXTURE_SOLID) : RenderType.entitySolid(TEXTURE_SOLID));
-        this.light.render(matrices, buffer, light, overlay, 0xff000000 | this.lightColor);
-
-        if (this.on) {
-            this.glow.visible = true;
-            buffer = consumers.getBuffer(RenderType.beaconBeam(TEXTURE_SOLID, true));
-
-            this.glow.render(matrices, buffer, light, overlay, 0x8e000000 | this.glowColor);
-        }
+        this.light = getChildSafe(this.main, "light");
+        this.glow = getChildSafe(this.main, "glow");
     }
 
     @Override
@@ -58,16 +40,24 @@ public class AutopilotFrontAttachmentModel extends FrontAttachmentRenderModel {
         this.glowColor = GLOW_OFF;
         this.on = false;
 
-        this.light.visible = false;
-        this.glow.visible = false;
+        if (this.light != PART_EMPTY) {
+            this.light.visible = true;
+        }
+        if (this.glow != PART_EMPTY) {
+            this.glow.visible = false;
+        }
     }
 
     @Override
     public void setRenderState(@Nullable FrontAttachment attachment, float groundHeight, float tickDelta) {
         super.setRenderState(attachment, groundHeight, tickDelta);
 
-        this.light.visible = false;
-        this.glow.visible = false;
+        if (this.light != PART_EMPTY) {
+            this.light.visible = true;
+        }
+        if (this.glow != PART_EMPTY) {
+            this.glow.visible = false;
+        }
         if (attachment instanceof AutopilotFrontAttachment att) {
             var state = att.getState();
 

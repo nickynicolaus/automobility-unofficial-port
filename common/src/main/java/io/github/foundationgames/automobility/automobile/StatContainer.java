@@ -1,12 +1,12 @@
 package io.github.foundationgames.automobility.automobile;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.Consumer;
 
 public interface StatContainer<C extends StatContainer<C>> {
-    ResourceLocation containerId();
+    Identifier containerId();
 
     default String getContainerTextKey() {
         var id = this.containerId();

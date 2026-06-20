@@ -4,44 +4,47 @@ import dev.isxander.controlify.api.ControlifyApi;
 import dev.isxander.controlify.api.bind.ControlifyBindApi;
 import dev.isxander.controlify.api.bind.InputBindingSupplier;
 import dev.isxander.controlify.api.entrypoint.ControlifyEntrypoint;
-import dev.isxander.controlify.api.event.ControlifyEvents;
-import dev.isxander.controlify.api.guide.ActionPriority;
-import dev.isxander.controlify.api.ingameguide.ActionLocation;
+import dev.isxander.controlify.api.entrypoint.InitContext;
+import dev.isxander.controlify.api.entrypoint.PreInitContext;
+import dev.isxander.controlify.api.guide.ActionLocation;
+import dev.isxander.controlify.api.guide.Fact;
+import dev.isxander.controlify.api.guide.InGameCtx;
+import dev.isxander.controlify.api.guide.Rule;
 import dev.isxander.controlify.bindings.BindContext;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
-import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 public class ControlifyCompat implements ControlifyEntrypoint {
     public static final Set<InputBindingSupplier> AUTOMOBILITY_BINDINGS = new HashSet<>();
 
     @Override
-    public void onControlifyPreInit(ControlifyApi controlify) {
+    public void onControlifyPreInit(PreInitContext context) {
+        var bindings = context.bindings();
         var drivingContextId = Automobility.rl("driving");
-        BindContext drivingCtx = Registry.register(BindContext.REGISTRY, drivingContextId, new BindContext(drivingContextId, mc -> {
+        BindContext drivingCtx = new BindContext(drivingContextId, mc -> {
             if (mc.player != null) {
                 var veh = mc.player.getVehicle();
                 return veh instanceof AutomobileEntity auto && auto.isDriving(mc.player);
             }
             return false;
-        }));
+        });
+        bindings.registerBindContext(drivingCtx);
 
         Component category = Component.translatable("controlify.binding_category.driving");
 
-        ControlifyController.accelerateBinding = ControlifyBindApi.get().registerBinding(builder -> builder
+        ControlifyController.accelerateBinding = bindings.registerBinding(builder -> builder
                 .id(Automobility.rl("accelerate_automobile"))
                 .allowedContexts(drivingCtx)
                 .category(category));
-        ControlifyController.brakeBinding = ControlifyBindApi.get().registerBinding(builder -> builder
+        ControlifyController.brakeBinding = bindings.registerBinding(builder -> builder
                 .id(Automobility.rl("brake_automobile"))
                 .allowedContexts(drivingCtx)
                 .category(category));
-        ControlifyController.driftBinding = ControlifyBindApi.get().registerBinding(builder -> builder
+        ControlifyController.driftBinding = bindings.registerBinding(builder -> builder
                 .id(Automobility.rl("drift_automobile"))
                 .allowedContexts(drivingCtx)
                 .category(category));
@@ -51,25 +54,25 @@ public class ControlifyCompat implements ControlifyEntrypoint {
         AUTOMOBILITY_BINDINGS.add(ControlifyController.brakeBinding);
         AUTOMOBILITY_BINDINGS.add(ControlifyController.driftBinding);
 
-        ControlifyEvents.INGAME_GUIDE_REGISTRY.register(ev -> {
-            var bindings = ev.bindings();
+        Fact<InGameCtx> drivingAutomobile = Fact.of(Automobility.rl("driving_automobile"), ctx ->
+                ctx.player().getVehicle() instanceof AutomobileEntity auto && auto.isDriving(ctx.player()));
+        context.guideRegistries().inGame().registerFact(drivingAutomobile);
+        registerGuideRule(context, drivingAutomobile, ControlifyController.accelerateBinding, "accelerate_automobile");
+        registerGuideRule(context, drivingAutomobile, ControlifyController.brakeBinding, "brake_automobile");
+        registerGuideRule(context, drivingAutomobile, ControlifyController.driftBinding, "drift_automobile");
+    }
 
-            ev.registry().registerGuideAction(ControlifyController.accelerateBinding.on(bindings), ActionLocation.LEFT, ActionPriority.LOW, ctx -> {
-                if (ctx.player().getVehicle() instanceof AutomobileEntity)
-                    return Optional.of(Component.translatable("controlify.binding.automobility.accelerate_automobile"));
-                return Optional.empty();
-            });
-            ev.registry().registerGuideAction(ControlifyController.brakeBinding.on(bindings), ActionLocation.LEFT, ActionPriority.LOW, ctx -> {
-                if (ctx.player().getVehicle() instanceof AutomobileEntity)
-                    return Optional.of(Component.translatable("controlify.binding.automobility.brake_automobile"));
-                return Optional.empty();
-            });
-            ev.registry().registerGuideAction(ControlifyController.driftBinding.on(bindings), ActionLocation.LEFT, ActionPriority.LOW, ctx -> {
-                if (ctx.player().getVehicle() instanceof AutomobileEntity)
-                    return Optional.of(Component.translatable("controlify.binding.automobility.drift_automobile"));
-                return Optional.empty();
-            });
-        });
+    private static void registerGuideRule(PreInitContext context, Fact<InGameCtx> drivingAutomobile, InputBindingSupplier binding, String key) {
+        context.guideRegistries().inGame().registerDynamicRule(Rule.builder()
+                .binding(binding)
+                .where(ActionLocation.LEFT)
+                .when(drivingAutomobile)
+                .then(Component.translatable("controlify.binding.automobility." + key))
+                .build());
+    }
+
+    @Override
+    public void onControlifyInit(InitContext context) {
     }
 
     @Override

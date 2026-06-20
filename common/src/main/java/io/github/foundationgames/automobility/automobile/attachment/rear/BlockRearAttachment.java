@@ -100,8 +100,7 @@ public class BlockRearAttachment extends RearAttachment {
     public static BlockRearAttachment autoMechanicTable(RearAttachmentType<?> type, AutomobileEntity entity) {
         return new BlockRearAttachment(type, entity,
                 AutomobilityBlocks.AUTO_MECHANIC_TABLE.require().defaultBlockState(),
-                (ctx, att) -> new SimpleMenuProvider((syncId, inventory, player) ->
-                        new AutoMechanicTableScreenHandler(syncId, inventory, ctx), AutoMechanicTableBlock.UI_TITLE)
+                (ctx, att) -> AutoMechanicTableBlock.mechanicMenuProvider(ctx)
         );
     }
 }

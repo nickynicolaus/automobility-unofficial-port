@@ -4,15 +4,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.foundationgames.automobility.automobile.model.ModelDefinition;
+import io.github.foundationgames.automobility.automobile.render.BaseModel;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.function.Supplier;
 
-public class ObjModel extends Model {
+public class ObjModel extends Model<BaseModel.RenderState> {
     private final Vector3f translation;
     private final Vector3f rotation;
     private final Vector3f scale;
@@ -23,7 +26,7 @@ public class ObjModel extends Model {
                      ModelDefinition.RenderMaterial material,
                      ModelLayerLocation layer,
                      Vector3f translation, Vector3f rotation, Vector3f scale) {
-        super(material.renderType);
+        super(BaseModel.PART_EMPTY, material.renderType);
         this.translation = translation;
         this.rotation = rotation;
         this.scale = scale;
@@ -31,8 +34,7 @@ public class ObjModel extends Model {
         this.obj = ObjLoader.INSTANCE.getObj(layer);
     }
 
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+    public void submit(PoseStack poseStack, SubmitNodeCollector submitter, RenderType renderType, int packedLight, int packedOverlay, int color) {
         var obj = this.obj.get();
         if (obj == null) {
             return;
@@ -45,8 +47,11 @@ public class ObjModel extends Model {
         poseStack.mulPose(Axis.XP.rotationDegrees(rotation.x()));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation.y()));
         poseStack.scale(scale.x(), scale.y(), scale.z());
-        var pose = poseStack.last();
+        submitter.submitCustomGeometry(poseStack, renderType, (pose, buffer) -> renderObj(obj, pose, buffer, packedLight, packedOverlay, color));
+        poseStack.popPose();
+    }
 
+    private static void renderObj(BakedObj obj, PoseStack.Pose pose, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         var vtx = new Vector3f();
         var nml = new Vector3f();
         var uv = new Vector2f();
@@ -76,7 +81,5 @@ public class ObjModel extends Model {
                         .setNormal(pose, nml.x(), nml.y(), nml.z());
             }
         }
-
-        poseStack.popPose();
     }
 }

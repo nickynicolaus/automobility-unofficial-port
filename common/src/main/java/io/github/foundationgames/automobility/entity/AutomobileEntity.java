@@ -44,7 +44,8 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -64,7 +65,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
@@ -73,6 +74,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -225,6 +228,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         buf.writeBoolean(drifting);
         buf.writeBoolean(burningOut);
+
+        displacement.writeSyncData(buf);
     }
 
     public void readSyncStateData(FriendlyByteBuf buf) {
@@ -239,64 +244,69 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         setDrifting(buf.readBoolean());
         setBurningOut(buf.readBoolean());
 
+        this.displacement.readSyncData(buf, !this.level().isClientSide());
+
         this.dataLerpTicks = CLIENT_SYNC_INTERVAL;
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        var reg = this.registryAccess();
+    public void readAdditionalSaveData(ValueInput nbt) {
+        var reg = nbt.lookup();
+        var frameId = Identifier.tryParse(nbt.getStringOr("frame", ""));
+        var wheelId = Identifier.tryParse(nbt.getStringOr("wheels", ""));
+        var engineId = Identifier.tryParse(nbt.getStringOr("engine", ""));
         setComponents(
-                reg.registryOrThrow(AutomobileFrame.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("frame")))
-                        .map(r -> (Holder<AutomobileFrame>)r).orElseGet(() -> Holder.direct(AutomobileFrame.EMPTY)),
-                reg.registryOrThrow(AutomobileWheel.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("wheels")))
-                        .map(r -> (Holder<AutomobileWheel>)r).orElseGet(() -> Holder.direct(AutomobileWheel.EMPTY)),
-                reg.registryOrThrow(AutomobileEngine.REGISTRY).getHolder(ResourceLocation.tryParse(nbt.getString("engine")))
-                        .map(r -> (Holder<AutomobileEngine>)r).orElseGet(() -> Holder.direct(AutomobileEngine.EMPTY))
+                frameId != null ? reg.lookupOrThrow(AutomobileFrame.REGISTRY).get(ResourceKey.create(AutomobileFrame.REGISTRY, frameId))
+                        .map(r -> (Holder<AutomobileFrame>)r).orElseGet(() -> Holder.direct(AutomobileFrame.EMPTY)) : Holder.direct(AutomobileFrame.EMPTY),
+                wheelId != null ? reg.lookupOrThrow(AutomobileWheel.REGISTRY).get(ResourceKey.create(AutomobileWheel.REGISTRY, wheelId))
+                        .map(r -> (Holder<AutomobileWheel>)r).orElseGet(() -> Holder.direct(AutomobileWheel.EMPTY)) : Holder.direct(AutomobileWheel.EMPTY),
+                engineId != null ? reg.lookupOrThrow(AutomobileEngine.REGISTRY).get(ResourceKey.create(AutomobileEngine.REGISTRY, engineId))
+                        .map(r -> (Holder<AutomobileEngine>)r).orElseGet(() -> Holder.direct(AutomobileEngine.EMPTY)) : Holder.direct(AutomobileEngine.EMPTY)
         );
 
-        var rAtt = nbt.getCompound("rearAttachment");
+        var rAtt = nbt.read("rearAttachment", CompoundTag.CODEC).orElseGet(CompoundTag::new);
         setRearAttachment(RearAttachment.fromNbt(rAtt));
         rearAttachment.readNbt(rAtt, this.level().registryAccess());
 
-        var fAtt = nbt.getCompound("frontAttachment");
+        var fAtt = nbt.read("frontAttachment", CompoundTag.CODEC).orElseGet(CompoundTag::new);
         setFrontAttachment(FrontAttachment.fromNbt(fAtt));
         frontAttachment.readNbt(fAtt, this.level().registryAccess());
 
-        engineSpeed = nbt.getFloat("engineSpeed");
-        boostSpeed = nbt.getFloat("boostSpeed");
-        boostTimer = nbt.getInt("boostTimer");
-        boostPower = nbt.getFloat("boostPower");
-        speedDirection = nbt.getFloat("speedDirection");
-        vSpeed = nbt.getFloat("verticalSpeed");
-        hSpeed = nbt.getFloat("horizontalSpeed");
-        addedVelocity = AUtils.v3dFromNbt(nbt.getCompound("addedVelocity"));
-        lastVelocity = AUtils.v3dFromNbt(nbt.getCompound("lastVelocity"));
-        angularSpeed = nbt.getFloat("angularSpeed");
-        steering = nbt.getFloat("steering");
-        wheelAngle = nbt.getFloat("wheelAngle");
-        drifting = nbt.getBoolean("drifting");
-        driftDir = nbt.getInt("driftDir");
-        burningOut = nbt.getBoolean("burningOut");
-        honking = nbt.getBoolean("honking");
-        turboCharge = nbt.getInt("turboCharge");
-        input.accelerating = nbt.getBoolean("accelerating");
-        input.braking = nbt.getBoolean("braking");
-        input.steering = nbt.getFloat("steeringInput");
-        input.holdingDrift = nbt.getBoolean("holdingDrift");
-        input.holdingHorn = nbt.getBoolean("holdingHorn");
-        fallTicks = nbt.getInt("fallTicks");
-        despawnTime = nbt.getInt("despawnTime");
-        despawnCountdown = nbt.getInt("despawnCountdown");
-        decorative = nbt.getBoolean("decorative");
+        engineSpeed = nbt.getFloatOr("engineSpeed", engineSpeed);
+        boostSpeed = nbt.getFloatOr("boostSpeed", boostSpeed);
+        boostTimer = nbt.getIntOr("boostTimer", boostTimer);
+        boostPower = nbt.getFloatOr("boostPower", boostPower);
+        speedDirection = nbt.getFloatOr("speedDirection", speedDirection);
+        vSpeed = nbt.getFloatOr("verticalSpeed", vSpeed);
+        hSpeed = nbt.getFloatOr("horizontalSpeed", hSpeed);
+        addedVelocity = nbt.read("addedVelocity", CompoundTag.CODEC).map(AUtils::v3dFromNbt).orElse(addedVelocity);
+        lastVelocity = nbt.read("lastVelocity", CompoundTag.CODEC).map(AUtils::v3dFromNbt).orElse(lastVelocity);
+        angularSpeed = nbt.getFloatOr("angularSpeed", angularSpeed);
+        steering = nbt.getFloatOr("steering", steering);
+        wheelAngle = nbt.getFloatOr("wheelAngle", wheelAngle);
+        drifting = nbt.getBooleanOr("drifting", drifting);
+        driftDir = nbt.getIntOr("driftDir", driftDir);
+        burningOut = nbt.getBooleanOr("burningOut", burningOut);
+        honking = nbt.getBooleanOr("honking", honking);
+        turboCharge = nbt.getIntOr("turboCharge", turboCharge);
+        input.accelerating = nbt.getBooleanOr("accelerating", input.accelerating);
+        input.braking = nbt.getBooleanOr("braking", input.braking);
+        input.steering = nbt.getFloatOr("steeringInput", input.steering);
+        input.holdingDrift = nbt.getBooleanOr("holdingDrift", input.holdingDrift);
+        input.holdingHorn = nbt.getBooleanOr("holdingHorn", input.holdingHorn);
+        fallTicks = nbt.getIntOr("fallTicks", fallTicks);
+        despawnTime = nbt.getIntOr("despawnTime", despawnTime);
+        despawnCountdown = nbt.getIntOr("despawnCountdown", despawnCountdown);
+        decorative = nbt.getBooleanOr("decorative", decorative);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        this.entityData.get(FRAME_TYPE).unwrapKey().ifPresent(k -> nbt.putString("frame", k.location().toString()));
-        this.entityData.get(WHEEL_TYPE).unwrapKey().ifPresent(k -> nbt.putString("wheels", k.location().toString()));
-        this.entityData.get(ENGINE_TYPE).unwrapKey().ifPresent(k -> nbt.putString("engine", k.location().toString()));
-        nbt.put("rearAttachment", rearAttachment.toNbt());
-        nbt.put("frontAttachment", frontAttachment.toNbt());
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        this.entityData.get(FRAME_TYPE).unwrapKey().ifPresent(k -> nbt.putString("frame", k.identifier().toString()));
+        this.entityData.get(WHEEL_TYPE).unwrapKey().ifPresent(k -> nbt.putString("wheels", k.identifier().toString()));
+        this.entityData.get(ENGINE_TYPE).unwrapKey().ifPresent(k -> nbt.putString("engine", k.identifier().toString()));
+        nbt.store("rearAttachment", CompoundTag.CODEC, rearAttachment.toNbt());
+        nbt.store("frontAttachment", CompoundTag.CODEC, frontAttachment.toNbt());
         nbt.putFloat("engineSpeed", engineSpeed);
         nbt.putFloat("boostSpeed", boostSpeed);
         nbt.putInt("boostTimer", boostTimer);
@@ -304,8 +314,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         nbt.putFloat("speedDirection", speedDirection);
         nbt.putFloat("verticalSpeed", vSpeed);
         nbt.putFloat("horizontalSpeed", hSpeed);
-        nbt.put("addedVelocity", AUtils.v3dToNbt(addedVelocity));
-        nbt.put("lastVelocity", AUtils.v3dToNbt(lastVelocity));
+        nbt.store("addedVelocity", CompoundTag.CODEC, AUtils.v3dToNbt(addedVelocity));
+        nbt.store("lastVelocity", CompoundTag.CODEC, AUtils.v3dToNbt(lastVelocity));
         nbt.putFloat("angularSpeed", angularSpeed);
         nbt.putFloat("steering", steering);
         nbt.putFloat("wheelAngle", wheelAngle);
@@ -386,7 +396,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public float getWheelAngle(float tickDelta) {
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             return Mth.lerp(tickDelta, lastWheelAngle, wheelAngle);
         }
 
@@ -394,7 +404,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public float getBoostSpeed(float tickDelta) {
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             return Mth.lerp(tickDelta, lastBoostSpeed, boostSpeed);
         }
 
@@ -452,7 +462,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public float getEffectiveSpeed() {
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             return calculateEffectiveSpeed();
         }
 
@@ -600,7 +610,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public void forPlayersTrackingMe(boolean ignoreDriver, Consumer<ServerPlayer> action) {
         if (level() instanceof ServerLevel sl) {
-            var cPos = new ChunkPos(blockPosition());
+            var cPos = ChunkPos.containing(blockPosition());
             for (var p : sl.getPlayers(s -> s.getChunkTrackingView().contains(cPos))) {
                 if (ignoreDriver && isDriving(p)) {
                     continue;
@@ -625,13 +635,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void updateCullingBox() {
-        this.cullingBox = super.getBoundingBoxForCulling();
+        this.cullingBox = super.getBoundingBox();
         for (var hitbox : this.hitboxes) {
             this.cullingBox = this.cullingBox.minmax(hitbox.getBoundingBox());
         }
     }
 
-    @Override
     public AABB getBoundingBoxForCulling() {
         return this.cullingBox;
     }
@@ -719,7 +728,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         receiveVehicleCollisions();
         movementTick();
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             this.move(MoverType.SELF, this.getDeltaMovement());
         }
         postMovementTick();
@@ -791,7 +800,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void positionTrackingTick() {
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             this.lerpTicks = 0;
             syncPacketPositionCodec(getX(), getY(), getZ());
         } else if (lerpTicks > 0) {
@@ -827,7 +836,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void updateEngineSpeed(float speed) {
-         if (!this.isControlledByLocalInstance()) {
+         if (!this.isLocalInstanceAuthoritative()) {
              return;
          }
 
@@ -835,7 +844,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void updateBoostSpeed(float speed) {
-        if (!this.isControlledByLocalInstance()) {
+        if (!this.isLocalInstanceAuthoritative()) {
             return;
         }
 
@@ -983,11 +992,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         wheelAngle += 300 * (hSpeed / wheelCircumference) + (hSpeed > 0 ? ((1 - grip) * 15) : 0); // made it a bit slower intentionally, also make it spin more when on slippery surface
 
         // Set the automobile's velocity
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             this.setDeltaMovement(cumulative);
         }
         this.markHurt();
-        this.hasImpulse = true;
+        this.hurtMarked = true;
 
         lastVelocity = cumulative;
 
@@ -1053,7 +1062,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                             .multiply(1, 0, 1));
 
             if (hadVehicleCollision <= 0) {
-                level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.22f, 0.7f + (0.06f * (this.level().random.nextFloat() - 0.5f)), false);
+                level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.22f, 0.7f + (0.06f * (this.getRandom().nextFloat() - 0.5f)), false);
                 this.engineSpeed *= 0.6f;
                 hadVehicleCollision = 12;
             }
@@ -1080,7 +1089,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             double knockSpeed = ((-0.2 * hSpeed) - 0.5);
             addedVelocity = addedVelocity.add(Math.sin(angle) * knockSpeed, 0, Math.cos(angle) * knockSpeed);
 
-            level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.76f, 0.65f + (0.06f * (this.level().random.nextFloat() - 0.5f)), true);
+            level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.COLLISION.require(), SoundSource.AMBIENT, 0.76f, 0.65f + (0.06f * (this.getRandom().nextFloat() - 0.5f)), true);
 
             if (isVehicle() && level().isClientSide()) {
                 if (getPassengers().stream().anyMatch(p -> p instanceof LocalPlayer)) {
@@ -1147,7 +1156,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         // Turns the automobile
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             this.setYRot(getYRot() + yawInc);
 
             var first = this.getFirstPassenger();
@@ -1200,8 +1209,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false; // Riders shouldn't take fall damage
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+        return false;
     }
 
     public boolean isOneOfMyHitboxes(Entity e) {
@@ -1221,21 +1235,29 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (this.level().isClientSide()) {
             this.displacement.preTick();
 
-            if (tick) {
-                this.displacement.otherColliders.clear();
-                this.accumulateCollisionAreas(this.displacement.otherColliders);
+            if (this.usesLocalDisplacement()) {
+                if (tick) {
+                    this.displacement.otherColliders.clear();
+                    this.accumulateCollisionAreas(this.displacement.otherColliders);
 
-                this.displacement.tick(this.level(), this, this.position(), this.getYRot(), this.maxUpStep());
-            }
+                    this.displacement.tick(this.level(), this, this.position(), this.getYRot(), this.maxUpStep());
+                }
 
-            if (level().getBlockState(this.blockPosition()).getBlock() instanceof AutomobileAssemblerBlock) {
-                this.displacement.lastVertical = this.displacement.verticalTarget = (this.getY() - this.getWheels().model().radius() / 16);
+                if (level().getBlockState(this.blockPosition()).getBlock() instanceof AutomobileAssemblerBlock) {
+                    this.displacement.lastVertical = this.displacement.verticalTarget = (this.getY() - this.getWheels().model().radius() / 16);
+                }
+            } else if (!this.displacement.hasSyncedData()) {
+                this.displacement.snapTo(this.getY(), new Quaternionf());
             }
 
             this.displacement.postTick();
         } else {
             this.displacement.lastVertical = this.displacement.currVertical = this.displacement.verticalTarget = this.getY();
         }
+    }
+
+    private boolean usesLocalDisplacement() {
+        return this.isLocalInstanceAuthoritative() || !this.isClientAuthoritative();
     }
 
     public Displacement getDisplacement() {
@@ -1283,7 +1305,6 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.automobileOnGround |= otherColliders.stream().anyMatch(col -> col.boxIntersects(groundBox));
     }
 
-    @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int interpolationSteps) {
         this.trackedX = x;
         this.trackedY = y;
@@ -1313,7 +1334,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             boostTimer = time;
             boostPower = power;
         }
-        if (this.isControlledByLocalInstance()) {
+        if (this.isLocalInstanceAuthoritative()) {
             this.updateEngineSpeed(Math.max(this.engineSpeed, this.stats.getComfortableSpeed() * 0.5f));
         }
 
@@ -1502,7 +1523,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public void playHitSound(Vec3 pos) {
         level().gameEvent(this, GameEvent.ENTITY_DAMAGE, pos);
-        level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.COPPER_BREAK, SoundSource.AMBIENT, 1, 0.9f + (this.level().random.nextFloat() * 0.2f));
+        level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.COPPER_BREAK, SoundSource.AMBIENT, 1, 0.9f + (this.getRandom().nextFloat() * 0.2f));
     }
 
     private void dropParts(Vec3 pos) {
@@ -1627,14 +1648,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                     if (!level().isClientSide()) {
                         this.getFirstPassenger().stopRiding();
                     }
-                    return InteractionResult.sidedSuccess(level().isClientSide);
+                    return level().isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
                 }
                 return InteractionResult.PASS;
             }
             if (!level().isClientSide()) {
                 player.startRiding(this);
             }
-            return InteractionResult.sidedSuccess(level().isClientSide());
+            return level().isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
         }
 
         return InteractionResult.PASS;
@@ -1732,7 +1753,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     @Override
-    public boolean canCollideWith(Entity entity) {
+    public boolean canBeCollidedWith(Entity entity) {
         return entity instanceof HitboxEntity hitbox && hitbox.automobile() != this;
     }
 
@@ -1800,7 +1821,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     public void bounce() {
         suspensionBounceTimer = 3;
-        level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.LANDING.require(), SoundSource.AMBIENT, 1, 1.5f + (0.15f * (this.level().random.nextFloat() - 0.5f)), true);
+        level().playLocalSound(this.getX(), this.getY(), this.getZ(), AutomobilitySounds.LANDING.require(), SoundSource.AMBIENT, 1, 1.5f + (0.15f * (this.getRandom().nextFloat() - 0.5f)), true);
         controllerAction(AutomobileController::groundThudRumble);
     }
 
@@ -1882,6 +1903,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         private final Quaternionf angularTarget = new Quaternionf();
         private final List<Vec3> scanPoints = new ArrayList<>();
         public final Set<CollisionArea> otherColliders = new HashSet<>();
+        private boolean hasSyncedData = false;
 
         public void preTick() {
             this.lastVertical = currVertical;
@@ -2096,6 +2118,41 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             for (WheelBase.WheelPos pos : wheelBase.wheels()) if (pos.end() != WheelBase.WheelEnd.NONE) {
                 this.scanPoints.add(new Vec3(pos.right() / 16, 0, pos.forward() / 16));
             }
+        }
+
+        public void writeSyncData(FriendlyByteBuf buf) {
+            buf.writeDouble(this.currVertical);
+            buf.writeFloat(this.currAngular.x());
+            buf.writeFloat(this.currAngular.y());
+            buf.writeFloat(this.currAngular.z());
+            buf.writeFloat(this.currAngular.w());
+        }
+
+        public void readSyncData(FriendlyByteBuf buf, boolean snap) {
+            double vertical = buf.readDouble();
+            var angular = new Quaternionf(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat());
+
+            if (snap || !this.hasSyncedData) {
+                this.snapTo(vertical, angular);
+            } else {
+                this.verticalTarget = vertical;
+                this.angularTarget.set(angular);
+            }
+
+            this.hasSyncedData = true;
+        }
+
+        public boolean hasSyncedData() {
+            return this.hasSyncedData;
+        }
+
+        public void snapTo(double vertical, Quaternionf angular) {
+            this.lastVertical = vertical;
+            this.currVertical = vertical;
+            this.verticalTarget = vertical;
+            this.lastAngular.set(angular);
+            this.currAngular.set(angular);
+            this.angularTarget.set(angular);
         }
 
         public double getVertical(float tickDelta) {

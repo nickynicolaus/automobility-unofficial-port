@@ -1,7 +1,7 @@
 {
-    "parent": "builtin/entity",
+    "parent": "minecraft:item/generated",
     "textures": {
-        "particle": "block/stone"
+        "layer0": "automobility:item/automobile_frame"
     },
     "display": {
         "gui": {

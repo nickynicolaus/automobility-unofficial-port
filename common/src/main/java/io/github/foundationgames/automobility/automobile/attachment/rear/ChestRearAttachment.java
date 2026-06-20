@@ -6,12 +6,14 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -19,6 +21,8 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiFunction;
@@ -96,13 +100,17 @@ public class ChestRearAttachment extends BaseChestRearAttachment implements Cont
     }
 
     @Override
-    public void startOpen(Player player) {
-        this.open(player);
+    public void startOpen(ContainerUser user) {
+        if (user.getLivingEntity() instanceof Player player) {
+            this.open(player);
+        }
     }
 
     @Override
-    public void stopOpen(Player player) {
-        this.close(player);
+    public void stopOpen(ContainerUser user) {
+        if (user.getLivingEntity() instanceof Player player) {
+            this.close(player);
+        }
     }
 
     @Override
@@ -119,13 +127,16 @@ public class ChestRearAttachment extends BaseChestRearAttachment implements Cont
     public void writeNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.writeNbt(nbt, registry);
 
-        nbt.put("Items", ContainerHelper.saveAllItems(new CompoundTag(), this.inventory, registry));
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registry);
+        ContainerHelper.saveAllItems(output, this.inventory);
+        nbt.put("Items", output.buildResult());
     }
 
     @Override
     public void readNbt(CompoundTag nbt, HolderLookup.Provider registry) {
         super.readNbt(nbt, registry);
 
-        ContainerHelper.loadAllItems(nbt.getCompound("Items"), this.inventory, registry);
+        var input = TagValueInput.create(ProblemReporter.DISCARDING, registry, nbt.getCompoundOrEmpty("Items"));
+        ContainerHelper.loadAllItems(input, this.inventory);
     }
 }

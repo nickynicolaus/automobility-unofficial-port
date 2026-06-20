@@ -1,15 +1,16 @@
 package io.github.foundationgames.automobility.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipe;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -27,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechanicTableScreenHandler> {
-    private static final ResourceLocation TEXTURE = Automobility.rl("textures/gui/container/auto_mechanic_table.png");
+    private static final Identifier TEXTURE = Automobility.rl("textures/gui/container/auto_mechanic_table.png");
 
     private static final int RECIPE_BUTTON_SIZE = 17;
     private static final int RECIPE_PANEL_WIDTH = 85;
@@ -51,16 +52,14 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
 
     private int currentCategory = 0;
     private int recipeScroll = 0;
-    private final List<ResourceLocation> orderedCategories = createDefaultCategories();
-    private final Map<ResourceLocation, List<RecipeEntry>> recipes = new HashMap<>();
+    private final List<Identifier> orderedCategories = createDefaultCategories();
+    private final Map<Identifier, List<RecipeEntry>> recipes = new HashMap<>();
 
     private FormattedCharSequence categoryTitle;
     private ItemStack hoveredMissingIngredient = null;
 
     public AutoMechanicTableScreen(AutoMechanicTableScreenHandler handler, Inventory inventory, Component title) {
-        super(handler, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 209;
+        super(handler, inventory, title, 176, 209);
 
         this.titleLabelY = 8;
 
@@ -79,8 +78,8 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         this.inventoryLabelY = this.topPos + 115;
     }
 
-    private static List<ResourceLocation> createDefaultCategories() {
-        var list = new ArrayList<ResourceLocation>();
+    private static List<Identifier> createDefaultCategories() {
+        var list = new ArrayList<Identifier>();
         list.add(Automobility.rl("frames"));
         list.add(Automobility.rl("engines"));
         list.add(Automobility.rl("wheels"));
@@ -109,46 +108,34 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
-        this.renderTooltip(graphics, mouseX, mouseY);
-    }
-
-    private void preDraw() {
-        RenderSystem.setShaderColor(1, 1, 1, 1);
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractBackground(graphics, mouseX, mouseY, delta);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
+        this.drawCategoryBar(graphics, mouseX, mouseY);
+        this.drawRecipes(graphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
-        this.preDraw();
-        graphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight);
-        this.drawCategoryBar(graphics, mouseX, mouseY);
-        this.drawRecipes(graphics, mouseX, mouseY);
-
+    public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractContents(graphics, mouseX, mouseY, delta);
         this.drawMissingIngredients(graphics);
     }
 
     @Override
-    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        super.renderLabels(graphics, mouseX, mouseY);
-
-        int hoveredRecipe = this.getHoveredRecipe(mouseX, mouseY);
+    protected void extractTooltip(GuiGraphicsExtractor graphics, int mx, int my) {
+        super.extractTooltip(graphics, mx, my);
+        int hoveredRecipe = this.getHoveredRecipe(mx, my);
         if (hoveredRecipe >= 0) {
-            graphics.renderTooltip(font, this.menu.recipes.get(hoveredRecipe).getResultItem(), mouseX - this.leftPos, mouseY - this.topPos);
+            graphics.setTooltipForNextFrame(font, this.menu.recipes.get(hoveredRecipe).getResultItem(), mx, my);
         }
-    }
 
-    @Override
-    protected void renderTooltip(GuiGraphics graphics, int mx, int my) {
-        super.renderTooltip(graphics, mx, my);
-
-        if (this.hoveredMissingIngredient != null) {
+        if (this.hoveredMissingIngredient != null && this.minecraft != null) {
             var tt = getTooltipFromItem(minecraft, hoveredMissingIngredient);
             if (!tt.isEmpty()) {
                 tt.set(0, tt.getFirst().copy().withStyle(ChatFormatting.RED));
             }
 
-            graphics.renderTooltip(minecraft.font, tt, hoveredMissingIngredient.getTooltipImage(), mx, my);
+            graphics.setTooltipForNextFrame(minecraft.font, tt, hoveredMissingIngredient.getTooltipImage(), mx, my);
         }
     }
 
@@ -158,7 +145,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         this.recipeScroll = 0;
     }
 
-    private FormattedCharSequence createCategoryTitle(ResourceLocation category) {
+    private FormattedCharSequence createCategoryTitle(Identifier category) {
         var translated = I18n.get("part_category."+category.getNamespace()+"."+category.getPath());
         if (this.font.width(translated) > 64) {
             return Component.literal(this.font.plainSubstrByWidth(translated, 57) + "...").getVisualOrderText();
@@ -173,7 +160,10 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             int selectedCatButton = getHoveredCategoryButton((int) mouseX, (int) mouseY);
             if (selectedCatButton != 0) {
@@ -191,7 +181,7 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void selectRecipe(int id) {
@@ -215,23 +205,24 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         return false;
     }
 
-    protected final void drawMissingIngredient(GuiGraphics graphics, Ingredient ing, int x, int y, boolean hovered) {
+    protected final void drawMissingIngredient(GuiGraphicsExtractor graphics, Ingredient ing, int x, int y, boolean hovered) {
         graphics.fill(x, y, x + 16, y + 16, 0x45FF0000);
 
-        var stacks = ing.getItems();
+        var stacks = ing.items().map(ItemStack::new).toArray(ItemStack[]::new);
+        if (stacks.length <= 0) {
+            return;
+        }
         var stack = stacks[Mth.floor((float)this.time / 30) % stacks.length];
-        graphics.renderFakeItem(stack, x, y);
+        graphics.fakeItem(stack, x, y);
 
-        RenderSystem.depthMask(false);
         graphics.fill(x, y, x + 16, y + 16, 0x30FFFFFF);
-        RenderSystem.depthMask(true);
 
         if (hovered) {
             this.hoveredMissingIngredient = stack;
         }
     }
 
-    protected void drawMissingIngredients(GuiGraphics graphics) {
+    protected void drawMissingIngredients(GuiGraphicsExtractor graphics) {
         var inputInv = this.menu.inputInv;
         var missingIngs = new ArrayDeque<>(this.menu.missingIngredients);
         this.hoveredMissingIngredient = null;
@@ -296,21 +287,20 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         return -2;
     }
 
-    protected void drawCategoryBar(GuiGraphics graphics, int mouseX, int mouseY) {
+    protected void drawCategoryBar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int hoveredCatButton = this.getHoveredCategoryButton(mouseX, mouseY);
 
-        this.preDraw();
-        graphics.blit(TEXTURE, this.categoryButtonsX, this.categoryButtonsY,
-                176, 17 + (hoveredCatButton < 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT);
-        graphics.blit(TEXTURE, this.categoryButtonsX + (CATEGORY_BUTTON_AREA_WIDTH - CATEGORY_BUTTON_WIDTH), this.categoryButtonsY,
-                188, 17 + (hoveredCatButton > 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.categoryButtonsX, this.categoryButtonsY,
+                176, 17 + (hoveredCatButton < 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.categoryButtonsX + (CATEGORY_BUTTON_AREA_WIDTH - CATEGORY_BUTTON_WIDTH), this.categoryButtonsY,
+                188, 17 + (hoveredCatButton > 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT, 256, 256);
 
         if (this.categoryTitle != null) {
-            graphics.drawCenteredString(this.font, this.categoryTitle, this.leftPos + 120, this.topPos + 8, 0xFFFFFF);
+            graphics.centeredText(this.font, this.categoryTitle, this.leftPos + 120, this.topPos + 8, 0xFFFFFF);
         }
     }
 
-    protected void drawRecipes(GuiGraphics graphics, int mouseX, int mouseY) {
+    protected void drawRecipes(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (this.orderedCategories.size() > 0) {
             var recipes = this.recipes.get(this.orderedCategories.get(this.currentCategory));
 
@@ -340,7 +330,6 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
             }
         }
 
-        this.preDraw();
         int maxScroll = this.getMaxRecipeScroll();
 
         int scrollBarX = this.leftPos + 162;
@@ -349,15 +338,14 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
             scrollBarY += (int)((SCROLL_BAR_AREA_HEIGHT - SCROLL_BAR_HEIGHT) * ((float)this.recipeScroll / maxScroll));
         }
 
-        graphics.blit(TEXTURE, scrollBarX, scrollBarY, 227, 0, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, scrollBarX, scrollBarY, 227, 0, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT, 256, 256);
     }
 
-    protected void drawRecipeEntry(RecipeEntry entry, GuiGraphics graphics, int x, int y, RecipeButtonState state) {
-        this.preDraw();
-        graphics.blit(TEXTURE, x, y, 176 + (state.ordinal() * RECIPE_BUTTON_SIZE), 0, RECIPE_BUTTON_SIZE, RECIPE_BUTTON_SIZE);
+    protected void drawRecipeEntry(RecipeEntry entry, GuiGraphicsExtractor graphics, int x, int y, RecipeButtonState state) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x, y, 176 + (state.ordinal() * RECIPE_BUTTON_SIZE), 0, RECIPE_BUTTON_SIZE, RECIPE_BUTTON_SIZE, 256, 256);
 
         var stack = entry.recipe.getResultItem();
-        graphics.renderFakeItem(stack, x, y);
+        graphics.fakeItem(stack, x, y);
     }
 
     public record RecipeEntry(int id, AutoMechanicTableRecipe recipe) {}

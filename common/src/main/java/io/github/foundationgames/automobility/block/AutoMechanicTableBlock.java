@@ -1,6 +1,7 @@
 package io.github.foundationgames.automobility.block;
 
 import io.github.foundationgames.automobility.screen.AutoMechanicTableScreenHandler;
+import io.github.foundationgames.automobility.platform.Platform;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
@@ -33,7 +34,13 @@ public class AutoMechanicTableBlock extends Block {
 
     @Override
     public @Nullable MenuProvider getMenuProvider(BlockState state, Level world, BlockPos pos) {
-        return new SimpleMenuProvider((syncId, playerInventory, player) ->
-                new AutoMechanicTableScreenHandler(syncId, playerInventory, ContainerLevelAccess.create(world, pos)), UI_TITLE);
+        return mechanicMenuProvider(ContainerLevelAccess.create(world, pos));
+    }
+
+    public static MenuProvider mechanicMenuProvider(ContainerLevelAccess access) {
+        return Platform.get().extendedMenuProvider(
+                UI_TITLE,
+                (syncId, playerInventory, player) -> new AutoMechanicTableScreenHandler(syncId, playerInventory, access),
+                AutoMechanicTableScreenHandler.OpeningData::fromPlayer);
     }
 }

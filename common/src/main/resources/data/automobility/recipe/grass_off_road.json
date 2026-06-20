@@ -1,18 +1,14 @@
 {
-    "type": "minecraft:crafting_shaped",
-    "pattern": [
-        "ABA"
-    ],
-    "key": {
-        "A": {
-            "item": "minecraft:short_grass"
-        },
-        "B": {
-            "item": "minecraft:coarse_dirt"
-        }
-    },
-    "result": {
-        "id": "automobility:grass_off_road",
-        "count": 6
-    }
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ABA"
+  ],
+  "key": {
+    "A": "minecraft:short_grass",
+    "B": "minecraft:coarse_dirt"
+  },
+  "result": {
+    "id": "automobility:grass_off_road",
+    "count": 6
+  }
 }

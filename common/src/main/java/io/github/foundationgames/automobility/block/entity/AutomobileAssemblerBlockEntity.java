@@ -25,19 +25,23 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -89,7 +93,7 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
         this.level.gameEvent(GameEvent.BLOCK_CHANGE, this.getBlockPos(), new GameEvent.Context(null, this.getBlockState()));
     }
 
-    protected ItemInteractionResult handleItemInteract(Player player, ItemStack stack) {
+    protected InteractionResult handleItemInteract(Player player, ItemStack stack) {
         // Returns success on the server since the client is never 100% confident that the action was valid
         // Subsequent handling is performed with the action result
 
@@ -97,9 +101,9 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
             if (!level.isClientSide()) {
                 this.dropParts();
                 this.partChanged();
-                return ItemInteractionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ItemInteractionResult.FAIL;
+            return InteractionResult.FAIL;
         }
         if (this.frame.value().isEmpty() && stack.getItem() instanceof AutomobileFrameItem frameItem) {
             if (!level.isClientSide()) {
@@ -108,9 +112,9 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
                     stack.shrink(1);
                 }
                 this.partChanged();
-                return ItemInteractionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ItemInteractionResult.FAIL;
+            return InteractionResult.FAIL;
         }
         if (!this.frame.value().isEmpty()) {
             if (this.engine.value().isEmpty() && stack.getItem() instanceof AutomobileEngineItem engineItem) {
@@ -120,9 +124,9 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
                         stack.shrink(1);
                     }
                     this.partChanged();
-                    return ItemInteractionResult.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
-                return ItemInteractionResult.FAIL;
+                return InteractionResult.FAIL;
             }
             if (stack.getItem() instanceof AutomobileWheelItem wheelItem) {
                 if (!level.isClientSide()) {
@@ -137,30 +141,30 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
                             stack.shrink(1);
                         }
                         this.partChanged();
-                        return ItemInteractionResult.SUCCESS;
+                        return InteractionResult.SUCCESS;
                     }
                 } else {
-                    return ItemInteractionResult.FAIL;
+                    return InteractionResult.FAIL;
                 }
             }
         }
-        if (!this.level.isClientSide() && stack.is(AutomobilityItems.FRONT_ATTACHMENT.require()) || stack.is(AutomobilityItems.REAR_ATTACHMENT.require())) {
-            player.displayClientMessage(AutomobileAssemblerBlock.INCOMPLETE_AUTOMOBILE_DIALOG, true);
+        if ((!this.level.isClientSide() && stack.is(AutomobilityItems.FRONT_ATTACHMENT.require())) || stack.is(AutomobilityItems.REAR_ATTACHMENT.require())) {
+            player.sendOverlayMessage(AutomobileAssemblerBlock.INCOMPLETE_AUTOMOBILE_DIALOG);
         }
 
-        return ItemInteractionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
-    public ItemInteractionResult interact(Player player, ItemStack stack, InteractionHand hand) {
+    public InteractionResult interact(Player player, ItemStack stack, InteractionHand hand) {
         var result = this.handleItemInteract(player, stack);
 
-        if (!this.level.isClientSide() && result == ItemInteractionResult.SUCCESS) {
+        if (!this.level.isClientSide() && result.consumesAction()) {
             if (!isComplete()) {
-                level.playSound(null, this.worldPosition, SoundEvents.COPPER_PLACE, SoundSource.BLOCKS, 0.7f, 0.6f + (this.level.random.nextFloat() * 0.15f));
+                level.playSound(null, this.worldPosition, SoundEvents.COPPER_PLACE, SoundSource.BLOCKS, 0.7f, 0.6f + (this.level.getRandom().nextFloat() * 0.15f));
             }
 
             tryConstructAutomobile();
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         return result;
     }
@@ -179,13 +183,15 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
         if (this.isComplete()) {
             var pos = this.centerPos();
             var auto = new AutomobileEntity(this.level);
-            auto.moveTo(pos.x, pos.y, pos.z, this.getAutomobileYaw(0), 0);
+            auto.setPos(pos);
+            auto.setYRot(this.getAutomobileYaw(0));
+            auto.setXRot(0);
             auto.setComponents(this.frame, this.wheel, this.engine);
             level.addFreshEntity(auto);
 
             level.players().forEach(p -> {
                 if (p instanceof ServerPlayer player && p.blockPosition().distSqr(this.worldPosition) < 80000) {
-                    player.connection.send(new ClientboundLevelParticlesPacket(ParticleTypes.EXPLOSION, false, pos.x, pos.y + 0.47, pos.z, 0, 0, 0, 0, 1));
+                    player.connection.send(new ClientboundLevelParticlesPacket(ParticleTypes.EXPLOSION, false, false, pos.x, pos.y + 0.47, pos.z, 0, 0, 0, 0, 1));
                 }
             });
             level.playSound(null, this.worldPosition, SoundEvents.ANVIL_PLACE, SoundSource.BLOCKS, 0.23f, 0.5f);
@@ -239,39 +245,39 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
     }
 
     @Override
-    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.loadAdditional(nbt, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
 
+        var registries = input.lookup();
         this.frame = registries.lookupOrThrow(AutomobileFrame.REGISTRY)
-                .get(ResourceKey.create(AutomobileFrame.REGISTRY, ResourceLocation.tryParse(nbt.getString("frame"))))
+                .get(ResourceKey.create(AutomobileFrame.REGISTRY, Identifier.tryParse(input.getStringOr("frame", ""))))
                 .map(r -> (Holder<AutomobileFrame>)r)
                 .orElseGet(() -> Holder.direct(AutomobileFrame.EMPTY));
         this.engine = registries.lookupOrThrow(AutomobileEngine.REGISTRY)
-                .get(ResourceKey.create(AutomobileEngine.REGISTRY, ResourceLocation.tryParse(nbt.getString("engine"))))
+                .get(ResourceKey.create(AutomobileEngine.REGISTRY, Identifier.tryParse(input.getStringOr("engine", ""))))
                 .map(r -> (Holder<AutomobileEngine>)r)
                 .orElseGet(() -> Holder.direct(AutomobileEngine.EMPTY));
 
-        var wheelNbt = nbt.getCompound("wheels");
+        var wheelNbt = input.childOrEmpty("wheels");
         this.wheel = registries.lookupOrThrow(AutomobileWheel.REGISTRY)
-                .get(ResourceKey.create(AutomobileWheel.REGISTRY, ResourceLocation.tryParse(wheelNbt.getString("type"))))
+                .get(ResourceKey.create(AutomobileWheel.REGISTRY, Identifier.tryParse(wheelNbt.getStringOr("type", ""))))
                 .map(r -> (Holder<AutomobileWheel>)r)
                 .orElseGet(() -> Holder.direct(AutomobileWheel.EMPTY));
-        this.wheelCount = wheelNbt.getInt("count");
+        this.wheelCount = wheelNbt.getIntOr("count", 0);
 
         onComponentsUpdated();
     }
 
     @Override
-    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
-        super.saveAdditional(nbt, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
 
-        this.frame.unwrapKey().ifPresent(k -> nbt.putString("frame", k.location().toString()));
-        this.engine.unwrapKey().ifPresent(k -> nbt.putString("engine", k.location().toString()));
+        this.frame.unwrapKey().ifPresent(k -> output.putString("frame", k.identifier().toString()));
+        this.engine.unwrapKey().ifPresent(k -> output.putString("engine", k.identifier().toString()));
 
-        var wheelNbt = new CompoundTag();
-        this.wheel.unwrapKey().ifPresent(k -> wheelNbt.putString("type", k.location().toString()));
+        var wheelNbt = output.child("wheels");
+        this.wheel.unwrapKey().ifPresent(k -> wheelNbt.putString("type", k.identifier().toString()));
         wheelNbt.putInt("count", this.wheelCount);
-        nbt.put("wheels", wheelNbt);
     }
 
     @Nullable
@@ -282,9 +288,9 @@ public class AutomobileAssemblerBlockEntity extends BlockEntity implements Rende
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        var nbt = new CompoundTag();
-        this.saveAdditional(nbt, registries);
-        return nbt;
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        this.saveAdditional(output);
+        return output.buildResult();
     }
 
     protected boolean powered() {

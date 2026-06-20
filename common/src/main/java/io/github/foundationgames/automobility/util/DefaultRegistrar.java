@@ -2,7 +2,7 @@ package io.github.foundationgames.automobility.util;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +15,7 @@ public class DefaultRegistrar<V> {
         this.registryKey = registry;
     }
 
-    public ResourceKey<V> register(ResourceLocation id, V value) {
+    public ResourceKey<V> register(Identifier id, V value) {
         var key = ResourceKey.create(this.registryKey, id);
         toRegister.put(key, value);
         return key;
@@ -31,11 +31,11 @@ public class DefaultRegistrar<V> {
         }
     }
 
-    public static <V> Candidate<V> cand(ResourceLocation id, V value) {
+    public static <V> Candidate<V> cand(Identifier id, V value) {
         return new Candidate<>(id, value);
     }
 
-    public record Candidate<V>(ResourceLocation id, V value) {
+    public record Candidate<V>(Identifier id, V value) {
     }
 
     public interface RegistrationContext<V> {

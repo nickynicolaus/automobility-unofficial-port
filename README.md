@@ -1,14 +1,27 @@
 ![Automobility](./md/banner.png)
 
-### A Minecraft mod adding customizable vehicles.
-**Automobility is currently in BETA!** <br/>
-The mod isn't feature-complete, and any feature requests would be greatly appreciated. Discuss features on the mod's GitHub Discussions page, or in the [Discord](https://discord.gg/7Aw3y4RtY9).
+# Automobility - Unofficial 26.1.2 Port
 
-## Available for Fabric and NeoForge
-- Requires **[Fabric API](https://modrinth.com/mod/fabric-api)** (Fabric)
-- No additional mods required for NeoForge
+This repository is an unofficial Fabric port/fork of [Automobility](https://modrinth.com/mod/automobility) by [FoundationGames](https://github.com/FoundationGames/Automobility) for Minecraft Java 26.1.2. It is not affiliated with or endorsed by FoundationGames unless stated otherwise by the upstream maintainers.
 
-**Currently maintained for version 1.21.1, older versions are retired.**
+Automobility adds customizable and functional vehicles, automobile parts, attachments, road-building blocks, driving controls, sounds, and resource/data-pack vehicle support.
+
+**Automobility is currently in BETA.** This port should also be treated as beta until it has wider public testing.
+
+## Available for Fabric
+- Targets Minecraft Java **26.1.2**
+- Requires **[Fabric API](https://modrinth.com/mod/fabric-api)**
+- Requires Fabric Loader **0.19.2 or newer**
+- Requires Java **25 or newer**
+- Optional Fabric controller support through **[Controlify](https://modrinth.com/mod/controlify)**
+
+This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for 26.1.2 port bugs once a public source repository is available.
+
+## Port Status
+- Vehicle driving, drifting, horn, sounds, speed HUD, boost FOV, and drift smoke are ported.
+- Automobile Assembler, Auto Mechanic Table, recipes, parts, attachments, and road blocks are ported.
+- OBJ-based vehicle/resource-pack rendering and addon data are ported.
+- Multiplayer vehicle visual displacement is synced so remote cars keep correct height and tilt when changing elevation.
 
 ### Supports Data Packs and Resource Packs
 - Add your own custom vehicle types with data packs and resource packs! 
@@ -29,6 +42,7 @@ The mod isn't feature-complete, and any feature requests would be greatly apprec
 - S - Brake/Reverse/Burnout
 - A/D - Steer left/right
 - Space - Drift/Deploy
+- Control - Honk horn
 
 **Controller Support (*Fabric Exclusive*):** when using [Controlify](https://modrinth.com/mod/controlify), you will be able to control automobiles with the following default controls:
 - A - Accelerate

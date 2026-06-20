@@ -2,10 +2,10 @@ package io.github.foundationgames.automobility.automobile.render.obj;
 
 import de.javagl.obj.ObjReader;
 import io.github.foundationgames.automobility.Automobility;
-import net.minecraft.ResourceLocationException;
+import net.minecraft.IdentifierException;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 public class ObjLoader implements ResourceManagerReloadListener {
     public static ObjLoader INSTANCE = new ObjLoader();
-    public static final ResourceLocation ID = Automobility.rl("obj_loader");
+    public static final Identifier ID = Automobility.rl("obj_loader");
 
     public static final Logger LOG = LogManager.getLogger("Automobility | OBJ Loader");
     private final Map<ModelLayerLocation, BakedObj> objs = new HashMap<>();
@@ -40,13 +40,13 @@ public class ObjLoader implements ResourceManagerReloadListener {
                 System.arraycopy(splitPath, 0, dirs, 0, dirs.length);
                 var layerName = splitPath[splitPath.length - 1].replace(".obj", "");
                 var modelName = String.join("/", dirs);
-                var layer = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), modelName), layerName);
+                var layer = new ModelLayerLocation(Identifier.fromNamespaceAndPath(rl.getNamespace(), modelName), layerName);
 
                 try (var in = res.open()) {
                     var obj = ObjReader.read(in);
                     this.objs.put(layer, BakedObj.bake(obj));
                 }
-            } catch (ResourceLocationException | IOException ex) {
+            } catch (IdentifierException | IOException ex) {
                 LOG.error(ex);
             }
         });

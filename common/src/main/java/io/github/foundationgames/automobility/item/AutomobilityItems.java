@@ -10,29 +10,30 @@ import io.github.foundationgames.automobility.util.RegistryQueue;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public enum AutomobilityItems {;
-    public static final Eventual<Item> CROWBAR = register("crowbar", () -> new TooltipItem(Component.translatable("tooltip.item.automobility.crowbar").withStyle(ChatFormatting.BLUE), new Item.Properties().stacksTo(1)), Automobility.TAB);
-    public static final Eventual<Item> AUTOMOBILE = register("automobile", () -> new AutomobileItem(new Item.Properties().stacksTo(1)), Automobility.PREFAB_TAB);
-    public static final Eventual<AutomobileFrameItem> AUTOMOBILE_FRAME = register("automobile_frame", () -> new AutomobileFrameItem(new Item.Properties().stacksTo(16)), Automobility.TAB);
-    public static final Eventual<AutomobileWheelItem> AUTOMOBILE_WHEEL = register("automobile_wheel", () -> new AutomobileWheelItem(new Item.Properties()), Automobility.TAB);
-    public static final Eventual<AutomobileEngineItem> AUTOMOBILE_ENGINE = register("automobile_engine", () -> new AutomobileEngineItem(new Item.Properties().stacksTo(16)), Automobility.TAB);
-    public static final Eventual<FrontAttachmentItem> FRONT_ATTACHMENT = register("front_attachment", () -> new FrontAttachmentItem(new Item.Properties().stacksTo(1)), Automobility.TAB);
-    public static final Eventual<RearAttachmentItem> REAR_ATTACHMENT = register("rear_attachment", () -> new RearAttachmentItem(new Item.Properties().stacksTo(1)), Automobility.TAB);
+    public static final Eventual<Item> CROWBAR = register("crowbar", key -> new TooltipItem(Component.translatable("tooltip.item.automobility.crowbar").withStyle(ChatFormatting.BLUE), new Item.Properties().stacksTo(1).setId(key)), Automobility.TAB);
+    public static final Eventual<Item> AUTOMOBILE = register("automobile", key -> new AutomobileItem(new Item.Properties().stacksTo(1).setId(key)), Automobility.PREFAB_TAB);
+    public static final Eventual<AutomobileFrameItem> AUTOMOBILE_FRAME = register("automobile_frame", key -> new AutomobileFrameItem(new Item.Properties().stacksTo(16).setId(key)), Automobility.TAB);
+    public static final Eventual<AutomobileWheelItem> AUTOMOBILE_WHEEL = register("automobile_wheel", key -> new AutomobileWheelItem(new Item.Properties().setId(key)), Automobility.TAB);
+    public static final Eventual<AutomobileEngineItem> AUTOMOBILE_ENGINE = register("automobile_engine", key -> new AutomobileEngineItem(new Item.Properties().stacksTo(16).setId(key)), Automobility.TAB);
+    public static final Eventual<FrontAttachmentItem> FRONT_ATTACHMENT = register("front_attachment", key -> new FrontAttachmentItem(new Item.Properties().stacksTo(1).setId(key)), Automobility.TAB);
+    public static final Eventual<RearAttachmentItem> REAR_ATTACHMENT = register("rear_attachment", key -> new RearAttachmentItem(new Item.Properties().stacksTo(1).setId(key)), Automobility.TAB);
 
     public static final Eventual<DataComponentType<AutomobileData>> COMPONENT_AUTOMOBILE_DATA = RegistryQueue.register(
             BuiltInRegistries.DATA_COMPONENT_TYPE, Automobility.rl("automobile_data"),
             () -> DataComponentType.<AutomobileData>builder().persistent(AutomobileData.CODEC).build());
 
-    public static final Eventual<DataComponentType<ResourceLocation>> COMPONENT_GENERIC_AUTO_PART = RegistryQueue.register(
+    public static final Eventual<DataComponentType<Identifier>> COMPONENT_GENERIC_AUTO_PART = RegistryQueue.register(
             BuiltInRegistries.DATA_COMPONENT_TYPE, Automobility.rl("automobile_part"),
-            () -> DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).build());
+            () -> DataComponentType.<Identifier>builder().persistent(Identifier.CODEC).build());
 
     public static final Eventual<DataComponentType<ResourceKey<AutomobileFrame>>> COMPONENT_FRAME = RegistryQueue.register(
             BuiltInRegistries.DATA_COMPONENT_TYPE, AutomobileFrame.ID,
@@ -81,8 +82,10 @@ public enum AutomobilityItems {;
         );
     }
 
-    public static <T extends Item> Eventual<T> register(String name, Supplier<T> item, CreativeTabQueue tab) {
-        var itemPromise = RegistryQueue.register(BuiltInRegistries.ITEM, Automobility.rl(name), item);
+    public static <T extends Item> Eventual<T> register(String name, Function<ResourceKey<Item>, T> item, CreativeTabQueue tab) {
+        var id = Automobility.rl(name);
+        var key = ResourceKey.create(Registries.ITEM, id);
+        var itemPromise = RegistryQueue.register(BuiltInRegistries.ITEM, id, () -> item.apply(key));
         tab.queue(itemPromise);
         return itemPromise;
     }

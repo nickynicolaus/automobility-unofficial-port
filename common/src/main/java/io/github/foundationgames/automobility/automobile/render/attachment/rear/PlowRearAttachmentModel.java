@@ -22,7 +22,7 @@ public class PlowRearAttachmentModel extends RearAttachmentRenderModel {
                                    Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
 
-        this.assembly = getChildSafe(this.root, "assembly");
+        this.assembly = getChildSafe(this.main, "assembly");
         this.instrument = getChildSafe(assembly, "instrument");
     }
 
@@ -30,15 +30,19 @@ public class PlowRearAttachmentModel extends RearAttachmentRenderModel {
     public void setDefaultState(float tickDelta) {
         super.setDefaultState(tickDelta);
 
-        this.assembly.setRotation(0, 0, 0);
-        this.instrument.setRotation(0, 0, 0);
+        if (this.assembly != PART_EMPTY) {
+            this.assembly.setRotation(0, 0, 0);
+        }
+        if (this.instrument != PART_EMPTY) {
+            this.instrument.setRotation(0, 0, 0);
+        }
     }
 
     @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 
-        if (this.assembly != null && this.instrument != null && attachment instanceof ExtendableRearAttachment att) {
+        if (this.assembly != PART_EMPTY && this.instrument != PART_EMPTY && attachment instanceof ExtendableRearAttachment att) {
             float anim = att.extendAnimation(tickDelta);
             this.assembly.setRotation(6.5f * anim, 0, 0);
             this.instrument.setRotation(-3 * anim, 0, 0);

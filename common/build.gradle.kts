@@ -1,21 +1,38 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("fabric-loom") version ("1.9-SNAPSHOT")
+    id("net.fabricmc.fabric-loom") version ("1.17.11")
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:${rootProject.properties["minecraft_version"]}")
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${rootProject.properties["minecraft_version"]}:${rootProject.properties["parchment_release"]}@zip")
-    })
 
     compileOnly("io.github.llamalad7:mixinextras-common:0.3.5")
     annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.5")
 
     compileOnly("net.fabricmc:sponge-mixin:0.15.3+mixin.0.8.7")
-    modImplementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
+    implementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
+    compileOnly("de.javagl:obj:0.4.0")
+}
+
+val automobilityLiteClientExcludes = listOf(
+    "**/AutomobilityClient.java",
+    "**/automobile/render/item/**",
+    "**/block/model/**",
+    "**/mixin/EntityRenderDispatcherMixin.java",
+    "**/mixin/EntityRenderersMixin.java",
+    "**/mixin/KeyMappingAccess.java",
+    "**/mixin/MultiPlayerGameModeMixin.java",
+    "**/mixin/SoundChannelAccess.java",
+    "**/mixin/SoundEngineMixin.java",
+)
+
+sourceSets {
+    main {
+        java {
+            automobilityLiteClientExcludes.forEach { exclude(it) }
+        }
+    }
 }
 
 loom {
@@ -27,6 +44,9 @@ loom {
 }
 
 tasks {
+    withType<JavaCompile> {
+        automobilityLiteClientExcludes.forEach { exclude(it) }
+    }
+
     jar { enabled = false }
-    remapJar { enabled = false }
 }

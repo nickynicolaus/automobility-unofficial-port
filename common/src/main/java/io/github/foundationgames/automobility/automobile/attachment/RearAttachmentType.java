@@ -14,20 +14,20 @@ import io.github.foundationgames.automobility.automobile.attachment.rear.PaverRe
 import io.github.foundationgames.automobility.automobile.attachment.rear.RearAttachment;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public record RearAttachmentType<T extends RearAttachment>(
-        ResourceLocation id, BiFunction<RearAttachmentType<T>, AutomobileEntity, T> constructor, RearAttachmentModel model
+        Identifier id, BiFunction<RearAttachmentType<T>, AutomobileEntity, T> constructor, RearAttachmentModel model
 ) implements AutomobileComponent<RearAttachmentType<?>> {
-    public static final ResourceLocation ID = Automobility.rl("rear_attachment");
+    public static final Identifier ID = Automobility.rl("rear_attachment");
     public static final SimpleMapContentRegistry<RearAttachmentType<?>> REGISTRY = new SimpleMapContentRegistry<>();
     public static final Codec<RearAttachmentType<?>> CODEC = REGISTRY.codec();
 
     public static final RearAttachmentType<EmptyRearAttachment> EMPTY = register(new RearAttachmentType<>(
-            Automobility.rl("empty"), EmptyRearAttachment::new, new RearAttachmentModel(ResourceLocation.parse("empty"), Automobility.rl("empty"), 0)
+            Automobility.rl("empty"), EmptyRearAttachment::new, new RearAttachmentModel(Identifier.parse("empty"), Automobility.rl("empty"), 0)
     ));
 
     public static final RearAttachmentType<PassengerSeatRearAttachment> PASSENGER_SEAT = register(new RearAttachmentType<>(
@@ -68,7 +68,7 @@ public record RearAttachmentType<T extends RearAttachment>(
     }
 
     @Override
-    public ResourceLocation containerId() {
+    public Identifier containerId() {
         return ID;
     }
 
@@ -77,7 +77,7 @@ public record RearAttachmentType<T extends RearAttachment>(
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return this.id;
     }
 
@@ -89,7 +89,7 @@ public record RearAttachmentType<T extends RearAttachment>(
         return block(name, Automobility.rl("rear_attachment/block"), constructor);
     }
 
-    private static RearAttachmentType<BlockRearAttachment> block(String name, ResourceLocation model, BiFunction<RearAttachmentType<BlockRearAttachment>, AutomobileEntity, BlockRearAttachment> constructor) {
+    private static RearAttachmentType<BlockRearAttachment> block(String name, Identifier model, BiFunction<RearAttachmentType<BlockRearAttachment>, AutomobileEntity, BlockRearAttachment> constructor) {
         return new RearAttachmentType<>(
                 Automobility.rl(name), constructor,
                 new RearAttachmentModel(Automobility.rl("textures/entity/automobile/rear_attachment/"+name+".png"), model, 11)
@@ -101,5 +101,5 @@ public record RearAttachmentType<T extends RearAttachment>(
         return entry;
     }
 
-    public record RearAttachmentModel(ResourceLocation texture, ResourceLocation modelId, float pivotDistPx) {}
+    public record RearAttachmentModel(Identifier texture, Identifier modelId, float pivotDistPx) {}
 }

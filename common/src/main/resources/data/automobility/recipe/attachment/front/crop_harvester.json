@@ -1,18 +1,18 @@
 {
-    "type": "automobility:auto_mechanic_table",
-    "category": "automobility:attachments",
-    "sortnum": 1,
-    "ingredients": [
-        {"item": "minecraft:stick"},
-        {"tag": "minecraft:stone_crafting_materials"},
-        {"item": "minecraft:gold_ingot"},
-        {"item": "minecraft:copper_ingot"},
-        {"item": "minecraft:gold_ingot"},
-        {"tag": "minecraft:stone_crafting_materials"},
-        {"item": "minecraft:stick"}
-    ],
-    "result": {
-        "item": "automobility:front_attachment",
-        "component": "automobility:crop_harvester"
-    }
+  "type": "automobility:auto_mechanic_table",
+  "category": "automobility:attachments",
+  "sortnum": 1,
+  "ingredients": [
+    "minecraft:stick",
+    "#minecraft:stone_crafting_materials",
+    "minecraft:gold_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:gold_ingot",
+    "#minecraft:stone_crafting_materials",
+    "minecraft:stick"
+  ],
+  "result": {
+    "item": "automobility:front_attachment",
+    "component": "automobility:crop_harvester"
+  }
 }

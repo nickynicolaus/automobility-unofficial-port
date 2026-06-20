@@ -47,7 +47,7 @@ public class BaseChestRearAttachment extends BlockRearAttachment {
                 }
             }
 
-            protected boolean isOwnContainer(Player player) {
+            public boolean isOwnContainer(Player player) {
                 if (!(player.containerMenu instanceof ChestMenu)) {
                     return false;
                 } else {
@@ -61,7 +61,7 @@ public class BaseChestRearAttachment extends BlockRearAttachment {
 
     public void open(Player player) {
         if (!player.isSpectator()) {
-            this.viewerManager.incrementOpeners(player, this.world(), this.automobile.blockPosition(), Blocks.AIR.defaultBlockState());
+            this.viewerManager.incrementOpeners(player, this.world(), this.automobile.blockPosition(), Blocks.AIR.defaultBlockState(), 5.0);
         }
     }
 
@@ -96,7 +96,7 @@ public class BaseChestRearAttachment extends BlockRearAttachment {
     }
 
     private static void sound(Level world, BlockPos pos, SoundEvent soundEvent) {
-        world.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, soundEvent, SoundSource.BLOCKS, 0.5F, world.random.nextFloat() * 0.1F + 0.9F);
+        world.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, soundEvent, SoundSource.BLOCKS, 0.5F, world.getRandom().nextFloat() * 0.1F + 0.9F);
     }
 
     public static BaseChestRearAttachment chest(RearAttachmentType<?> type, AutomobileEntity entity) {

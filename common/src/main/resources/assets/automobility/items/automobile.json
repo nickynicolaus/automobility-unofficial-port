@@ -1,0 +1,10 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "automobility:item/automobile",
+    "model": {
+      "type": "automobility:automobile_item",
+      "kind": "automobile"
+    }
+  }
+}

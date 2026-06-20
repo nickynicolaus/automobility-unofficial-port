@@ -26,14 +26,16 @@ public class HarvesterFrontAttachmentModel extends FrontAttachmentRenderModel {
     public void setDefaultState(float tickDelta) {
         super.setDefaultState(tickDelta);
 
-        this.roller.setRotation(0, 0, 0);
+        if (this.roller != PART_EMPTY) {
+            this.roller.setRotation(0, 0, 0);
+        }
     }
 
     @Override
     public void setRenderState(@Nullable FrontAttachment attachment, float groundHeight, float tickDelta) {
         super.setRenderState(attachment, groundHeight, tickDelta);
 
-        if (this.roller != null) {
+        if (this.roller != PART_EMPTY) {
             if (attachment != null) {
                 this.roller.setRotation((float) Math.toRadians(attachment.automobile().getWheelAngle(tickDelta)), 0, 0);
             } else {

@@ -19,21 +19,23 @@ public class GrindstoneRearAttachmentModel extends RearAttachmentRenderModel {
                                          ModelLayerLocation layer,
                                          Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.grindstone = getChildSafe(this.root, "grindstone");
+        this.grindstone = getChildSafe(this.main, "grindstone");
     }
 
     @Override
     public void setDefaultState(float tickDelta) {
         super.setDefaultState(tickDelta);
 
-        this.grindstone.setRotation(0, 0, 0);
+        if (this.grindstone != PART_EMPTY) {
+            this.grindstone.setRotation(0, 0, 0);
+        }
     }
 
     @Override
     public void setRenderState(@Nullable RearAttachment attachment, float wheelAngle, float tickDelta) {
         super.setRenderState(attachment, wheelAngle, tickDelta);
 
-        if (this.grindstone != null) {
+        if (this.grindstone != PART_EMPTY) {
             this.grindstone.setRotation(wheelAngle * 0.25f, 0, 0);
         }
     }

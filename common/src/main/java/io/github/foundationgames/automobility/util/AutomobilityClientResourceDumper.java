@@ -8,7 +8,7 @@ import io.github.foundationgames.automobility.platform.Platform;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,19 +23,19 @@ public class AutomobilityClientResourceDumper {
 
         if (registryMaybe.isPresent()) {
             var registry = registryMaybe.get();
-            var regId = key.location();
+            var regId = key.identifier();
             var dumpRoot = "data";
             var subFolder = regId.getNamespace() + "/" + regId.getPath();
 
             for (var e : registry.listElements().toList()) {
-                var location = e.key().location();
+                var location = e.key().identifier();
 
                 dumpJsonResource(dumpRoot, subFolder, location, e.value(), codec);
             }
         }
     }
 
-    public static <R> void dumpJsonResource(String root, String subfolder, ResourceLocation location,
+    public static <R> void dumpJsonResource(String root, String subfolder, Identifier location,
                                             R resource, Codec<R> codec) throws IOException {
         var file = DUMP_DIR.resolve(root).resolve(location.getNamespace()).resolve(subfolder).resolve(location.getPath() + ".json");
         var folder = file.getParent();

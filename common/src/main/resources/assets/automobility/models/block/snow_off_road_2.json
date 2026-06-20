@@ -2,6 +2,5 @@
   "parent": "automobility:block/template_off_road_2",
   "textures": {
     "off_road": "automobility:block/snow_off_road"
-  },
-  "elements": []
+  }
 }

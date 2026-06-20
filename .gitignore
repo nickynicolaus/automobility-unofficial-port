@@ -40,3 +40,7 @@ run/
 common/run/
 fabric/run/
 forge/run/
+
+# local release artifacts and working notes
+dist/
+*.log

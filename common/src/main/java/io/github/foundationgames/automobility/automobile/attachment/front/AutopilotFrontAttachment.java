@@ -13,7 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -227,7 +227,7 @@ public class AutopilotFrontAttachment extends FrontAttachment {
 
         var stopsFor = new ListTag();
         for (var type : this.stopsFor) {
-            var id = BuiltInRegistries.ENTITY_TYPE.getResourceKey(type).map(ResourceKey::location).orElse(null);
+            var id = BuiltInRegistries.ENTITY_TYPE.getResourceKey(type).map(ResourceKey::identifier).orElse(null);
 
             if (id != null) {
                 stopsFor.add(StringTag.valueOf(id.toString()));
@@ -241,20 +241,20 @@ public class AutopilotFrontAttachment extends FrontAttachment {
         super.readNbt(nbt, reg);
 
         if (nbt.contains("Command")) {
-            this.currentHeading = AutopilotSignBlock.Heading.fromNbt(nbt.getCompound("Command"));
+            this.currentHeading = AutopilotSignBlock.Heading.fromNbt(nbt.getCompoundOrEmpty("Command"));
         } else {
             this.currentHeading = null;
         }
 
-        this.headingTimeLimit = nbt.getInt("timeout");
-        this.honkTimer = nbt.getInt("honk_time");
-        this.impatience = nbt.getInt("impatience");
+        this.headingTimeLimit = nbt.getIntOr("timeout", this.headingTimeLimit);
+        this.honkTimer = nbt.getIntOr("honk_time", this.honkTimer);
+        this.impatience = nbt.getIntOr("impatience", this.impatience);
 
         this.stopsFor.clear();
-        var stopsFor = nbt.getList("StopsFor", StringTag.TAG_STRING);
+        var stopsFor = nbt.getListOrEmpty("StopsFor");
         for (var tag : stopsFor) {
             if (tag instanceof StringTag strTag) {
-                var id = ResourceLocation.tryParse(strTag.getAsString());
+                var id = Identifier.tryParse(strTag.value());
 
                 if (id != null) {
                     BuiltInRegistries.ENTITY_TYPE.getOptional(id).ifPresent(this.stopsFor::add);

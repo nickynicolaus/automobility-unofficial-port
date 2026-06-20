@@ -1,7 +1,6 @@
 package io.github.foundationgames.automobility.entity;
 
 import io.github.foundationgames.automobility.automobile.AutomobileFrame;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -9,21 +8,27 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 public class HitboxEntity extends Entity implements EntityWithContainer {
     public static final EntityDataAccessor<Integer> AUTOMOBILE = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.INT);
-    public static final EntityDataAccessor<Vector3f> ORIGIN = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.VECTOR3);
+    public static final EntityDataAccessor<Vector3fc> ORIGIN = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.VECTOR3);
     public static final EntityDataAccessor<Float> WIDTH = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> HEIGHT = SynchedEntityData.defineId(HitboxEntity.class, EntityDataSerializers.FLOAT);
 
@@ -102,9 +107,9 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     }
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 hitLocation) {
         var automobile = automobile();
-        if (automobile == null) return super.interact(player, hand);
+        if (automobile == null) return super.interact(player, hand, hitLocation);
 
         return automobile.handleInteraction(player, hand);
     }
@@ -128,11 +133,10 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     }
 
     @Override
-    public boolean canCollideWith(Entity other) {
+    public boolean canBeCollidedWith(Entity other) {
         return !(other instanceof AutomobileEntity) && Boat.canVehicleCollide(this, other);
     }
 
-    @Override
     public boolean canBeCollidedWith() {
         return this.level().isClientSide();
     }
@@ -142,8 +146,13 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
         return !this.isRemoved();
     }
 
-    @Override
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+        var automobile = automobile();
+        return automobile != null && automobile.hurtServer(level, damageSource, amount);
     }
 
     @Override
@@ -169,11 +178,11 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compound) {
+    protected void readAdditionalSaveData(ValueInput compound) {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compound) {
+    protected void addAdditionalSaveData(ValueOutput compound) {
     }
 
     @Override

@@ -3,6 +3,7 @@ package io.github.foundationgames.automobility.automobile.model;
 import com.mojang.serialization.Codec;
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.render.BaseModel;
+import io.github.foundationgames.automobility.automobile.render.EmptyModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.AutopilotFrontAttachmentModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.FrontAttachmentRenderModel;
 import io.github.foundationgames.automobility.automobile.render.attachment.front.HarvesterFrontAttachmentModel;
@@ -17,10 +18,10 @@ import io.github.foundationgames.automobility.util.SimpleMapContentRegistry;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 
-public record ModelType(ResourceLocation id,
+public record ModelType(Identifier id,
                         ModelInstanceProvider provider
 ) implements SimpleMapContentRegistry.Identifiable {
     public static final SimpleMapContentRegistry<ModelType> REGISTRY = new SimpleMapContentRegistry<>();
@@ -39,7 +40,7 @@ public record ModelType(ResourceLocation id,
     public static final ModelType OBJ = REGISTRY.register(new ModelType(Automobility.rl("obj"), ObjModel::new));
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return id();
     }
 

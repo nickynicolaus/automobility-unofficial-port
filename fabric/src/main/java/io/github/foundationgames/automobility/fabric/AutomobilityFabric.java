@@ -23,15 +23,15 @@ public class AutomobilityFabric implements ModInitializer {
             @Override
             public <T> void accept(ResourceKey<Registry<T>> key, Codec<T> codec, DefaultRegistrar<T> defaults) {
                 DynamicRegistries.registerSynced(key, codec, codec);
-                DynamicRegistrySetupCallback.EVENT.register(reg -> reg.asDynamicRegistryManager().registry(key).ifPresent(r ->
+                DynamicRegistrySetupCallback.EVENT.register(reg -> reg.getOptional(key).ifPresent(r ->
                         defaults.bootstrap((k, v) -> Registry.register(r, k, v))));
             }
         });
 
         Automobility.init();
 
-        PayloadTypeRegistry.playC2S().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
-        PayloadTypeRegistry.playS2C().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(AutomobilityPacketPayload.TYPE, AutomobilityPacketPayload.STREAM_CODEC);
         ServerPlayNetworking.registerGlobalReceiver(AutomobilityPacketPayload.TYPE, (payload, context) ->
                 CommonPackets.SERVERBOUND_HANDLERS.getOrDefault(payload.id(), (x,y,z)->{}).accept(context.server(), context.player(), payload.buf()));
 

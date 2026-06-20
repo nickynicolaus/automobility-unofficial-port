@@ -33,7 +33,7 @@ import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.GrassColor;
 
 import java.io.IOException;
@@ -126,7 +126,7 @@ public class AutomobilityClient {
         screens.accept(Automobility.SINGLE_SLOT_SCREEN, SingleSlotScreen::new);
     }
 
-    public static <T extends AutomobileComponent<T>, V> void componentItemRenderer(AutomobileComponentItem<T, V> item, Function<T, Model> modelProvider, Function<T, ResourceLocation> textureProvider, FloatFunc<T> scaleProvider) {
+    public static <T extends AutomobileComponent<T>, V> void componentItemRenderer(AutomobileComponentItem<T, V> item, Function<T, Model> modelProvider, Function<T, Identifier> textureProvider, FloatFunc<T> scaleProvider) {
         Platform.get().builtinItemRenderer(item, (stack, mode, matrices, vertexConsumers, light, overlay) -> {
             var lvl = Minecraft.getInstance().level;
             if (lvl == null) return;

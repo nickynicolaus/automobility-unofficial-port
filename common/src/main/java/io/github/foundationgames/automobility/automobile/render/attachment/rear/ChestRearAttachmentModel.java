@@ -20,7 +20,7 @@ public class ChestRearAttachmentModel extends RearAttachmentRenderModel {
                                     ModelLayerLocation layer,
                                     Vector3f translation, Vector3f rotation, Vector3f scale) {
         super(ctx, material, layer, translation, rotation, scale);
-        this.lid = getChildSafe(this.root, "lid");
+        this.lid = getChildSafe(this.main, "lid");
     }
 
     @Override
@@ -30,13 +30,17 @@ public class ChestRearAttachmentModel extends RearAttachmentRenderModel {
         if (attachment instanceof BaseChestRearAttachment chest) {
             float angle = 1 - chest.lidAnimator.getOpenness(tickDelta);
             angle = 1 - (angle * angle * angle);
-            this.lid.setRotation((float) (angle * Math.PI * 0.5), 0, 0);
+            if (this.lid != PART_EMPTY) {
+                this.lid.setRotation((float) (angle * Math.PI * 0.5), 0, 0);
+            }
         }
     }
 
     @Override
     public void resetModel() {
         super.resetModel();
-        this.lid.setRotation(0, 0, 0);
+        if (this.lid != PART_EMPTY) {
+            this.lid.setRotation(0, 0, 0);
+        }
     }
 }

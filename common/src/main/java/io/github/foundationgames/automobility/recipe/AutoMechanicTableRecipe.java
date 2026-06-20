@@ -1,11 +1,13 @@
 package io.github.foundationgames.automobility.recipe;
 
 import io.github.foundationgames.automobility.Automobility;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
@@ -18,24 +20,28 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Comparable<AutoMechanicTableRecipe> {
-    public static final ResourceLocation ID = Automobility.rl("auto_mechanic_table");
+    public static final Identifier ID = Automobility.rl("auto_mechanic_table");
     public static final RecipeType<AutoMechanicTableRecipe> TYPE = new RecipeType<>() {};
 
-    protected final ResourceLocation category;
+    protected final Identifier category;
     protected final List<Ingredient> ingredients;
-    protected final ItemStack result;
+    protected final AutoMechanicTableRecipeSerializer.AutoComponentResult result;
     protected final int sortNum;
 
-    public @Nullable ResourceLocation sortId;
+    public @Nullable Identifier sortId;
 
-    public AutoMechanicTableRecipe(ResourceLocation category, List<Ingredient> ingredients, ItemStack result, int sortNum) {
+    public AutoMechanicTableRecipe(Identifier category, List<Ingredient> ingredients, AutoMechanicTableRecipeSerializer.AutoComponentResult result, int sortNum) {
         this.category = category;
         this.ingredients = ingredients;
         this.result = result;
         this.sortNum = sortNum;
     }
 
-    public ResourceLocation getCategory() {
+    public AutoMechanicTableRecipe(Identifier category, List<Ingredient> ingredients, ItemStack result, int sortNum) {
+        this(category, ingredients, AutoMechanicTableRecipeSerializer.AutoComponentResult.fromStack(result), sortNum);
+    }
+
+    public Identifier getCategory() {
         return this.category;
     }
 
@@ -48,10 +54,6 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
     }
 
     @Override
-    public ItemStack assemble(ContainerRecipeInput inv, HolderLookup.Provider var2) {
-        return assemble(inv);
-    }
-
     public ItemStack assemble(ContainerRecipeInput inv) {
         for (var ing : this.ingredients) {
             for (int i = 0; i < inv.size(); i++) {
@@ -63,31 +65,45 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
             }
         }
 
-        return this.result.copy();
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return true;
-    }
-
-    @Override
-    public ItemStack getResultItem(HolderLookup.Provider var1) {
-        return getResultItem();
+        return this.result.createStack();
     }
 
     public ItemStack getResultItem() {
+        return this.result.createStack();
+    }
+
+    public AutoMechanicTableRecipeSerializer.AutoComponentResult getResultDescriptor() {
         return this.result;
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public boolean showNotification() {
+        return false;
+    }
+
+    @Override
+    public String group() {
+        return this.category.toString();
+    }
+
+    @Override
+    public RecipeSerializer<? extends Recipe<ContainerRecipeInput>> getSerializer() {
         return AutoMechanicTableRecipeSerializer.INSTANCE;
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType<? extends Recipe<ContainerRecipeInput>> getType() {
         return TYPE;
+    }
+
+    @Override
+    public PlacementInfo placementInfo() {
+        return PlacementInfo.create(this.ingredients);
+    }
+
+    @Override
+    public RecipeBookCategory recipeBookCategory() {
+        return RecipeBookCategories.CRAFTING_MISC;
     }
 
     public void forMissingIngredients(ContainerRecipeInput inv, Consumer<Ingredient> action) {
@@ -117,7 +133,6 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
             return this.sortId.compareTo(o.sortId);
         }
 
-        return this.getResultItem().getItemHolder().getRegisteredName()
-                .compareTo(o.getResultItem().getItemHolder().getRegisteredName());
+        return this.result.item().getRegisteredName().compareTo(o.result.item().getRegisteredName());
     }
 }
