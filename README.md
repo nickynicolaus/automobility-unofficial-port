@@ -15,7 +15,7 @@ Automobility adds customizable and functional vehicles, automobile parts, attach
 - Requires Java **25 or newer**
 - Optional Fabric controller support through **[Controlify](https://modrinth.com/mod/controlify)**
 
-This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for 26.1.2 port bugs once a public source repository is available.
+This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for 26.1.2 port bugs.
 
 ## Port Status
 - Vehicle driving, drifting, horn, sounds, speed HUD, boost FOV, and drift smoke are ported.

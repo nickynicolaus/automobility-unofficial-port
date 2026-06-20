@@ -21,10 +21,8 @@ Do not upload this as a version of the original Automobility project unless Foun
 
 ## Required Links
 
-Set these after creating the public fork/source repository:
-
-- Source: `TODO: public fork URL`
-- Issues: `TODO: public fork issue tracker URL`
+- Source: `https://github.com/nickynicolaus/automobility-unofficial-port`
+- Issues: `https://github.com/nickynicolaus/automobility-unofficial-port/issues`
 - Wiki/Discord: leave empty unless there is a port-specific support location
 
 Do not point fork-specific bug reports at upstream FoundationGames support channels.
@@ -44,8 +42,8 @@ Do not point fork-specific bug reports at upstream FoundationGames support chann
 ## Upload File
 
 - Local jar: `dist\automobility-0.5.0-unofficial.1+26.1.2-fabric.jar`
-- Size: `1372445`
-- SHA-256: `233FC880F144B85002C758836F7D0159086D5AFE74AB686CFD7817DF2A3E4648`
+- Size: `1372470`
+- SHA-256: `ED2EB9AF1388AEBE741D846D8D25B3E1821DDC3C29F27A638B82888A73F0687E`
 
 ## Changelog Text
 

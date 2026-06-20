@@ -9,7 +9,8 @@
   ],
   "contact": {
     "homepage": "https://modrinth.com/project/automobility-unofficial-port",
-    "sources": ""
+    "sources": "https://github.com/nickynicolaus/automobility-unofficial-port",
+    "issues": "https://github.com/nickynicolaus/automobility-unofficial-port/issues"
   },
   "license": "MIT",
   "icon": "automobility.png",
