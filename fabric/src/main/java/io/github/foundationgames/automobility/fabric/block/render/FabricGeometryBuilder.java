@@ -1,32 +1,40 @@
 package io.github.foundationgames.automobility.fabric.block.render;
 
-import io.github.foundationgames.automobility.block.model.GeometryBuilder;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.ShadeMode;
+import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-public class FabricGeometryBuilder implements GeometryBuilder {
+public class FabricGeometryBuilder {
     private final QuadEmitter quads;
-    private final Matrix4f transform;
+    private final Matrix4fc transform;
 
     private int index = 0;
+    private @Nullable Material.Baked material = null;
 
-    public FabricGeometryBuilder(QuadEmitter quads, Matrix4f transform) {
+    public FabricGeometryBuilder(QuadEmitter quads, Matrix4fc transform) {
         this.quads = quads;
         this.transform = transform;
     }
 
-    @Override
-    public GeometryBuilder vertex(float x, float y, float z, @Nullable Direction face, float nx, float ny, float nz, TextureAtlasSprite sprite, float u, float v) {
-        return this.vertex(x, y, z, face, nx, ny, nz, sprite, u, v, 0xFFFFFFFF);
+    public FabricGeometryBuilder vertex(float x, float y, float z, @Nullable Direction face, float nx, float ny, float nz, Material.Baked material, float u, float v) {
+        return this.vertex(x, y, z, face, nx, ny, nz, material, u, v, 0xFFFFFFFF);
     }
 
-    @Override
-    public GeometryBuilder vertex(float x, float y, float z, @Nullable Direction face, float nx, float ny, float nz, TextureAtlasSprite sprite, float u, float v, int color) {
+    public FabricGeometryBuilder vertex(float x, float y, float z, @Nullable Direction face, float nx, float ny, float nz, Material.Baked material, float u, float v, int color) {
+        if (index == 0) {
+            this.material = material;
+            quads.clear();
+            quads.ambientOcclusion(TriState.DEFAULT);
+            quads.shadeMode(ShadeMode.VANILLA);
+        }
+
         var pos = new Vector4f(x - 0.5f, y, z - 0.5f, 1);
         var tNormal = new Vector4f(nx, ny, nz, 1);
         pos.mul(this.transform);
@@ -40,18 +48,16 @@ public class FabricGeometryBuilder implements GeometryBuilder {
             face = Direction.rotate(this.transform, face);
             quads.cullFace(face);
         }
+        quads.nominalFace(face);
         quads.normal(index, normal.x(), normal.y(), normal.z());
-
-        float u0 = sprite.getU0();
-        float u1 = sprite.getU1();
-        float v0 = sprite.getV0();
-        float v1 = sprite.getV1();
-        quads.spriteColor(index, 0, color);
-        quads.sprite(index, 0, u0 + ((u1 - u0) * u), v0 + ((v1 - v0) * v));
+        quads.color(index, color);
+        quads.uv(index, u, v);
 
         if (++index >= 4) {
+            quads.materialBake(this.material, MutableQuadView.BAKE_NORMALIZED);
             quads.emit();
             index = 0;
+            this.material = null;
         }
 
         return this;

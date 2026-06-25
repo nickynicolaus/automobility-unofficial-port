@@ -35,7 +35,6 @@ val automobilityLiteClientExcludes = listOf(
     "**/AutomobilityClient.java",
     "**/automobile/render/item/**",
     "**/block/model/**",
-    "**/fabric/block/render/**",
     "**/mixin/EntityRenderDispatcherMixin.java",
     "**/mixin/EntityRenderersMixin.java",
     "**/mixin/KeyMappingAccess.java",
