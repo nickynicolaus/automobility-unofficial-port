@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.2 - 2026-06-26
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Fixed slope and steep slope block rendering on current Fabric so placed slopes render as sloped geometry instead of full cubes.
+- Fixed the grass cutter front attachment so it harvests short grass, tall grass, ferns, dead bush, and flower-tagged blocks while leaving crops to the crop harvester.
+
 ## 0.5.0-unofficial.1 - 2026-06-20
 
 Unofficial beta Fabric port of Automobility to Minecraft Java 26.1.2.
