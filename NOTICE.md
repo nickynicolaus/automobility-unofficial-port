@@ -7,3 +7,11 @@ This fork is based on Automobility by FoundationGames.
 - Original license: MIT, retained in `LICENSE`
 
 The 26.1.2 port work in this repository is unofficial and is not affiliated with or endorsed by FoundationGames unless stated otherwise by the upstream maintainers.
+
+This repository also contains an unofficial port of Momentum for Automobility by milkucha.
+
+- Original Modrinth project: https://modrinth.com/mod/momentum-for-automobility
+- Original source repository: https://github.com/milkucha/momentum
+- Original license: MIT
+
+The Momentum port work in this repository is unofficial and is not affiliated with or endorsed by the upstream Momentum maintainer unless stated otherwise by that maintainer.

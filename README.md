@@ -17,6 +17,11 @@ Automobility adds customizable and functional vehicles, automobile parts, attach
 
 This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for 26.1.2 port bugs.
 
+## Momentum Addon
+This repository also contains an unofficial 26.1.2 Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) in the `momentum` subproject.
+
+Momentum is an optional Automobility addon that changes vehicle movement feel and adds its own minimal speed HUD. It requires this Automobility port on both client and server. YACL is optional and only needed for the in-game options screen.
+
 ## Port Status
 - Vehicle driving, drifting, horn, sounds, speed HUD, boost FOV, and drift smoke are ported.
 - Automobile Assembler, Auto Mechanic Table, recipes, parts, attachments, and road blocks are ported.

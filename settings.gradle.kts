@@ -10,4 +10,4 @@ pluginManagement {
     }
 }
 
-include("common", "fabric")
+include("common", "fabric", "momentum")
