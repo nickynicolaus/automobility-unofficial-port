@@ -26,8 +26,8 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Version Metadata
 
-- Version title: `0.1.5-unofficial.1 for Minecraft 26.1.2`
-- Version number: `0.1.5-unofficial.1+26.1.2`
+- Version title: `0.1.7-unofficial.1 for Minecraft 26.1.2`
+- Version number: `0.1.7-unofficial.1+26.1.2`
 - Environment: Client and server
 - Loaders: Fabric
 - Game versions: 26.1.2
@@ -38,18 +38,24 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Upload File
 
-- Local jar: `dist\momentum-0.1.5-unofficial.1+26.1.2-fabric.jar`
-- Size: `76189`
-- SHA-256: `CD38A7504D1F84094821F0B284D487EFA5F7945D5BF87D401B368E28AA17D823`
+- Local jar: `dist\momentum-0.1.7-unofficial.1+26.1.2-fabric.jar`
+- Size: `82262`
+- SHA-256: `0DDD8CF92F8CEA5A2BA6B92F116EFCD35B2526BB200D7ED01513BC40169E70E2`
 
 ## Changelog Text
 
-Initial unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
+Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
 
 ### Added and Ported
 - Ported Momentum's vehicle movement changes, braking, coasting, steering behavior, drift profiles, camera behavior, and minimal speed HUD to Minecraft 26.1.2.
 - Ported client-to-server key state sync for brake and drift input on dedicated multiplayer servers.
 - Ported the optional YACL config screen. It is available only when YACL is installed.
+- Added cruise control on the `C` key while driving an Automobility vehicle.
+- Added cruise control HUD indication to the existing Momentum speed HUD, including target speed and active/coasting color changes.
+
+### Fixed
+- Cruise control disengages when braking, drifting, reversing, leaving the driver seat, or hitting a wall/vehicle hard enough to count as an impact.
+- Cruise throttle uses normal Automobility forward input instead of direct speed injection for multiplayer compatibility.
 
 ### Known Limits
 - ModMenu integration is not included in this build because the available ModMenu API artifact for this environment is not compatible with the named Loom dependency setup used by this port.

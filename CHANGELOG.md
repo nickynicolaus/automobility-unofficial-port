@@ -1,5 +1,17 @@
 # Changelog
 
+## Momentum 0.1.7-unofficial.1 - 2026-06-26
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Added
+- Added cruise control on the `C` key while driving an Automobility vehicle.
+- Added cruise control HUD indication to the existing Momentum speed HUD, including target speed and active/coasting color changes.
+
+### Fixed
+- Cruise control now disengages when braking, drifting, reversing, leaving the driver seat, or hitting a wall/vehicle hard enough to count as an impact.
+- Cruise throttle now avoids direct speed injection and instead uses normal Automobility forward input so multiplayer behavior stays compatible with the existing vehicle sync.
+
 ## Momentum 0.1.5-unofficial.1 - 2026-06-26
 
 Initial unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.

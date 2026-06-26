@@ -22,6 +22,7 @@ public class MomentumConfig {
     public Steering steering = new Steering();
     public Camera  camera   = new Camera();
     public BarHud  barHud   = new BarHud();
+    public Cruise  cruise   = new Cruise();
     public ArcadeDrift    arcadeDrift    = new ArcadeDrift();
     public ResponsiveDrift responsiveDrift = new ResponsiveDrift();
     public ODrift  oDrift   = new ODrift();
@@ -102,6 +103,19 @@ public class MomentumConfig {
         public int     debugX         = -1;
         public int     debugY         = 10;
         public float   debugXFraction = 0.016f; // fraction of screenW from right edge
+    }
+
+    public static class Cruise {
+        public boolean enabled = true;
+        public float minActivationKmh = 8.0f;
+        public float maxTargetKmh = 150.0f;
+        public float resumeThrottleBelowTargetKmh = 1.5f;
+        public float cutThrottleBelowTargetKmh = 0.2f;
+        public float impactCancelMinSpeedKmh = 15.0f;
+        public float impactCancelDropKmh = 8.0f;
+        public int activeColor = 0xFF55FFFF;
+        public int acceleratingColor = 0xFF55FF99;
+        public int coastColor = 0xFFB7FFF8;
     }
 
     public static class ArcadeDrift {
@@ -189,6 +203,7 @@ public class MomentumConfig {
                     if (loaded.steering == null) loaded.steering = new Steering();
                     if (loaded.camera   == null) loaded.camera   = new Camera();
                     if (loaded.barHud   == null) loaded.barHud   = new BarHud();
+                    if (loaded.cruise   == null) loaded.cruise   = new Cruise();
                     if (loaded.arcadeDrift    == null) loaded.arcadeDrift    = new ArcadeDrift();
                     if (loaded.responsiveDrift == null) loaded.responsiveDrift = new ResponsiveDrift();
                     if (loaded.oDrift   == null) loaded.oDrift   = new ODrift();

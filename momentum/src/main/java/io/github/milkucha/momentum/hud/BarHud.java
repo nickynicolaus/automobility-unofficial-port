@@ -1,6 +1,7 @@
 package io.github.milkucha.momentum.hud;
 
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import io.github.milkucha.momentum.MomentumCruiseControl;
 import io.github.milkucha.momentum.accessor.SteeringDebugAccessor;
 import io.github.milkucha.momentum.config.MomentumConfig;
 import net.minecraft.client.Minecraft;
@@ -42,7 +43,14 @@ public class BarHud {
         if (!(vehicle instanceof AutomobileEntity auto)) return;
         if (client.screen != null) return;
 
-        MomentumConfig.BarHud b = MomentumConfig.get().barHud;
+        MomentumConfig cfg = MomentumConfig.get();
+        MomentumConfig.BarHud b = cfg.barHud;
+        boolean cruiseActive = MomentumCruiseControl.isActiveFor(auto);
+        int cruiseColor = MomentumCruiseControl.isAccelerating()
+                ? cfg.cruise.acceleratingColor
+                : cfg.cruise.coastColor;
+        int barColor = cruiseActive ? cruiseColor : b.barColor;
+        int textColor = cruiseActive ? cruiseColor : b.textColor;
 
         int screenW = client.getWindow().getGuiScaledWidth();
         int screenH = client.getWindow().getGuiScaledHeight();
@@ -66,16 +74,28 @@ public class BarHud {
 
         for (int i = 0; i < totalFilledBars; i++) {
             int bx    = originX + i * (b.barWidth + b.barSpacing);
-            int color = i < engineBars ? b.barColor : b.boostBarColor;
+            int color = i < engineBars ? barColor : b.boostBarColor;
             graphics.fill(bx, originY, bx + b.barWidth, originY + b.totalHeight, color);
         }
 
         // Speed text - positioned relative to bar origin via textOffsetX/Y
         String speedStr = String.format("%.0f km/h", speedKmh);
+        int textX = originX + b.textOffsetX;
+        int textY = originY + b.textOffsetY;
         graphics.text(client.font, Component.literal(speedStr),
-                originX + b.textOffsetX,
-                originY + b.textOffsetY,
-                b.textColor);
+                textX,
+                textY,
+                textColor);
+
+        if (cruiseActive) {
+            int iconX = textX + client.font.width(speedStr) + 5;
+            int iconY = textY + 1;
+            drawCruiseIcon(graphics, iconX, iconY, cruiseColor);
+            graphics.text(client.font, Component.literal(String.format("%.0f", MomentumCruiseControl.getTargetKmh())),
+                    iconX + 12,
+                    textY,
+                    cruiseColor);
+        }
     }
 
     // ── Debug overlay ─────────────────────────────────────────────────────────
@@ -97,6 +117,7 @@ public class BarHud {
         float   engSpd    = dbg.momentum$getEngineSpeed();
         boolean drifting  = dbg.momentum$isDrifting();
         boolean onGround  = dbg.momentum$isOnGround();
+        boolean cruise    = MomentumCruiseControl.isActiveFor(auto);
 
         List<String>  texts  = new ArrayList<>();
         List<Integer> colors = new ArrayList<>();
@@ -108,6 +129,8 @@ public class BarHud {
         row(texts, colors, String.format("angSpd: %+.3f", angSpd),              0xFFFF55FF);
         row(texts, colors, "ground: " + yn(onGround),     onGround ? 0xFF55FF55 : 0xFF999999);
         row(texts, colors, "drift:  " + yn(drifting),     drifting ? 0xFF55FF55 : 0xFF999999);
+        row(texts, colors, String.format("cruise: %s %.0f", yn(cruise), MomentumCruiseControl.getTargetKmh()),
+                cruise ? MomentumConfig.get().cruise.activeColor : 0xFF999999);
 
         int lineH  = 9;
         int padX   = 6;
@@ -134,6 +157,16 @@ public class BarHud {
     }
 
     private static String yn(boolean v) { return v ? "YES" : "no"; }
+
+    private static void drawCruiseIcon(GuiGraphicsExtractor g, int x, int y, int color) {
+        g.fill(x + 1, y + 6, x + 9, y + 7, color);
+        g.fill(x, y + 4, x + 1, y + 6, color);
+        g.fill(x + 9, y + 4, x + 10, y + 6, color);
+        g.fill(x + 2, y + 2, x + 3, y + 3, color);
+        g.fill(x + 5, y + 1, x + 6, y + 2, color);
+        g.fill(x + 8, y + 2, x + 9, y + 3, color);
+        g.fill(x + 5, y + 5, x + 9, y + 6, color);
+    }
 
     private static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x, y, x + w, y + h, COL_PANEL_BG);

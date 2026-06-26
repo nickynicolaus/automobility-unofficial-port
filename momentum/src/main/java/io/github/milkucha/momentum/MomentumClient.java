@@ -76,6 +76,13 @@ public class MomentumClient implements ClientModInitializer {
             openOptionsKey = null;
         }
 
+        KeyMapping cruiseKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+                "key.momentum.cruise_control",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_C,
+                MOMENTUM_CATEGORY
+        ));
+
         // ── HUD rendering ─────────────────────────────────────────────────────
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, Identifier.fromNamespaceAndPath("momentum", "bar_hud"), (drawContext, tickCounter) -> {
@@ -92,7 +99,7 @@ public class MomentumClient implements ClientModInitializer {
         // server entities read the correct values this frame.
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (client.player != null && client.player.getVehicle() instanceof AutomobileEntity) {
+            if (client.player != null && client.player.getVehicle() instanceof AutomobileEntity auto && auto.isDriving(client.player)) {
                 long win = client.getWindow().handle();
                 MomentumConfig mc = MomentumConfig.get();
                 MomentumBrakeState.brakeHeld    = isKeyHeld(mc.brakeKey, win);
@@ -100,6 +107,7 @@ public class MomentumClient implements ClientModInitializer {
             } else {
                 MomentumBrakeState.brakeHeld    = false;
                 MomentumDriftState.driftKeyHeld = false;
+                MomentumCruiseControl.deactivate();
             }
 
             // Send key state to server whenever any value changes.
@@ -115,6 +123,20 @@ public class MomentumClient implements ClientModInitializer {
         // ── Per-tick effects ──────────────────────────────────────────────────
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (cruiseKey.consumeClick() && client.player != null) {
+                if (client.player.getVehicle() instanceof AutomobileEntity auto && auto.isDriving(client.player)) {
+                    boolean active = MomentumCruiseControl.toggle(auto);
+                    if (active) {
+                        client.player.sendOverlayMessage(Component.literal(String.format("[Momentum] Cruise %.0f km/h", MomentumCruiseControl.getTargetKmh())));
+                    } else {
+                        client.player.sendOverlayMessage(Component.literal("[Momentum] Cruise off"));
+                    }
+                } else {
+                    MomentumCruiseControl.deactivate();
+                    client.player.sendOverlayMessage(Component.literal("[Momentum] Cruise off"));
+                }
+            }
+
             if (reloadKey.consumeClick() && client.player != null) {
                 MomentumConfig.reload();
                 client.player.sendOverlayMessage(Component.literal("[Momentum] Config reloaded"));

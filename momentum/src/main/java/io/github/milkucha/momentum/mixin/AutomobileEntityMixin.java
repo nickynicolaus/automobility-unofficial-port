@@ -2,12 +2,15 @@ package io.github.milkucha.momentum.mixin;
 
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import io.github.foundationgames.automobility.util.AUtils;
+import io.github.foundationgames.automobility.util.network.ClientPackets;
 import io.github.milkucha.momentum.MomentumBrakeState;
+import io.github.milkucha.momentum.MomentumCruiseControl;
 import io.github.milkucha.momentum.MomentumDriftState;
 import io.github.milkucha.momentum.accessor.SteeringDebugAccessor;
 import io.github.milkucha.momentum.config.MomentumConfig;
 import io.github.milkucha.momentum.network.ServerKeyState;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import java.util.UUID;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -68,6 +71,8 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
     @Shadow private float hSpeed;
     @Shadow private float steering;
     @Shadow private float angularSpeed;
+    @Shadow private boolean touchingWall;
+    @Shadow private int hadVehicleCollision;
     @Shadow private int driftDir;
     @Shadow private int turboCharge;
     @Shadow public abstract boolean automobileOnGround();
@@ -254,6 +259,17 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         MomentumConfig.Steering s = MomentumConfig.get().steering;
         float speedCurved = (float) Math.pow(Math.abs(hSpeed), s.understeerCurve);
         return target / (1f + s.understeer * speedCurved);
+    }
+
+    @Inject(method = "postMovementTick", at = @At("HEAD"))
+    private void momentum$cancelCruiseOnImpact(CallbackInfo ci) {
+        if (!MomentumConfig.get().enabled || !MomentumConfig.get().cruise.enabled) return;
+        Entity self = (Entity) (Object) this;
+        if (!self.level().isClientSide()) return;
+        if (!(self.getControllingPassenger() instanceof Player player) || !player.isLocalPlayer()) return;
+        if (touchingWall || hadVehicleCollision > 0) {
+            MomentumCruiseControl.cancelOnImpact((AutomobileEntity) (Object) this, Math.abs(hSpeed) * 72f);
+        }
     }
 
     // ── Vanilla Drift (transplanted from Automobility) ────────────────────────
@@ -574,6 +590,27 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      * Intercepts the `back` parameter of provideClientInput and forces it to false
      * when Momentum is enabled.
      */
+    @Inject(method = "provideClientInput", at = @At("HEAD"), cancellable = true)
+    private void momentum$applyCruiseControlInput(boolean fwd, boolean back, boolean left, boolean right, boolean space, boolean ctrl, CallbackInfo ci) {
+        MomentumCruiseControl.AdjustedInput adjusted = MomentumCruiseControl.adjustInput(
+                (AutomobileEntity) (Object) this,
+                fwd, back, left, right, space, ctrl
+        );
+        if (adjusted == null) return;
+
+        if (this.input.setDigitalInputs(
+                adjusted.fwd(),
+                adjusted.back(),
+                adjusted.left(),
+                adjusted.right(),
+                adjusted.space(),
+                adjusted.ctrl()
+        )) {
+            ClientPackets.sendServerboundAutomobileSyncPacket((AutomobileEntity) (Object) this);
+        }
+        ci.cancel();
+    }
+
     @ModifyVariable(
         method = "provideClientInput",
         at = @At("HEAD"),

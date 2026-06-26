@@ -18,6 +18,7 @@ Momentum changes Automobility vehicle movement feel and adds a minimal speed HUD
 ## Port Status
 - Vehicle acceleration, coasting, braking, steering, and drift profiles are ported.
 - Minimal speed HUD is ported.
+- Cruise control is available on the `C` key while driving.
 - Brake and drift key state sync works on dedicated servers.
 - The YACL options screen can be opened with the Momentum options key when YACL is installed.
 
