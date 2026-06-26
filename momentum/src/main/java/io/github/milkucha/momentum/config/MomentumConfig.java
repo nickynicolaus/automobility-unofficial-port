@@ -47,7 +47,7 @@ public class MomentumConfig {
 
     public static class Camera {
         public boolean enabled            = true;
-        public boolean lock               = true;
+        public boolean lock               = false;
         public float   pitch              = 10f;
         // Steering lean: camera yaw offset proportional to steering (−1..1).
         // At full lock the camera swings steeringTilt degrees toward the turn direction.

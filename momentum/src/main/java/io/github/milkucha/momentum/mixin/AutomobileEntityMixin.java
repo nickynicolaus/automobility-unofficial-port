@@ -136,6 +136,13 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         return momentum$driftKey() && MomentumConfig.get().oDrift.profile == MomentumConfig.ODrift.Profile.RESPONSIVE;
     }
 
+    @Unique
+    private int momentum$driftDirForSteering(float steeringValue, int fallback) {
+        if (steeringValue > 0f) return -1;
+        if (steeringValue < 0f) return 1;
+        return fallback;
+    }
+
     // ── Coasting fix ─────────────────────────────────────────────────────────
 
     @Redirect(
@@ -337,7 +344,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                         && momentum$arcadeHeldTimer >= cfg.minHoldTicks
                         && hSpeed > cfg.minSpeedKmh / 72f && kMcOnGnd) {
                     momentum$arcadeDriftActive = true;
-                    momentum$arcadeDriftDir    = steering > 0 ? 1 : -1;
+                    momentum$arcadeDriftDir    = momentum$driftDirForSteering(steering, 0);
                     momentum$arcadeDriftTimer  = 0;
                     momentum$arcadeDriftOffset = momentum$arcadeDriftDir * cfg.slipAngle;
                 }
@@ -367,7 +374,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                     else if (t >= min)      turboCharge = AutomobileEntity.SMALL_TURBO_TIME + 1;
                     else                    turboCharge = 0;
                 }
-                int currentDir = steering > 0 ? 1 : (steering < 0 ? -1 : momentum$arcadeDriftDir);
+                int currentDir = momentum$driftDirForSteering(steering, momentum$arcadeDriftDir);
                 float target = currentDir * cfg.slipAngle;
                 momentum$arcadeDriftOffset = AUtils.shift(momentum$arcadeDriftOffset, cfg.slipConvergeRate, target);
                 // Cancel drift if speed drops too low
@@ -443,7 +450,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                 if (!drifting && Math.abs(steering) > cfg.steerThreshold && hSpeed > mMinSpd && mMcOnGnd
                         && momentum$responsiveHeldTimer >= cfg.minHoldTicks) {
                     momentum$responsiveDriftActive = true;
-                    momentum$responsiveDriftDir    = steering > 0 ? 1 : -1;
+                    momentum$responsiveDriftDir    = momentum$driftDirForSteering(steering, 0);
                     momentum$responsiveDriftTimer  = 0;
                     momentum$responsiveDriftOffset = 0f;
                     momentum$responsiveHeldTimer   = 0;
@@ -478,7 +485,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                 } else {
                     momentum$responsiveSteerAccum = Math.max(0.0f, momentum$responsiveSteerAccum - cfg.steerDecayRate);
                 }
-                int currentDir = steering > 0 ? 1 : (steering < 0 ? -1 : momentum$responsiveDriftDir);
+                int currentDir = momentum$driftDirForSteering(steering, momentum$responsiveDriftDir);
                 float steerFactor = cfg.constantAngle ? 1.0f
                     : (float) Math.pow(momentum$responsiveSteerAccum, cfg.steerSensitivity);
                 float target = currentDir * cfg.slipAngle * steerFactor;

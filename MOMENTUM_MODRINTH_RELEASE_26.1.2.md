@@ -39,8 +39,8 @@ Do not upload this as a version of the original Momentum project unless the upst
 ## Upload File
 
 - Local jar: `dist\momentum-0.1.5-unofficial.1+26.1.2-fabric.jar`
-- Size: `76115`
-- SHA-256: `C0B48F6DFAF500F38A2F9D146B9232B19A367BE488DA8B0425A4CD209F351102`
+- Size: `76189`
+- SHA-256: `CD38A7504D1F84094821F0B284D487EFA5F7945D5BF87D401B368E28AA17D823`
 
 ## Changelog Text
 
