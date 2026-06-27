@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.7 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Restored the full motorcar windshield height after the previous visual test build left a gap.
+- Moved the separate motorcar windshield plane away from nearby body geometry to reduce flickering under the windshield.
+
 ## 0.5.0-unofficial.6 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
