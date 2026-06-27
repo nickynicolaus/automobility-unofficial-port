@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.13 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Settled unmanned automobiles once they finish coasting after a moving dismount, clearing residual physics and resynchronizing hitboxes.
+
 ## 0.5.0-unofficial.12 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

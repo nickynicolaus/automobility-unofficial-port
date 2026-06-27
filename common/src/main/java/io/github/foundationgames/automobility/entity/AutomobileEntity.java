@@ -125,6 +125,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     public static final int LARGE_TURBO_TIME = 115;
     public static final float TERMINAL_VELOCITY = -1.2f;
     private static final int RECENT_DISMOUNT_GRACE_TICKS = 30;
+    private static final int UNMANNED_COAST_SETTLE_MAX_TICKS = 120;
 
     public final Input input = new Input();
     private boolean prevHoldDrift = input.holdingDrift;
@@ -216,6 +217,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private int despawnCountdown = 0;
     private boolean decorative = false;
     private final Map<UUID, Integer> recentDismounts = new HashMap<>();
+    private int unmannedCoastSettleTicks = 0;
 
     private boolean wasEngineRunning = false;
 
@@ -737,6 +739,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.move(MoverType.SELF, this.getDeltaMovement());
         }
         postMovementTick();
+        tickUnmannedCoastSettle();
 
         this.verifyHitboxesFor(getFrame());
         if (!level().isClientSide()) {
@@ -1556,6 +1559,74 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.lastSteering = 0;
         this.setDrifting(false);
         this.setBurningOut(false);
+        this.lerpTicks = 0;
+        this.trackedX = this.getX();
+        this.trackedY = this.getY();
+        this.trackedZ = this.getZ();
+        this.trackedYaw = this.getYRot();
+        this.syncPacketPositionCodec(this.getX(), this.getY(), this.getZ());
+        this.prevYDisplacements.clear();
+        this.touchingWall = false;
+        this.hadVehicleCollision = 0;
+        this.unmannedCoastSettleTicks = this.shouldCoastAfterDriverDismount() ? UNMANNED_COAST_SETTLE_MAX_TICKS : 1;
+        this.markDirty();
+        this.hurtMarked = true;
+        this.updateHitboxPositions();
+        if (!this.level().isClientSide()) {
+            this.syncData();
+        }
+    }
+
+    private boolean shouldCoastAfterDriverDismount() {
+        return Math.abs(this.engineSpeed) > 0.035f
+                || Math.abs(this.hSpeed) > 0.035f
+                || this.addedVelocity.horizontalDistanceSqr() > 0.0009
+                || this.getDeltaMovement().horizontalDistanceSqr() > 0.0009;
+    }
+
+    private void tickUnmannedCoastSettle() {
+        if (this.unmannedCoastSettleTicks <= 0) {
+            return;
+        }
+        if (this.isVehicle()) {
+            this.unmannedCoastSettleTicks = 0;
+            return;
+        }
+
+        this.unmannedCoastSettleTicks--;
+        boolean horizontallyStopped = Math.abs(this.engineSpeed) < 0.035f
+                && Math.abs(this.hSpeed) < 0.035f
+                && this.addedVelocity.horizontalDistanceSqr() < 0.0009
+                && this.getDeltaMovement().horizontalDistanceSqr() < 0.0009;
+        boolean verticallyStable = this.automobileOnGround || this.isFloorDirectlyBelow || Math.abs(this.vSpeed) < 0.035f;
+        if ((horizontallyStopped && verticallyStable) || this.unmannedCoastSettleTicks <= 0) {
+            this.settleUnmannedCoast();
+        }
+    }
+
+    private void settleUnmannedCoast() {
+        this.unmannedCoastSettleTicks = 0;
+        this.input.clearInputs();
+        this.engineSpeed = 0;
+        this.boostSpeed = 0;
+        this.lastBoostSpeed = 0;
+        this.lossySyncedEffectiveSpeed = 0;
+        this.lastSyncedBoostSpeed = 0;
+        this.lossySyncedBoostSpeed = 0;
+        this.dataLerpTicks = 0;
+        this.boostTimer = 0;
+        this.boostPower = 0;
+        this.hSpeed = 0;
+        this.vSpeed = 0;
+        this.addedVelocity = Vec3.ZERO;
+        this.lastVelocity = Vec3.ZERO;
+        this.lastMeasuredPos = this.position();
+        this.angularSpeed = 0;
+        this.steering = 0;
+        this.lastSteering = 0;
+        this.setDrifting(false);
+        this.setBurningOut(false);
+        this.setDeltaMovement(Vec3.ZERO);
         this.lerpTicks = 0;
         this.trackedX = this.getX();
         this.trackedY = this.getY();
