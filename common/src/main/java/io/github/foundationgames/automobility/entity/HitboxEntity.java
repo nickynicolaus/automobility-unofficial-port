@@ -94,7 +94,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
         }
 
         if (!this.level().isClientSide()) {
-            if (!automobile.isAlive()) {
+            if (!automobile.isAlive() || !automobile.hitboxes.contains(this)) {
                 this.remove(RemovalReason.DISCARDED);
                 return;
             }
@@ -158,6 +158,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
         return automobile != null
                 && other.getVehicle() != automobile
+                && !automobile.isRecentlyDismounted(other)
                 && !(other instanceof AutomobileEntity)
                 && Boat.canVehicleCollide(this, other);
     }

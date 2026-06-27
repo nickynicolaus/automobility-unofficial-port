@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-unofficial.16 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Kept recent-dismount collision grace active while an unmanned automobile coasts to a stop.
+- Ignored automobile and auxiliary hitbox collision against the player who just dismounted, reducing camera jitter when walking into the vehicle immediately after a moving dismount.
+- Removed orphaned auxiliary hitbox entities on the server if they are no longer tracked by their automobile.
+
 ## 0.5.0-unofficial.15 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

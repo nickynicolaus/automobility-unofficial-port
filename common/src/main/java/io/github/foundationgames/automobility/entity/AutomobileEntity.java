@@ -1569,6 +1569,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             return;
         }
 
+        if (this.unmannedCoastSettleTicks > 0) {
+            return;
+        }
+
         this.recentDismounts.replaceAll((uuid, ticks) -> ticks - 1);
         this.recentDismounts.values().removeIf(ticks -> ticks <= 0);
     }
@@ -1962,7 +1966,8 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         return entity instanceof LivingEntity living
-                && living.getVehicle() != this;
+                && living.getVehicle() != this
+                && !this.isRecentlyDismounted(living);
     }
 
     @Override
