@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.19 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Moved recently dismounted players out of current auxiliary automobile hitboxes after dismount stabilization and after unmanned coasting settles, reducing edge jitter when the vehicle stops near the player.
+
 ## 0.5.0-unofficial.18 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

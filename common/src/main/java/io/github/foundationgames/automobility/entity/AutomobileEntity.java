@@ -1647,6 +1647,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.hurtMarked = true;
         this.updateHitboxPositions();
         if (!this.level().isClientSide()) {
+            this.resolveRecentDismountHitboxOverlap();
             this.syncData();
         }
     }
@@ -1714,10 +1715,55 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.hurtMarked = true;
         if (!this.level().isClientSide()) {
             this.recreateHitboxesFor(this.getFrame());
+            this.resolveRecentDismountHitboxOverlap();
             this.syncData();
         } else {
             this.updateHitboxPositions();
         }
+    }
+
+    private void resolveRecentDismountHitboxOverlap() {
+        if (this.recentDismounts.isEmpty() || !(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        for (var uuid : new ArrayList<>(this.recentDismounts.keySet())) {
+            var player = serverLevel.getServer().getPlayerList().getPlayer(uuid);
+            if (player == null || player.level() != this.level() || player.isPassenger()) {
+                continue;
+            }
+
+            Vec3 correction = Vec3.ZERO;
+            AABB playerBox = player.getBoundingBox();
+            for (var hitbox : this.hitboxes) {
+                var hitboxBox = hitbox.getBoundingBox().inflate(0.04, 0, 0.04);
+                if (!playerBox.intersects(hitboxBox)) {
+                    continue;
+                }
+
+                var escape = minimalHorizontalEscape(playerBox, hitboxBox);
+                playerBox = playerBox.move(escape);
+                correction = correction.add(escape);
+            }
+
+            if (correction.horizontalDistanceSqr() > 1.0E-6) {
+                player.setPos(player.getX() + correction.x, player.getY(), player.getZ() + correction.z);
+            }
+        }
+    }
+
+    private static Vec3 minimalHorizontalEscape(AABB subject, AABB obstacle) {
+        double east = obstacle.maxX - subject.minX + 0.03;
+        double west = obstacle.minX - subject.maxX - 0.03;
+        double south = obstacle.maxZ - subject.minZ + 0.03;
+        double north = obstacle.minZ - subject.maxZ - 0.03;
+
+        double x = Math.abs(east) < Math.abs(west) ? east : west;
+        double z = Math.abs(south) < Math.abs(north) ? south : north;
+        if (Math.abs(x) < Math.abs(z)) {
+            return new Vec3(x, 0, 0);
+        }
+        return new Vec3(0, 0, z);
     }
 
     private void updateHitboxPositions() {
