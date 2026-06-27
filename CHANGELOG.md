@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.22 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Kept automobile hitbox collision active for recently dismounted players, but now continuously resolves overlap while the vehicle is settling after an unmanned coast. This prevents players from entering the vehicle hitbox during the grace window and getting stuck when collision resumes.
+
 ## 0.5.0-unofficial.21 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

@@ -829,8 +829,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         postMovementTick();
         tickUnmannedCoastSettle();
 
-        this.verifyHitboxesFor(getFrame());
+        this.updateHitboxPositions();
         if (!level().isClientSide()) {
+            this.resolveRecentDismountHitboxOverlap();
+
             var prevTailPos = this.prevTailPos != null ? this.prevTailPos : this.getTailPos();
             var tailPos = this.getTailPos();
 
@@ -888,8 +890,6 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
                 ClientPackets.sendServerboundAutomobileSyncPacket(this);
             }
-
-            updateCullingBox();
         }
 
         displacementTick(first || (this.position().subtract(prevPos).length() > 0 || this.getYRot() != this.yRotO));
