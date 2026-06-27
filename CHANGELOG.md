@@ -1,5 +1,12 @@
 # Changelog
 
+## Momentum 0.1.8-unofficial.1 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Changed
+- Replaced the procedural cruise control HUD glyph with a dedicated texture icon.
+
 ## Momentum 0.1.7-unofficial.1 - 2026-06-26
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.

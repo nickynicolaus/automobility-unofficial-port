@@ -6,7 +6,9 @@ import io.github.milkucha.momentum.accessor.SteeringDebugAccessor;
 import io.github.milkucha.momentum.config.MomentumConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayList;
@@ -34,6 +36,9 @@ public class BarHud {
     // Debug panel colors
     private static final int COL_PANEL_BG   = 0xAA000000;
     private static final int COL_PANEL_EDGE = 0xFF444444;
+    private static final Identifier CRUISE_ICON = Identifier.fromNamespaceAndPath("momentum", "textures/gui/cruise_control.png");
+    private static final int CRUISE_ICON_TEXTURE_SIZE = 64;
+    private static final int CRUISE_ICON_DISPLAY_SIZE = 10;
 
     public static void render(GuiGraphicsExtractor graphics, float tickDelta) {
         Minecraft client = Minecraft.getInstance();
@@ -89,10 +94,12 @@ public class BarHud {
 
         if (cruiseActive) {
             int iconX = textX + client.font.width(speedStr) + 5;
-            int iconY = textY + 1;
-            drawCruiseIcon(graphics, iconX, iconY, cruiseColor);
+            int iconY = textY;
+            graphics.blit(RenderPipelines.GUI_TEXTURED, CRUISE_ICON, iconX, iconY, 0, 0,
+                    CRUISE_ICON_DISPLAY_SIZE, CRUISE_ICON_DISPLAY_SIZE,
+                    CRUISE_ICON_TEXTURE_SIZE, CRUISE_ICON_TEXTURE_SIZE);
             graphics.text(client.font, Component.literal(String.format("%.0f", MomentumCruiseControl.getTargetKmh())),
-                    iconX + 12,
+                    iconX + CRUISE_ICON_DISPLAY_SIZE + 2,
                     textY,
                     cruiseColor);
         }
@@ -157,16 +164,6 @@ public class BarHud {
     }
 
     private static String yn(boolean v) { return v ? "YES" : "no"; }
-
-    private static void drawCruiseIcon(GuiGraphicsExtractor g, int x, int y, int color) {
-        g.fill(x + 1, y + 6, x + 9, y + 7, color);
-        g.fill(x, y + 4, x + 1, y + 6, color);
-        g.fill(x + 9, y + 4, x + 10, y + 6, color);
-        g.fill(x + 2, y + 2, x + 3, y + 3, color);
-        g.fill(x + 5, y + 1, x + 6, y + 2, color);
-        g.fill(x + 8, y + 2, x + 9, y + 3, color);
-        g.fill(x + 5, y + 5, x + 9, y + 6, color);
-    }
 
     private static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x, y, x + w, y + h, COL_PANEL_BG);

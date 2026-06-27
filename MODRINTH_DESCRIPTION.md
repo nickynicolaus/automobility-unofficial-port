@@ -32,4 +32,6 @@ The first public beta targets Minecraft Java 26.1.2 on Fabric.
 
 ## Status
 
-This port is beta. Core vehicle gameplay, rendering, sounds, particles, crafting screens, assembler flow, and multiplayer vehicle visual sync are working, but broader modpack compatibility is still being tested.
+This port is beta. Core vehicle gameplay, rendering, sounds, particles, crafting screens, assembler flow, attachments, slopes, and multiplayer vehicle visual sync are working.
+
+Compatibility testing has been done in singleplayer and on a multiplayer Fabric 26.1.2 server with a large mod set, including common performance mods, world generation mods, mapping mods, voice chat, controller support, shader/renderer mods, and quality-of-life mods. This does not guarantee compatibility with every modpack, so please include logs and a full mod list when reporting issues.
