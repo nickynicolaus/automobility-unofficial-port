@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.17 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Removed direct living-entity collision from the main automobile entity so players collide with the detailed auxiliary hitboxes instead of two overlapping vehicle collision layers.
+- Restored normal auxiliary hitbox collision for recently dismounted players after the previous test build made overlap jitter worse.
+
 ## 0.5.0-unofficial.16 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

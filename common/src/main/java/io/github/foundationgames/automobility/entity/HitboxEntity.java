@@ -158,7 +158,6 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
         return automobile != null
                 && other.getVehicle() != automobile
-                && !automobile.isRecentlyDismounted(other)
                 && !(other instanceof AutomobileEntity)
                 && Boat.canVehicleCollide(this, other);
     }
