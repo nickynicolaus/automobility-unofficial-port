@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.21 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Kept the recent-dismount collision grace active for the full unmanned coasting window plus a short settle period, preventing the former driver from getting stuck on the automobile hitbox after jumping out while the vehicle rolls to a stop.
+
 ## 0.5.0-unofficial.20 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

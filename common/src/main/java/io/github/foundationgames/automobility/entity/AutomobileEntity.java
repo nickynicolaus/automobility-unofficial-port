@@ -126,6 +126,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     public static final float TERMINAL_VELOCITY = -1.2f;
     private static final int RECENT_DISMOUNT_GRACE_TICKS = 30;
     private static final int UNMANNED_COAST_SETTLE_MAX_TICKS = 120;
+    private static final int POST_UNMANNED_COAST_GRACE_TICKS = 60;
 
     public final Input input = new Input();
     private boolean prevHoldDrift = input.holdingDrift;
@@ -251,6 +252,19 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         setBurningOut(buf.readBoolean());
 
         this.displacement.readSyncData(buf, !this.level().isClientSide());
+
+        if (this.level().isClientSide()) {
+            if (boostTimer == 0 && Math.abs(engineSpeed) < 1.0E-4f && Math.abs(boostSpeed) < 1.0E-4f && !input.accelerating && !input.braking) {
+                hSpeed = 0;
+                vSpeed = 0;
+                addedVelocity = Vec3.ZERO;
+                lastVelocity = Vec3.ZERO;
+                angularSpeed = 0;
+                lerpTicks = 0;
+            }
+
+            updateHitboxPositions();
+        }
 
         this.dataLerpTicks = CLIENT_SYNC_INTERVAL;
     }
@@ -1591,15 +1605,19 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     @Override
     protected void removePassenger(Entity passenger) {
         boolean wasDriver = this.isDriving(passenger);
+        boolean shouldCoastAfterDriverDismount = wasDriver && this.shouldCoastAfterDriverDismount();
 
         super.removePassenger(passenger);
 
         if (passenger instanceof LivingEntity) {
-            this.recentDismounts.put(passenger.getUUID(), RECENT_DISMOUNT_GRACE_TICKS);
+            int graceTicks = shouldCoastAfterDriverDismount
+                    ? UNMANNED_COAST_SETTLE_MAX_TICKS + POST_UNMANNED_COAST_GRACE_TICKS
+                    : RECENT_DISMOUNT_GRACE_TICKS;
+            this.recentDismounts.put(passenger.getUUID(), graceTicks);
         }
 
         if (wasDriver) {
-            this.stabilizeAfterDriverDismount();
+            this.stabilizeAfterDriverDismount(shouldCoastAfterDriverDismount);
         }
     }
 
@@ -1616,7 +1634,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.recentDismounts.values().removeIf(ticks -> ticks <= 0);
     }
 
-    private void stabilizeAfterDriverDismount() {
+    private void stabilizeAfterDriverDismount(boolean shouldCoastAfterDriverDismount) {
         this.input.clearInputs();
         this.boostSpeed = 0;
         this.lastBoostSpeed = 0;
@@ -1642,7 +1660,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.prevYDisplacements.clear();
         this.touchingWall = false;
         this.hadVehicleCollision = 0;
-        this.unmannedCoastSettleTicks = this.shouldCoastAfterDriverDismount() ? UNMANNED_COAST_SETTLE_MAX_TICKS : 1;
+        this.unmannedCoastSettleTicks = shouldCoastAfterDriverDismount ? UNMANNED_COAST_SETTLE_MAX_TICKS : 1;
         this.markDirty();
         this.hurtMarked = true;
         this.updateHitboxPositions();
