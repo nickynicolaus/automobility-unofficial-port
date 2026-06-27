@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.23 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Included the automobile's authoritative server position in the custom sync packet and snapped stopped client-side automobiles to that position before recalculating auxiliary hitboxes. This prevents parked vehicles that coasted after a dismount from keeping a stale rear hitbox until the next small physical movement.
+
 ## 0.5.0-unofficial.22 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

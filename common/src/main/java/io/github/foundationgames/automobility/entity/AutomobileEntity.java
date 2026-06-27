@@ -231,6 +231,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         buf.writeInt(turboCharge);
         buf.writeFloat(engineSpeed);
         buf.writeFloat(boostSpeed);
+        buf.writeDouble(this.getX());
+        buf.writeDouble(this.getY());
+        buf.writeDouble(this.getZ());
+        buf.writeFloat(this.getYRot());
         input.writePacket(buf);
 
         buf.writeBoolean(drifting);
@@ -246,6 +250,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         turboCharge = buf.readInt();
         engineSpeed = buf.readFloat();
         boostSpeed = buf.readFloat();
+        double syncedX = buf.readDouble();
+        double syncedY = buf.readDouble();
+        double syncedZ = buf.readDouble();
+        float syncedYaw = buf.readFloat();
         input.readPacket(buf);
 
         setDrifting(buf.readBoolean());
@@ -254,13 +262,21 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.displacement.readSyncData(buf, !this.level().isClientSide());
 
         if (this.level().isClientSide()) {
-            if (boostTimer == 0 && Math.abs(engineSpeed) < 1.0E-4f && Math.abs(boostSpeed) < 1.0E-4f && !input.accelerating && !input.braking) {
+            boolean stoppedSync = boostTimer == 0 && Math.abs(engineSpeed) < 1.0E-4f && Math.abs(boostSpeed) < 1.0E-4f && !input.accelerating && !input.braking;
+            if (stoppedSync) {
                 hSpeed = 0;
                 vSpeed = 0;
                 addedVelocity = Vec3.ZERO;
                 lastVelocity = Vec3.ZERO;
                 angularSpeed = 0;
                 lerpTicks = 0;
+                trackedX = syncedX;
+                trackedY = syncedY;
+                trackedZ = syncedZ;
+                trackedYaw = syncedYaw;
+                this.setPos(syncedX, syncedY, syncedZ);
+                this.setYRot(syncedYaw);
+                this.syncPacketPositionCodec(syncedX, syncedY, syncedZ);
             }
 
             updateHitboxPositions();
