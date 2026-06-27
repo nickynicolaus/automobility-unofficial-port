@@ -72,6 +72,10 @@ public class AutomobileModels implements ResourceManagerReloadListener {
             ModelType.BASIC, ModelDefinition.RenderMaterial.CUTOUT_NO_CULL,
             new ModelLayerLocation(Automobility.rl("automobile/frame/motorcar"), "main")
     );
+    public static final ModelDefinition FRAME_MOTORCAR_WINDOW = ModelDefinition.of(
+            ModelType.BASIC, ModelDefinition.RenderMaterial.TRANSLUCENT_NO_CULL,
+            new ModelLayerLocation(Automobility.rl("automobile/frame/motorcar"), "window")
+    );
     public static final ModelDefinition FRAME_RICKSHAW = ModelDefinition.of(
             ModelType.BASIC, ModelDefinition.RenderMaterial.CUTOUT_NO_CULL,
             new ModelLayerLocation(Automobility.rl("automobile/frame/rickshaw"), "main")
@@ -206,6 +210,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
         register(Automobility.rl("frame/c_arr"), FRAME_C_ARR);
         register(Automobility.rl("frame/pineapple"), FRAME_PINEAPPLE);
         register(Automobility.rl("frame/motorcar"), FRAME_MOTORCAR);
+        register(Automobility.rl("frame/motorcar_window"), FRAME_MOTORCAR_WINDOW);
         register(Automobility.rl("frame/rickshaw"), FRAME_RICKSHAW);
 
         register(Automobility.rl("wheel/standard"), WHEEL_STANDARD);

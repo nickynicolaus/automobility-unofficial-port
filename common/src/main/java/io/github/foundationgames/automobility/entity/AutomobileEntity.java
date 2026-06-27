@@ -1513,10 +1513,16 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     protected void removePassenger(Entity passenger) {
+        boolean wasDriver = this.isDriving(passenger);
+
         super.removePassenger(passenger);
 
         if (passenger instanceof LivingEntity) {
             this.recentDismounts.put(passenger.getUUID(), RECENT_DISMOUNT_GRACE_TICKS);
+        }
+
+        if (wasDriver) {
+            this.stabilizeAfterDriverDismount();
         }
     }
 
@@ -1531,6 +1537,28 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         this.recentDismounts.replaceAll((uuid, ticks) -> ticks - 1);
         this.recentDismounts.values().removeIf(ticks -> ticks <= 0);
+    }
+
+    private void stabilizeAfterDriverDismount() {
+        this.input.clearInputs();
+        this.engineSpeed = 0;
+        this.boostSpeed = 0;
+        this.boostTimer = 0;
+        this.boostPower = 0;
+        this.hSpeed = 0;
+        this.vSpeed = 0;
+        this.addedVelocity = Vec3.ZERO;
+        this.lastVelocity = Vec3.ZERO;
+        this.angularSpeed = 0;
+        this.steering = 0;
+        this.setDrifting(false);
+        this.setBurningOut(false);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.markDirty();
+        this.hurtMarked = true;
+        if (!this.level().isClientSide()) {
+            this.syncData();
+        }
     }
 
     @Override

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.6 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Stabilized vehicles immediately when the driver dismounts, clearing residual speed and collision velocity left by jumping out while moving.
+- Split motorcar glass into its own translucent render pass so the body can render separately from the windshield.
+
 ## 0.5.0-unofficial.5 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.automobile.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.automobile.AutomobileEngine;
 import io.github.foundationgames.automobility.automobile.WheelBase;
 import io.github.foundationgames.automobility.automobile.render.obj.ObjModel;
@@ -14,6 +15,9 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 
 public enum AutomobileRenderer {;
+    private static final Identifier MOTORCAR_FRAME_MODEL = Automobility.rl("frame/motorcar");
+    private static final Identifier MOTORCAR_WINDOW_MODEL = Automobility.rl("frame/motorcar_window");
+
     public static void render(
             PoseStack pose, SubmitNodeCollector submitter, int light, int overlay,
             float tickDelta, RenderableAutomobile automobile
@@ -49,6 +53,12 @@ public enum AutomobileRenderer {;
         var engineTexture = engine.model().texture();
         if (!frame.isEmpty() && frameModel != null) {
             submit(frameModel, state(tickDelta), pose, submitter, frameTexture, light, overlay, 0xFFFFFFFF);
+            if (MOTORCAR_FRAME_MODEL.equals(frame.model().modelId())) {
+                var windowModel = AutomobileModels.getModel(MOTORCAR_WINDOW_MODEL);
+                if (windowModel != null) {
+                    submit(windowModel, state(tickDelta), pose, submitter, frameTexture, light, overlay, 0xFFFFFFFF);
+                }
+            }
         }
 
         var ePos = frame.model().enginePos().scale(1.0 / 16);
