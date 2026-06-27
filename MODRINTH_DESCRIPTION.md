@@ -1,6 +1,6 @@
 # Automobility Unofficial Port
 
-This project provides unofficial Fabric ports of [Automobility](https://modrinth.com/mod/automobility) by FoundationGames for newer Minecraft versions.
+This project provides unofficial Fabric ports of [Automobility](https://modrinth.com/mod/automobility) by FoundationGames for Minecraft Java 26.x versions.
 
 Automobility adds customizable and functional vehicles, vehicle parts, attachments, road-building blocks, driving controls, sounds, and data/resource-pack vehicle support.
 
@@ -17,11 +17,11 @@ This is an unofficial fork/port. It is not affiliated with or endorsed by Founda
 
 ## Current Version
 
-The current public beta supports Minecraft Java 26.1.x on Fabric. Current builds are built and smoke-tested on Minecraft Java 26.1.2.
+Public builds are published per Minecraft target. Current targets include Minecraft Java 26.1.x and 26.2 on Fabric.
 
 ### Requirements
 
-- Minecraft Java 26.1.x
+- A matching Minecraft Java 26.x build
 - Fabric Loader 0.19.2 or newer
 - Fabric API
 - Java 25 or newer

@@ -146,7 +146,7 @@ public class MomentumClient implements ClientModInitializer {
                     try {
                         var screenClass = Class.forName("io.github.milkucha.momentum.config.MomentumConfigScreen");
                         var create = screenClass.getMethod("create", net.minecraft.client.gui.screens.Screen.class);
-                        client.setScreen((net.minecraft.client.gui.screens.Screen) create.invoke(null, client.screen));
+                        client.gui.setScreen((net.minecraft.client.gui.screens.Screen) create.invoke(null, client.gui.screen()));
                     } catch (ReflectiveOperationException | LinkageError e) {
                         if (client.player != null) {
                             client.player.sendOverlayMessage(Component.literal("[Momentum] Config screen unavailable"));

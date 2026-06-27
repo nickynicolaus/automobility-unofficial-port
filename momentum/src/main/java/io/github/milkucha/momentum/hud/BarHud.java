@@ -42,7 +42,7 @@ public class BarHud {
 
         Entity vehicle = client.player.getVehicle();
         if (!(vehicle instanceof AutomobileEntity auto)) return;
-        if (client.screen != null) return;
+        if (client.gui.screen() != null) return;
 
         MomentumConfig cfg = MomentumConfig.get();
         MomentumConfig.BarHud b = cfg.barHud;
@@ -103,7 +103,7 @@ public class BarHud {
         if (client.player == null || client.level == null) return;
         Entity vehicle = client.player.getVehicle();
         if (!(vehicle instanceof AutomobileEntity auto)) return;
-        if (client.screen != null) return;
+        if (client.gui.screen() != null) return;
 
         MomentumConfig cfg = MomentumConfig.get();
         if (!cfg.barHud.debug) return;

@@ -30,10 +30,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public enum AutomobilityBlocks {;
-    public static final Eventual<Block> AUTO_MECHANIC_TABLE = register("auto_mechanic_table", key -> new AutoMechanicTableBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK).setId(key)), Automobility.TAB);
+    public static final Eventual<Block> AUTO_MECHANIC_TABLE = register("auto_mechanic_table", key -> new AutoMechanicTableBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.COPPER_BLOCK.weathering().unaffected()).setId(key)), Automobility.TAB);
     public static final Eventual<Block> AUTOMOBILE_ASSEMBLER = register("automobile_assembler", key -> new AutomobileAssemblerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.ANVIL).setId(key)), Automobility.TAB);
     public static final Eventual<Block> AUTOPILOT_SIGN = register("autopilot_sign", key -> new AutopilotSignBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_TRAPDOOR)
-            .lightLevel(s -> 1).emissiveRendering((s,l,p) -> true).noCollision().setId(key)),
+            .lightLevel(s -> 1).emissiveRendering(s -> true).noCollision().setId(key)),
             (b, itemKey) -> new AutopilotSignBlockItem(b, new Item.Properties().setId(itemKey)), Automobility.TAB);
     public static final Eventual<Block> AUTOMOBILE_PRESSURE_PLATE = register("automobile_pressure_plate", key -> new AutomobilePressurePlateBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.HEAVY_WEIGHTED_PRESSURE_PLATE).setId(key)), Automobility.TAB);
 
@@ -41,11 +41,11 @@ public enum AutomobilityBlocks {;
     public static final Eventual<Block> STEEP_SLOPE = register("steep_slope", key -> new SteepSlopeBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).setId(key)), (b, itemKey) -> new SteepSlopeBlockItem(b, new Item.Properties().setId(itemKey)), Automobility.TAB);
 
     public static final Eventual<Block> SLOPE_WITH_DASH_PANEL = register("slope_with_dash_panel", key -> new SlopeWithDashPanelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
-            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering((s, l, p) -> !s.getValue(DashPanelBlock.POWERED)).setId(key)));
+            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering(s -> !s.getValue(DashPanelBlock.POWERED)).setId(key)));
     public static final Eventual<Block> STEEP_SLOPE_WITH_DASH_PANEL = register("steep_slope_with_dash_panel", key -> new SteepSlopeWithDashPanelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
-            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering((s, l, p) -> !s.getValue(DashPanelBlock.POWERED)).setId(key)));
+            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering(s -> !s.getValue(DashPanelBlock.POWERED)).setId(key)));
     public static final Eventual<Block> DASH_PANEL = register("dash_panel", key -> new DashPanelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
-            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering((s, l, p) -> !s.getValue(DashPanelBlock.POWERED)).noCollision().setId(key)), (b, itemKey) -> new DashPanelItem(b, new Item.Properties().setId(itemKey)), Automobility.TAB);
+            .lightLevel(s -> s.getValue(DashPanelBlock.POWERED) ? 0 : 1).emissiveRendering(s -> !s.getValue(DashPanelBlock.POWERED)).noCollision().setId(key)), (b, itemKey) -> new DashPanelItem(b, new Item.Properties().setId(itemKey)), Automobility.TAB);
 
     public static final Eventual<Block> GRASS_OFF_ROAD = register("grass_off_road", key -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GRASS_BLOCK).noCollision().setId(key), AUtils.colorFromInt(0x406918)), Automobility.TAB);
     public static final Eventual<Block> DIRT_OFF_ROAD = register("dirt_off_road", key -> new OffRoadBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT).noCollision().setId(key), AUtils.colorFromInt(0x594227)), Automobility.TAB);

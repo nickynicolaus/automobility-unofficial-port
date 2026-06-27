@@ -20,11 +20,11 @@
     "momentum.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.19.2",
+    "fabricloader": ">=0.19.3",
     "fabric-api": "*",
-    "minecraft": "26.1.x",
+    "minecraft": "26.2",
     "java": ">=25",
-    "automobility": ">=0.5.0-unofficial.2"
+    "automobility": ">=0.5.0-unofficial.24"
   },
   "suggests": {
     "modmenu": "*",

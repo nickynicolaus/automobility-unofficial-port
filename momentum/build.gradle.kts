@@ -24,7 +24,7 @@ dependencies {
     compileOnly(fabricMainOutput)
     runtimeOnly(fabricMainOutput)
 
-    compileOnly("dev.isxander:yet-another-config-lib:3.9.0+26.1-fabric")
+    compileOnly("maven.modrinth:yacl:3.9.5+26.2-fabric")
 }
 
 sourceSets {

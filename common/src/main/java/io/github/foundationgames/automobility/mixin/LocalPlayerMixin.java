@@ -24,7 +24,7 @@ public class LocalPlayerMixin {
         LocalPlayer self = (LocalPlayer)(Object)this;
         if (self.getVehicle() instanceof AutomobileEntity vehicle && vehicle.isDriving(self)) {
             var keyPresses = this.input.keyPresses;
-            if (Platform.get().controller().inControllerMode() && minecraft.screen == null) {
+            if (Platform.get().controller().inControllerMode() && minecraft.gui.screen() == null) {
                 vehicle.provideClientInput(
                         Platform.get().controller().accelerating(),
                         Platform.get().controller().braking(),

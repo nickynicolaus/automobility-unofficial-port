@@ -2212,7 +2212,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public static Vec3 moveAndCollide(Entity entity, Vec3 mvmt, AABB myCollider, Level level, List<VoxelShape> nearbyEntities) {
-        var colliders = collectColliders(entity, level, nearbyEntities, myCollider.expandTowards(mvmt));
+        var colliders = collectAllColliders(entity, level, myCollider.expandTowards(mvmt));
         return collideWithShapes(mvmt, myCollider, colliders);
     }
 

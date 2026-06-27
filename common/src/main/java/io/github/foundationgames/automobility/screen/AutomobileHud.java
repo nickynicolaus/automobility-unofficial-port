@@ -26,10 +26,6 @@ public enum AutomobileHud {;
     );
 
     public static void render(GuiGraphicsExtractor graphics, Player player, AutomobileEntity auto, DeltaTracker tickDelta) {
-        if (Minecraft.getInstance().options.hideGui) {
-            return;
-        }
-
         renderSpeedometer(graphics, auto);
 
         if (!Platform.get().controller().inControllerMode()) {

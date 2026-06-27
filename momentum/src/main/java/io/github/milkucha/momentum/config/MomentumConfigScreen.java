@@ -257,7 +257,7 @@ public class MomentumConfigScreen {
                             cfg.oDrift.profile = val;
                             cfg.save();
                             Minecraft mc = Minecraft.getInstance();
-                            mc.execute(() -> mc.setScreen(MomentumConfigScreen.create(parent)));
+                            mc.execute(() -> mc.gui.setScreen(MomentumConfigScreen.create(parent)));
                         })
                         .build();
 

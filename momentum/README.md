@@ -1,11 +1,11 @@
-# Momentum for Automobility - Unofficial 26.1.x Port
+# Momentum for Automobility - Unofficial 26.x Ports
 
-This subproject is an unofficial Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) by milkucha for Minecraft Java 26.1.x. Current builds are built and smoke-tested on Minecraft Java 26.1.2.
+This subproject is an unofficial Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) by milkucha for Minecraft Java 26.x. Releases are built per Minecraft target, such as 26.1.x and 26.2.
 
 Momentum changes Automobility vehicle movement feel and adds a minimal speed HUD. It is optional, but when used in multiplayer it must be installed on both the client and the server.
 
 ## Requirements
-- Minecraft Java 26.1.x
+- A matching Minecraft Java 26.x build
 - Fabric Loader 0.19.2 or newer
 - Fabric API
 - Java 25 or newer
