@@ -34,7 +34,7 @@ public class BarHud {
     // Debug panel colors
     private static final int COL_PANEL_BG   = 0xAA000000;
     private static final int COL_PANEL_EDGE = 0xFF444444;
-    private static final int CRUISE_INDICATOR_WIDTH = 13;
+    private static final int CRUISE_INDICATOR_WIDTH = 10;
 
     public static void render(GuiGraphicsExtractor graphics, float tickDelta) {
         Minecraft client = Minecraft.getInstance();
@@ -47,9 +47,7 @@ public class BarHud {
         MomentumConfig cfg = MomentumConfig.get();
         MomentumConfig.BarHud b = cfg.barHud;
         boolean cruiseActive = MomentumCruiseControl.isActiveFor(auto);
-        int cruiseColor = MomentumCruiseControl.isAccelerating()
-                ? cfg.cruise.acceleratingColor
-                : cfg.cruise.coastColor;
+        int cruiseColor = cfg.cruise.activeColor;
         int barColor = cruiseActive ? cruiseColor : b.barColor;
         int textColor = cruiseActive ? cruiseColor : b.textColor;
 
@@ -89,10 +87,10 @@ public class BarHud {
                 textColor);
 
         if (cruiseActive) {
-            int indicatorX = textX + client.font.width(speedStr) + 5;
+            int indicatorX = textX + client.font.width(speedStr) + 4;
             drawCruiseChevrons(graphics, indicatorX, textY, cruiseColor);
             graphics.text(client.font, Component.literal(String.format("%.0f", MomentumCruiseControl.getTargetKmh())),
-                    indicatorX + CRUISE_INDICATOR_WIDTH + 3,
+                    indicatorX + CRUISE_INDICATOR_WIDTH + 2,
                     textY,
                     cruiseColor);
         }
@@ -159,19 +157,22 @@ public class BarHud {
     private static String yn(boolean v) { return v ? "YES" : "no"; }
 
     private static void drawCruiseChevrons(GuiGraphicsExtractor g, int x, int y, int color) {
-        int shadow = 0xAA000000;
-        chevron(g, x + 1, y + 1, shadow);
-        chevron(g, x + 7, y + 1, shadow);
-        chevron(g, x, y, color);
-        chevron(g, x + 6, y, color);
+        int shadow = 0x99000000;
+        int cy = y + 1;
+        chevron(g, x + 1, cy + 1, shadow);
+        chevron(g, x + 6, cy + 1, shadow);
+        chevron(g, x, cy, color);
+        chevron(g, x + 5, cy, color);
     }
 
     private static void chevron(GuiGraphicsExtractor g, int x, int y, int color) {
-        g.fill(x,     y,     x + 2, y + 2, color);
-        g.fill(x + 2, y + 2, x + 4, y + 4, color);
-        g.fill(x + 4, y + 4, x + 6, y + 5, color);
-        g.fill(x + 2, y + 5, x + 4, y + 7, color);
-        g.fill(x,     y + 7, x + 2, y + 9, color);
+        g.fill(x,     y,     x + 1, y + 1, color);
+        g.fill(x + 1, y + 1, x + 2, y + 2, color);
+        g.fill(x + 2, y + 2, x + 3, y + 3, color);
+        g.fill(x + 3, y + 3, x + 4, y + 4, color);
+        g.fill(x + 2, y + 4, x + 3, y + 5, color);
+        g.fill(x + 1, y + 5, x + 2, y + 6, color);
+        g.fill(x,     y + 6, x + 1, y + 7, color);
     }
 
     private static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## Momentum 0.1.11-unofficial.1 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Changed
+- Reduced the cruise control HUD chevron size.
+- Made the cruise control HUD color stable while active instead of switching with throttle/coast state.
+
 ## Momentum 0.1.10-unofficial.1 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
