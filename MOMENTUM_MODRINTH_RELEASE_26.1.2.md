@@ -68,6 +68,8 @@ Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
 
 Momentum for Automobility is a small handling addon for Automobility. This unofficial port brings milkucha's Momentum addon forward to Minecraft Java 26.1.2 on Fabric.
 
+This addon is built for [Automobility: Unofficial Port](https://modrinth.com/mod/automobility-unofficial-port). Install Automobility first; Momentum does not include the base vehicle mod.
+
 The goal is simple: make Automobility vehicles feel less abrupt and more controllable, especially when driving for more than a few seconds at a time. It adjusts acceleration, coasting, braking, steering, drift behavior, camera feel, and adds a compact speed HUD.
 
 ### Features
@@ -86,7 +88,7 @@ The goal is simple: make Automobility vehicles feel less abrupt and more control
 - Minecraft Java 26.1.2
 - Fabric Loader
 - Fabric API
-- Automobility: Unofficial Port `0.5.0-unofficial.2` or newer
+- [Automobility: Unofficial Port](https://modrinth.com/mod/automobility-unofficial-port) `0.5.0-unofficial.2` or newer
 
 This addon is required on both the client and the server for multiplayer.
 

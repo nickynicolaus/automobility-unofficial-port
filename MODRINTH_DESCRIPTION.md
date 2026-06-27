@@ -30,6 +30,10 @@ The first public beta targets Minecraft Java 26.1.2 on Fabric.
 
 - Controlify for controller support
 
+### Related Addons
+
+- [Momentum for Automobility: Unofficial Port](https://modrinth.com/mod/momentum-for-automobility-unofficial-port) is an optional addon for this port that adds smoother handling, cruise control, brake/drift input sync, and a compact speed HUD. If used in multiplayer, install it on both the client and the server.
+
 ## Status
 
 This port is beta. Core vehicle gameplay, rendering, sounds, particles, crafting screens, assembler flow, attachments, slopes, and multiplayer vehicle visual sync are working.
