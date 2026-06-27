@@ -1,5 +1,12 @@
 # Changelog
 
+## Momentum 0.1.10-unofficial.1 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Changed
+- Replaced the cruise control HUD icon with compact procedural chevrons that match the existing speed HUD.
+
 ## Momentum 0.1.9-unofficial.1 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
