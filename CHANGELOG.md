@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.12 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Restored physical collision for detailed automobile hitbox entities so rear vehicle sections cannot be walked through while the automobile coasts after dismount.
+- Restored Automobility control hints when Momentum's HUD is enabled.
+
 ## 0.5.0-unofficial.11 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

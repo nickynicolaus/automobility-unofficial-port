@@ -36,17 +36,4 @@ public abstract class AutomobileHudMixin {
         if (!cfg.enabled || !cfg.barHud.enabled) return;
         ci.cancel();
     }
-
-    @Inject(
-        method = "renderControlHints",
-        at = @At("HEAD"),
-        cancellable = true
-    )
-    private static void momentum$suppressControlHints(
-            GuiGraphicsExtractor graphics,
-            float alpha,
-            CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
-        ci.cancel();
-    }
 }

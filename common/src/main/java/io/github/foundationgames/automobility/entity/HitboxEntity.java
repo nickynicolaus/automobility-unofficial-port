@@ -144,8 +144,11 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     @Override
     public boolean canBeCollidedWith(Entity other) {
         var automobile = automobile();
-        return automobile != null && !(other instanceof LivingEntity)
-                && !(other instanceof AutomobileEntity) && Boat.canVehicleCollide(this, other);
+        return automobile != null
+                && other.getVehicle() != automobile
+                && !(other instanceof AutomobileEntity)
+                && !(other instanceof HitboxEntity hitbox && hitbox.automobile() == automobile)
+                && Boat.canVehicleCollide(this, other);
     }
 
     @Override
