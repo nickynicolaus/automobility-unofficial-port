@@ -81,6 +81,16 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
                 && Math.abs(this.height() - hitbox.height()) < 0.0001;
     }
 
+    public boolean matches(HitboxEntity hitbox) {
+        var origin = this.boxOrigin();
+        var otherOrigin = hitbox.boxOrigin();
+        return Math.abs(origin.x - otherOrigin.x) < 0.0001
+                && Math.abs(origin.y - otherOrigin.y) < 0.0001
+                && Math.abs(origin.z - otherOrigin.z) < 0.0001
+                && Math.abs(this.width() - hitbox.width()) < 0.0001
+                && Math.abs(this.height() - hitbox.height()) < 0.0001;
+    }
+
     @Override
     public void tick() {
         var automobile = automobile();
@@ -99,8 +109,9 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
                 return;
             }
         } else {
-            if (!automobile.hitboxes.contains(this)) {
-                automobile.hitboxes.add(this);
+            if (!automobile.registerClientHitbox(this)) {
+                this.remove(RemovalReason.DISCARDED);
+                return;
             }
         }
 

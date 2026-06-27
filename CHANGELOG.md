@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.18 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Pruned stale duplicate auxiliary hitboxes on the client after server-side hitbox recreation so local player collision uses the current hitbox set.
+
 ## 0.5.0-unofficial.17 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

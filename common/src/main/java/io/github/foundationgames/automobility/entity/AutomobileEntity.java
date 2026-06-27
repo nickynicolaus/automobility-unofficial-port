@@ -614,6 +614,49 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return true;
     }
 
+    public boolean registerClientHitbox(HitboxEntity candidate) {
+        if (!this.level().isClientSide()) {
+            return false;
+        }
+
+        this.hitboxes.removeIf(Entity::isRemoved);
+
+        var boxes = this.getFrame().hitboxes();
+        if (boxes.isEmpty()) boxes = List.of(AutomobileFrame.Hitbox.DEFAULT);
+
+        boolean expected = false;
+        for (var box : boxes) {
+            if (candidate.matches(box)) {
+                expected = true;
+                break;
+            }
+        }
+        if (!expected) {
+            return false;
+        }
+
+        HitboxEntity duplicate = null;
+        for (var existing : this.hitboxes) {
+            if (existing != candidate && existing.matches(candidate)) {
+                duplicate = existing;
+                break;
+            }
+        }
+
+        if (duplicate != null) {
+            if (duplicate.getId() > candidate.getId()) {
+                return false;
+            }
+            duplicate.remove(RemovalReason.DISCARDED);
+            this.hitboxes.remove(duplicate);
+        }
+
+        if (!this.hitboxes.contains(candidate)) {
+            this.hitboxes.add(candidate);
+        }
+        return true;
+    }
+
     private void recreateHitboxes(List<AutomobileFrame.Hitbox> boxes) {
         if (this.level().isClientSide()) {
             return;
