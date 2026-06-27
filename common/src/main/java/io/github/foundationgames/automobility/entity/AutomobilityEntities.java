@@ -24,7 +24,7 @@ public enum AutomobilityEntities {;
     );
     public static final Eventual<EntityType<HitboxEntity>> HITBOX = RegistryQueue.register(BuiltInRegistries.ENTITY_TYPE,
             Automobility.rl("hitbox"),
-            () -> Platform.get().entityType(MobCategory.MISC, HitboxEntity::new, EntityDimensions.scalable(1.1f, 0.7f), 3, 10, true, "automobile_hitbox")
+            () -> Platform.get().entityType(MobCategory.MISC, HitboxEntity::new, EntityDimensions.scalable(1.1f, 0.7f), 1, 10, true, "automobile_hitbox")
     );
 
     public static final TagKey<EntityType<?>> DASH_PANEL_BOOSTABLES = TagKey.create(Registries.ENTITY_TYPE, Automobility.rl("dash_panel_boostables"));

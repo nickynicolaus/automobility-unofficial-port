@@ -279,7 +279,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 this.syncPacketPositionCodec(syncedX, syncedY, syncedZ);
             }
 
-            updateHitboxPositions();
+            if (stoppedSync) {
+                snapClientHitboxesFromAutomobile();
+            } else {
+                updateCullingBox();
+            }
         }
 
         this.dataLerpTicks = CLIENT_SYNC_INTERVAL;
@@ -1802,6 +1806,18 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     private void updateHitboxPositions() {
         this.verifyHitboxesFor(this.getFrame());
+        if (!this.level().isClientSide()) {
+            this.hitboxes.forEach(HitboxEntity::updatePositionFromAutomobile);
+        }
+        this.updateCullingBox();
+    }
+
+    private void snapClientHitboxesFromAutomobile() {
+        if (!this.level().isClientSide()) {
+            return;
+        }
+
+        this.hitboxes.removeIf(Entity::isRemoved);
         this.hitboxes.forEach(HitboxEntity::updatePositionFromAutomobile);
         this.updateCullingBox();
     }

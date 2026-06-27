@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.24 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Made auxiliary automobile hitbox entities honor authoritative server position packets on clients instead of continuously deriving collision positions from the parent automobile. Hitboxes now request precise position tracking and update every tick, while stopped automobile sync still performs an immediate local snap for parked vehicles.
+
 ## 0.5.0-unofficial.23 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

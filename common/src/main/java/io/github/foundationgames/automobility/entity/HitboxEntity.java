@@ -37,6 +37,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
     public HitboxEntity(Level level, AutomobileEntity automobile, AutomobileFrame.Hitbox hitbox) {
         super(AutomobilityEntities.HITBOX.require(), level);
+        this.setRequiresPrecisePosition(true);
 
         this.entityData.set(AUTOMOBILE, automobile.getId());
         this.entityData.set(ORIGIN, new Vector3f((float) hitbox.origin().x(), (float) hitbox.origin().y(), (float) hitbox.origin().z()));
@@ -48,6 +49,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
     public HitboxEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
+        this.setRequiresPrecisePosition(true);
         this.size = EntityDimensions.scalable(1.1f, 0.7f);
     }
 
@@ -115,7 +117,9 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
             }
         }
 
-        this.updatePositionFromAutomobile();
+        if (!this.level().isClientSide()) {
+            this.updatePositionFromAutomobile();
+        }
         super.tick();
     }
 
@@ -189,6 +193,8 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     }
 
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.setPos(x, y, z);
+        this.syncPacketPositionCodec(x, y, z);
     }
 
     @Override
@@ -199,6 +205,8 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
     @Override
     protected void lerpPositionAndRotationStep(int steps, double targetX, double targetY, double targetZ, double targetYRot, double targetXRot) {
+        this.setPos(targetX, targetY, targetZ);
+        this.syncPacketPositionCodec(targetX, targetY, targetZ);
     }
 
     @Override
