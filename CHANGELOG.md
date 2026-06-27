@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-unofficial.4 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Offset the motorcar windshield plane slightly away from the front body face to reduce dashboard-area z-fighting.
+- Kept automobile hitbox entities on stable chassis coordinates instead of visual suspension displacement to reduce player collision jitter after driving.
+- Added a short dismount grace period so the former driver is not immediately pushed or run over by the same vehicle.
+
 ## 0.5.0-unofficial.3 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

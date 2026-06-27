@@ -95,7 +95,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
         }
 
         var pos = this.boxOrigin();
-        automobile.localPosToWorldSpace(pos);
+        automobile.localPosToStableWorldSpace(pos);
 
         this.setPos(pos.x(), pos.y() - this.size.height() * 0.5, pos.z());
         super.tick();
@@ -134,11 +134,9 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
     @Override
     public boolean canBeCollidedWith(Entity other) {
-        return !(other instanceof AutomobileEntity) && Boat.canVehicleCollide(this, other);
-    }
-
-    public boolean canBeCollidedWith() {
-        return !this.isRemoved() && this.automobile() != null;
+        var automobile = automobile();
+        return automobile != null && !automobile.isRecentlyDismounted(other)
+                && !(other instanceof AutomobileEntity) && Boat.canVehicleCollide(this, other);
     }
 
     @Override

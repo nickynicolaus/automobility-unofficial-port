@@ -96,8 +96,10 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class AutomobileEntity extends Entity implements RenderableAutomobile, EntityWithInventory, EntityWithContainer {
@@ -122,6 +124,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     public static final int MEDIUM_TURBO_TIME = 70;
     public static final int LARGE_TURBO_TIME = 115;
     public static final float TERMINAL_VELOCITY = -1.2f;
+    private static final int RECENT_DISMOUNT_GRACE_TICKS = 30;
 
     public final Input input = new Input();
     private boolean prevHoldDrift = input.holdingDrift;
@@ -212,6 +215,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private int despawnTime = -1;
     private int despawnCountdown = 0;
     private boolean decorative = false;
+    private final Map<UUID, Integer> recentDismounts = new HashMap<>();
 
     private boolean wasEngineRunning = false;
 
@@ -709,6 +713,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         if (this.jumpCooldown > 0) {
             this.jumpCooldown--;
         }
+        tickRecentDismounts();
 
         super.tick();
         if (!this.rearAttachment.type.isEmpty()) this.rearAttachment.tick();
@@ -1014,7 +1019,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             var bbox = box.getBoundingBox().move(velocity.scale(0.5));
             for (var entity : level().getEntities(EntityTypeTest.forClass(Entity.class), bbox, entity -> entity != this && entity.getVehicle() != this)) {
                 if (!entity.isInvulnerable() && !entity.isSpectator()) {
-                    if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
+                    if (entity instanceof LivingEntity living && entity.getVehicle() != this && !this.isRecentlyDismounted(living)) {
                         entitiesToHit.add(living);
                     }
                 }
@@ -1502,6 +1507,30 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
             this.gameEvent(GameEvent.ENTITY_MOUNT, passenger);
         }
+
+        this.recentDismounts.remove(passenger.getUUID());
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+
+        if (passenger instanceof LivingEntity) {
+            this.recentDismounts.put(passenger.getUUID(), RECENT_DISMOUNT_GRACE_TICKS);
+        }
+    }
+
+    public boolean isRecentlyDismounted(Entity entity) {
+        return this.recentDismounts.containsKey(entity.getUUID());
+    }
+
+    private void tickRecentDismounts() {
+        if (this.recentDismounts.isEmpty()) {
+            return;
+        }
+
+        this.recentDismounts.replaceAll((uuid, ticks) -> ticks - 1);
+        this.recentDismounts.values().removeIf(ticks -> ticks <= 0);
     }
 
     @Override
@@ -1874,6 +1903,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         var pos = this.position();
         position.add(pos.x(), pos.y() + disp.getVerticalOffset(1, this), pos.z());
+    }
+
+    public void localPosToStableWorldSpace(Vector3d position) {
+        position.rotateY(Math.toRadians(-this.getYRot()));
+
+        var pos = this.position();
+        position.add(pos.x(), pos.y(), pos.z());
     }
 
     @Override
