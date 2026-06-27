@@ -1,4 +1,4 @@
-# Modrinth Release Plan - Automobility 26.1.2 Port
+# Modrinth Release Plan - Automobility 26.1.x Port
 
 Use this file as the source of truth for the first public Modrinth upload.
 
@@ -14,7 +14,7 @@ Use this file as the source of truth for the first public Modrinth upload.
 - Server side: Required
 - Categories: Transportation, Technology, Equipment
 - Loaders: Fabric
-- Game versions: 26.1.2
+- Game versions: 26.1, 26.1.1, 26.1.2
 - Release channel for first upload: Beta
 
 Do not upload this as a version of the original Automobility project unless FoundationGames explicitly grants project access or asks for it.
@@ -29,11 +29,11 @@ Do not point fork-specific bug reports at upstream FoundationGames support chann
 
 ## Version Metadata
 
-- Version title: `0.5.0-unofficial.1 for Minecraft 26.1.2`
-- Version number: `0.5.0-unofficial.1+26.1.2`
+- Version title: `0.5.0-unofficial.24 for Minecraft 26.1.x`
+- Version number: `0.5.0-unofficial.24+26.1.2`
 - Environment: Client and server
 - Loaders: Fabric
-- Game versions: 26.1.2
+- Game versions: 26.1, 26.1.1, 26.1.2
 - Dependencies:
   - Fabric API: required
   - Fabric Loader 0.19.2 or newer: required
@@ -41,9 +41,9 @@ Do not point fork-specific bug reports at upstream FoundationGames support chann
 
 ## Upload File
 
-- Local jar: `dist\automobility-0.5.0-unofficial.1+26.1.2-fabric.jar`
-- Size: `1372470`
-- SHA-256: `ED2EB9AF1388AEBE741D846D8D25B3E1821DDC3C29F27A638B82888A73F0687E`
+- Local jar: `dist\automobility-0.5.0-unofficial.24+26.1.2-fabric.jar`
+- Size: `1393293`
+- SHA-256: `60f35bd94f84f70149984078e0cae78861c9a322c1810f015c77b3764e05b683`
 
 ## Changelog Text
 
@@ -65,7 +65,7 @@ Use the existing images from the `md` directory:
 ## Pre-Publish Checklist
 
 - Public source fork exists and contains `README.md`, `LICENSE`, `NOTICE.md`, and `CHANGELOG.md`.
-- `README.md` clearly says this is an unofficial 26.1.2 port.
+- `README.md` clearly says this is an unofficial 26.1.x port and notes that the current build was smoke-tested on 26.1.2.
 - Modrinth project description clearly says this is an unofficial fork/port.
 - Modrinth links point to the fork, not to upstream support for fork bugs.
 - Jar uploaded is the file listed above, not an older build from `fabric/build/libs`.

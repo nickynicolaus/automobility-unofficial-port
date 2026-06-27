@@ -17,11 +17,11 @@ This is an unofficial fork/port. It is not affiliated with or endorsed by Founda
 
 ## Current Version
 
-The first public beta targets Minecraft Java 26.1.2 on Fabric.
+The current public beta supports Minecraft Java 26.1.x on Fabric. Current builds are built and smoke-tested on Minecraft Java 26.1.2.
 
 ### Requirements
 
-- Minecraft Java 26.1.2
+- Minecraft Java 26.1.x
 - Fabric Loader 0.19.2 or newer
 - Fabric API
 - Java 25 or newer

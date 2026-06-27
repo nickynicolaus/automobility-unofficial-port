@@ -1,4 +1,4 @@
-# Modrinth Release Plan - Momentum for Automobility 26.1.2 Port
+# Modrinth Release Plan - Momentum for Automobility 26.1.x Port
 
 Use this file as the source of truth for the first public Modrinth upload of the Momentum addon port.
 
@@ -7,13 +7,13 @@ Use this file as the source of truth for the first public Modrinth upload of the
 - Project type: Mod
 - Suggested project title: `Momentum for Automobility: Unofficial Port`
 - Suggested slug: `momentum-for-automobility-unofficial-port`
-- Summary: `Handling tweaks, cruise control, and a speed HUD for Automobility on Minecraft 26.1.2 Fabric.`
+- Summary: `Handling tweaks, cruise control, and a speed HUD for Automobility on Minecraft 26.1.x Fabric.`
 - License: MIT
 - Client side: Required
 - Server side: Required
 - Categories: Transportation, Utility
 - Loaders: Fabric
-- Game versions: 26.1.2
+- Game versions: 26.1, 26.1.1, 26.1.2
 - Release channel for first upload: Beta
 
 Do not upload this as a version of the original Momentum project unless the upstream maintainer explicitly grants project access or asks for it.
@@ -26,11 +26,11 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Version Metadata
 
-- Version title: `0.1.11-unofficial.1 for Minecraft 26.1.2`
-- Version number: `0.1.11-unofficial.1+26.1.2`
+- Version title: `0.1.11-unofficial.3 for Minecraft 26.1.x`
+- Version number: `0.1.11-unofficial.3+26.1.2`
 - Environment: Client and server
 - Loaders: Fabric
-- Game versions: 26.1.2
+- Game versions: 26.1, 26.1.1, 26.1.2
 - Dependencies:
   - Fabric API: required
   - Automobility Unofficial Port `0.5.0-unofficial.2` or newer: required
@@ -38,16 +38,16 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Upload File
 
-- Local jar: `dist\momentum-0.1.11-unofficial.1+26.1.2-fabric.jar`
-- Size: `82343`
-- SHA-256: `24420477ECFA3D353585CF64D211169CA9760EE25E3AB3E793BFB3EB204D4287`
+- Local jar: `dist\momentum-0.1.11-unofficial.3+26.1.2-fabric.jar`
+- Size: `82249`
+- SHA-256: `f151eed6d4a5065c7e85b27e24bd26b4045fc7125841c2b44c19749733c5408f`
 
 ## Changelog Text
 
-Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
+Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.x. This build was smoke-tested on Minecraft Java 26.1.2.
 
 ### Added and Ported
-- Ported Momentum's vehicle movement changes, braking, coasting, steering behavior, drift profiles, camera behavior, and minimal speed HUD to Minecraft 26.1.2.
+- Ported Momentum's vehicle movement changes, braking, coasting, steering behavior, drift profiles, camera behavior, and minimal speed HUD to Minecraft 26.1.x.
 - Ported client-to-server key state sync for brake and drift input on dedicated multiplayer servers.
 - Ported the optional YACL config screen. It is available only when YACL is installed.
 - Added cruise control on the `C` key while driving an Automobility vehicle.
@@ -69,7 +69,7 @@ Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
 
 ## Project Description Text
 
-Momentum for Automobility is a small handling addon for Automobility. This unofficial port brings milkucha's Momentum addon forward to Minecraft Java 26.1.2 on Fabric.
+Momentum for Automobility is a small handling addon for Automobility. This unofficial port brings milkucha's Momentum addon forward to Minecraft Java 26.1.x on Fabric. Current builds are built and smoke-tested on Minecraft Java 26.1.2.
 
 This addon is built for [Automobility: Unofficial Port](https://modrinth.com/mod/automobility-unofficial-port). Install Automobility first; Momentum does not include the base vehicle mod.
 
@@ -88,7 +88,7 @@ The goal is simple: make Automobility vehicles feel less abrupt and more control
 
 ### Requirements
 
-- Minecraft Java 26.1.2
+- Minecraft Java 26.1.x
 - Fabric Loader
 - Fabric API
 - [Automobility: Unofficial Port](https://modrinth.com/mod/automobility-unofficial-port) `0.5.0-unofficial.2` or newer
@@ -103,7 +103,7 @@ YACL is optional. When installed, the Momentum options screen is available in-ga
 
 Compatibility testing has been done in singleplayer and on a multiplayer Fabric 26.1.2 server with a large mod set, including common performance mods, world generation mods, mapping mods, voice chat, controller support, shader/renderer mods, and quality-of-life mods. This does not guarantee compatibility with every modpack, so please include logs and a full mod list when reporting issues.
 
-This project is not affiliated with or endorsed by the upstream Momentum maintainer unless stated otherwise by that maintainer. Bugs specific to this 26.1.2 port should be reported to this fork.
+This project is not affiliated with or endorsed by the upstream Momentum maintainer unless stated otherwise by that maintainer. Bugs specific to this port should be reported to this fork.
 
 ## Pre-Publish Checklist
 

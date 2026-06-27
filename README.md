@@ -1,24 +1,25 @@
 ![Automobility](./md/banner.png)
 
-# Automobility - Unofficial 26.1.2 Port
+# Automobility - Unofficial 26.1.x Port
 
-This repository is an unofficial Fabric port/fork of [Automobility](https://modrinth.com/mod/automobility) by [FoundationGames](https://github.com/FoundationGames/Automobility) for Minecraft Java 26.1.2. It is not affiliated with or endorsed by FoundationGames unless stated otherwise by the upstream maintainers.
+This repository is an unofficial Fabric port/fork of [Automobility](https://modrinth.com/mod/automobility) by [FoundationGames](https://github.com/FoundationGames/Automobility) for Minecraft Java 26.1.x. Current builds are built and smoke-tested on Minecraft Java 26.1.2. It is not affiliated with or endorsed by FoundationGames unless stated otherwise by the upstream maintainers.
 
 Automobility adds customizable and functional vehicles, automobile parts, attachments, road-building blocks, driving controls, sounds, and resource/data-pack vehicle support.
 
 **Automobility is currently in BETA.** This port should also be treated as beta until it has wider public testing.
 
 ## Available for Fabric
-- Targets Minecraft Java **26.1.2**
+- Supports Minecraft Java **26.1.x**
+- Current release builds are smoke-tested on **26.1.2**
 - Requires **[Fabric API](https://modrinth.com/mod/fabric-api)**
 - Requires Fabric Loader **0.19.2 or newer**
 - Requires Java **25 or newer**
 - Optional Fabric controller support through **[Controlify](https://modrinth.com/mod/controlify)**
 
-This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for 26.1.2 port bugs.
+This port currently publishes a Fabric build only. The upstream project is maintained separately; use this fork's issue tracker for bugs specific to this port.
 
 ## Momentum Addon
-This repository also contains an unofficial 26.1.2 Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) in the `momentum` subproject.
+This repository also contains an unofficial 26.1.x Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) in the `momentum` subproject.
 
 Momentum is an optional Automobility addon that changes vehicle movement feel and adds its own minimal speed HUD. It requires this Automobility port on both client and server. YACL is optional and only needed for the in-game options screen.
 

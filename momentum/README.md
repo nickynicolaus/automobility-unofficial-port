@@ -1,11 +1,11 @@
-# Momentum for Automobility - Unofficial 26.1.2 Port
+# Momentum for Automobility - Unofficial 26.1.x Port
 
-This subproject is an unofficial Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) by milkucha for Minecraft Java 26.1.2.
+This subproject is an unofficial Fabric port of [Momentum for Automobility](https://modrinth.com/mod/momentum-for-automobility) by milkucha for Minecraft Java 26.1.x. Current builds are built and smoke-tested on Minecraft Java 26.1.2.
 
 Momentum changes Automobility vehicle movement feel and adds a minimal speed HUD. It is optional, but when used in multiplayer it must be installed on both the client and the server.
 
 ## Requirements
-- Minecraft Java 26.1.2
+- Minecraft Java 26.1.x
 - Fabric Loader 0.19.2 or newer
 - Fabric API
 - Java 25 or newer
@@ -22,4 +22,4 @@ Momentum changes Automobility vehicle movement feel and adds a minimal speed HUD
 - Brake and drift key state sync works on dedicated servers.
 - The YACL options screen can be opened with the Momentum options key when YACL is installed.
 
-This is an unofficial fork/port. Bugs specific to this 26.1.2 build should be reported to this fork, not to the upstream Momentum project.
+This is an unofficial fork/port. Bugs specific to this port should be reported to this fork, not to the upstream Momentum project.
