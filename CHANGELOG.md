@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.10 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Prevented moving dismount fallback from placing the player at the center of the automobile.
+- Tried both sides of the automobile when choosing a dismount location and increased side clearance.
+
 ## 0.5.0-unofficial.9 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

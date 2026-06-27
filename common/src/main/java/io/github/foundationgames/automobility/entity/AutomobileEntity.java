@@ -1797,39 +1797,64 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             if (height > maxHeight) maxHeight = height;
         }
 
-        float yaw = this.getYRot() + (passenger.getMainArm() == HumanoidArm.RIGHT ? 90 : -90);
-        var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth + 0.25, passenger.getBbWidth(), yaw);
-
-        var scanPos = new Vector3d(
-                dir.x() + getX(),
-                dir.y() + this.displacement.getVertical(1),
-                dir.z() + getZ());
-
         var pos = new BlockPos.MutableBlockPos();
         double maxDismountHeight = this.getBoundingBox().maxY + 0.75;
+        Vec3 fallbackDismountPos = null;
+        float preferredSide = passenger.getMainArm() == HumanoidArm.RIGHT ? 90 : -90;
+        float[] sideOffsets = new float[] { preferredSide, -preferredSide };
 
-        for (var pose : passenger.getDismountPoses()) {
+        for (float sideOffset : sideOffsets) {
+            float yaw = this.getYRot() + sideOffset;
+            var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth + 0.75, passenger.getBbWidth(), yaw);
+
+            var scanPos = new Vector3d(
+                    dir.x() + getX(),
+                    dir.y() + this.displacement.getVertical(1),
+                    dir.z() + getZ());
+
             pos.set(scanPos.x(), scanPos.y(), scanPos.z());
-
             while (true) {
                 double height = this.level().getBlockFloorHeight(pos);
                 if (pos.getY() + height > maxDismountHeight) break;
 
-                if (DismountHelper.isBlockFloorValid(height)) {
-                    var bounds = passenger.getLocalBoundsForPose(pose);
-                    var dismountPos = new Vec3(scanPos.x(), (double)pos.getY() + height, scanPos.z());
-                    if (DismountHelper.canDismountTo(this.level(), passenger, bounds.move(dismountPos))) {
-                        passenger.setPose(pose);
-                        return dismountPos;
-                    }
+                if (DismountHelper.isBlockFloorValid(height) && fallbackDismountPos == null) {
+                    fallbackDismountPos = new Vec3(scanPos.x(), (double)pos.getY() + height, scanPos.z());
+                    break;
                 }
 
                 pos.move(Direction.UP);
                 if (pos.getY() > maxDismountHeight) break;
             }
+
+            for (var pose : passenger.getDismountPoses()) {
+                pos.set(scanPos.x(), scanPos.y(), scanPos.z());
+
+                while (true) {
+                    double height = this.level().getBlockFloorHeight(pos);
+                    if (pos.getY() + height > maxDismountHeight) break;
+
+                    if (DismountHelper.isBlockFloorValid(height)) {
+                        var bounds = passenger.getLocalBoundsForPose(pose);
+                        var dismountPos = new Vec3(scanPos.x(), (double)pos.getY() + height, scanPos.z());
+                        if (DismountHelper.canDismountTo(this.level(), passenger, bounds.move(dismountPos))) {
+                            passenger.setPose(pose);
+                            return dismountPos;
+                        }
+                    }
+
+                    pos.move(Direction.UP);
+                    if (pos.getY() > maxDismountHeight) break;
+                }
+            }
         }
 
-        return new Vec3(this.getX(), this.getY() + maxHeight, this.getZ());
+        if (fallbackDismountPos != null) {
+            return fallbackDismountPos;
+        }
+
+        float yaw = this.getYRot() + preferredSide;
+        var dir = Entity.getCollisionHorizontalEscapeVector(maxWidth + 1.0, passenger.getBbWidth(), yaw);
+        return new Vec3(this.getX() + dir.x(), this.getY() + maxHeight, this.getZ() + dir.z());
     }
 
     @Override
