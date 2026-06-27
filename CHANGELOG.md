@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0-unofficial.14 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Changed
+- Moved the in-vehicle control hints to the upper-right HUD area by default.
+
+## Momentum 0.1.11-unofficial.3 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Fixed
+- Prevented the drift key from pushing automobiles into reverse when held at low speed; reverse remains on the brake key.
+
 ## 0.5.0-unofficial.13 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

@@ -565,7 +565,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         if (momentum$responsiveDriftActive) return;
         if (drifting) return;
         float decay = MomentumConfig.get().movement.brakeDecay;
-        engineSpeed = Math.max(engineSpeed - decay, -0.25f);
+        engineSpeed = Math.max(engineSpeed - decay, 0f);
     }
 
     /**
@@ -581,7 +581,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         if (momentum$responsiveDriftActive) return;
         if (drifting) return;
         float decay = MomentumConfig.get().movement.brakeDecay;
-        engineSpeed = Math.max(engineSpeed - decay, -0.25f);
+        engineSpeed = Math.max(engineSpeed - decay, 0f);
     }
 
     // ── Brake ────────────────────────────────────────────────────────────────

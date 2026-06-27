@@ -60,10 +60,17 @@ public enum AutomobileHud {;
     }
 
     private static void renderControlHints(GuiGraphicsExtractor graphics, float alpha) {
-        int x = 20;
-        int y = 50;
+        var client = Minecraft.getInstance();
         var options = Minecraft.getInstance().options;
         var font = Minecraft.getInstance().font;
+        int totalWidth = 0;
+        for (var control : CONTROL_HINTS) {
+            var keyTxt = control.getKeybindText(options);
+            totalWidth = Math.max(totalWidth, font.width(keyTxt) + 9 + font.width(control.getText()));
+        }
+
+        int x = Math.max(20, client.getWindow().getGuiScaledWidth() - totalWidth - 20);
+        int y = 38;
 
         for (var control : CONTROL_HINTS) {
             var keyTxt = control.getKeybindText(options);
