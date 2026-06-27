@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.5 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Restored the motorcar windshield plane position and instead offset the body face behind it to target dashboard-area z-fighting.
+- Prevented detailed automobile hitbox entities from acting as direct walking collision for living entities; player collision now uses the stable main automobile entity instead.
+
 ## 0.5.0-unofficial.4 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

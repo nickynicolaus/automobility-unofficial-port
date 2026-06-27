@@ -1783,7 +1783,13 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     @Override
     public boolean canBeCollidedWith(Entity entity) {
-        return entity instanceof HitboxEntity hitbox && hitbox.automobile() != this;
+        if (entity instanceof HitboxEntity hitbox) {
+            return hitbox.automobile() != this;
+        }
+
+        return entity instanceof LivingEntity living
+                && living.getVehicle() != this
+                && !this.isRecentlyDismounted(living);
     }
 
     @Override
