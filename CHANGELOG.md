@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.11 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Changed
+- Allowed automobiles to coast after the driver dismounts while still clearing driver input and stabilizing hitbox synchronization.
+- Stopped active boost on driver dismount so unmanned automobiles coast from their current engine speed instead of continuing powered boost.
+
 ## 0.5.0-unofficial.10 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
