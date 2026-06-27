@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.20 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Stopped recreating auxiliary hitbox entities every time an unmanned automobile finishes coasting; the settle path now validates and repositions the existing hitboxes like a normally stopped vehicle.
+
 ## 0.5.0-unofficial.19 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

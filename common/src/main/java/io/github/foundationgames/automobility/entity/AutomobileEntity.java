@@ -1714,7 +1714,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.markDirty();
         this.hurtMarked = true;
         if (!this.level().isClientSide()) {
-            this.recreateHitboxesFor(this.getFrame());
+            this.updateHitboxPositions();
             this.resolveRecentDismountHitboxOverlap();
             this.syncData();
         } else {
