@@ -1543,22 +1543,45 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.input.clearInputs();
         this.engineSpeed = 0;
         this.boostSpeed = 0;
+        this.lastBoostSpeed = 0;
+        this.lossySyncedEffectiveSpeed = 0;
+        this.lastSyncedBoostSpeed = 0;
+        this.lossySyncedBoostSpeed = 0;
+        this.dataLerpTicks = 0;
         this.boostTimer = 0;
         this.boostPower = 0;
         this.hSpeed = 0;
         this.vSpeed = 0;
         this.addedVelocity = Vec3.ZERO;
         this.lastVelocity = Vec3.ZERO;
+        this.lastMeasuredPos = this.position();
         this.angularSpeed = 0;
         this.steering = 0;
+        this.lastSteering = 0;
         this.setDrifting(false);
         this.setBurningOut(false);
         this.setDeltaMovement(Vec3.ZERO);
+        this.lerpTicks = 0;
+        this.trackedX = this.getX();
+        this.trackedY = this.getY();
+        this.trackedZ = this.getZ();
+        this.trackedYaw = this.getYRot();
+        this.syncPacketPositionCodec(this.getX(), this.getY(), this.getZ());
+        this.prevYDisplacements.clear();
+        this.touchingWall = false;
+        this.hadVehicleCollision = 0;
         this.markDirty();
         this.hurtMarked = true;
+        this.updateHitboxPositions();
         if (!this.level().isClientSide()) {
             this.syncData();
         }
+    }
+
+    private void updateHitboxPositions() {
+        this.verifyHitboxesFor(this.getFrame());
+        this.hitboxes.forEach(HitboxEntity::updatePositionFromAutomobile);
+        this.updateCullingBox();
     }
 
     @Override
@@ -1816,8 +1839,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         return entity instanceof LivingEntity living
-                && living.getVehicle() != this
-                && !this.isRecentlyDismounted(living);
+                && living.getVehicle() != this;
     }
 
     @Override

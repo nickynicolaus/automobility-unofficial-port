@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-unofficial.9 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Forced vehicle interpolation and hitbox positions to settle immediately when the driver dismounts while moving.
+- Restored normal walking collision immediately after dismount while keeping the recent-dismount protection against run-over knockback.
+- Gave the motorcar windshield/dashboard planes a tiny depth to avoid zero-thickness face flicker during engine shake.
+
 ## 0.5.0-unofficial.8 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.

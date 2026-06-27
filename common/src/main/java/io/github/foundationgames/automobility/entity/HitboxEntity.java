@@ -95,11 +95,19 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
             }
         }
 
+        this.updatePositionFromAutomobile();
+        super.tick();
+    }
+
+    public void updatePositionFromAutomobile() {
+        var automobile = automobile();
+        if (automobile == null) {
+            return;
+        }
+
         var pos = this.boxOrigin();
         automobile.localPosToStableWorldSpace(pos);
-
         this.setPos(pos.x(), pos.y() - this.size.height() * 0.5, pos.z());
-        super.tick();
     }
 
     @Override
