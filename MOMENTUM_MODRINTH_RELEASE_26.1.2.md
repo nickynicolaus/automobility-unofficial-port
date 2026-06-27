@@ -26,8 +26,8 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Version Metadata
 
-- Version title: `0.1.8-unofficial.1 for Minecraft 26.1.2`
-- Version number: `0.1.8-unofficial.1+26.1.2`
+- Version title: `0.1.9-unofficial.1 for Minecraft 26.1.2`
+- Version number: `0.1.9-unofficial.1+26.1.2`
 - Environment: Client and server
 - Loaders: Fabric
 - Game versions: 26.1.2
@@ -38,9 +38,9 @@ Do not upload this as a version of the original Momentum project unless the upst
 
 ## Upload File
 
-- Local jar: `dist\momentum-0.1.8-unofficial.1+26.1.2-fabric.jar`
-- Size: `83732`
-- SHA-256: `D1EAD2B2FEB1FE49B82B7122D9A52F6161EF9F5180B0EBB801EDEB51D43D345E`
+- Local jar: `dist\momentum-0.1.9-unofficial.1+26.1.2-fabric.jar`
+- Size: `84230`
+- SHA-256: `03429C956749E8E672973B7E281C72096A03584B5C20112EF59B85D4B972762C`
 
 ## Changelog Text
 
@@ -59,6 +59,7 @@ Unofficial Fabric port of Momentum for Automobility to Minecraft Java 26.1.2.
 
 ### Changed
 - Replaced the procedural cruise control HUD glyph with a dedicated texture icon.
+- Increased the cruise control HUD icon size and added a procedural fallback so the cruise indicator remains visible if texture rendering fails in the HUD layer.
 
 ### Known Limits
 - ModMenu integration is not included in this build because the available ModMenu API artifact for this environment is not compatible with the named Loom dependency setup used by this port.

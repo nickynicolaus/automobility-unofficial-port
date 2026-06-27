@@ -1,5 +1,12 @@
 # Changelog
 
+## Momentum 0.1.9-unofficial.1 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
+
+### Changed
+- Increased the cruise control HUD icon size and added a procedural fallback so the cruise indicator remains visible if texture rendering fails in the HUD layer.
+
 ## Momentum 0.1.8-unofficial.1 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.
