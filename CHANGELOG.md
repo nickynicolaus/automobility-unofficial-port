@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.3 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Changed
+- Changed motorcar frame rendering away from full-model translucent rendering to reduce windshield shimmer.
+- Made automobile hitbox collision active consistently on client and server to reduce player clipping and jitter after driving.
+
 ## Momentum 0.1.11-unofficial.1 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port of Momentum for Automobility.

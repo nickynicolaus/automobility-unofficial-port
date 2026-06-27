@@ -138,7 +138,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     }
 
     public boolean canBeCollidedWith() {
-        return this.level().isClientSide();
+        return !this.isRemoved() && this.automobile() != null;
     }
 
     @Override

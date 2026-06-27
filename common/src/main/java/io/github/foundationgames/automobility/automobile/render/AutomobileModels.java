@@ -69,7 +69,7 @@ public class AutomobileModels implements ResourceManagerReloadListener {
             2
     );
     public static final ModelDefinition FRAME_MOTORCAR = ModelDefinition.of(
-            ModelType.BASIC, ModelDefinition.RenderMaterial.TRANSLUCENT,
+            ModelType.BASIC, ModelDefinition.RenderMaterial.CUTOUT_NO_CULL,
             new ModelLayerLocation(Automobility.rl("automobile/frame/motorcar"), "main")
     );
     public static final ModelDefinition FRAME_RICKSHAW = ModelDefinition.of(
