@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.8 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Rendered only the transparent upper windshield pixels through the motorcar glass pass.
+- Moved the opaque lower windshield/dashboard pixels back into the normal motorcar body pass to reduce flicker while the engine shake animation is active.
+
 ## 0.5.0-unofficial.7 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
