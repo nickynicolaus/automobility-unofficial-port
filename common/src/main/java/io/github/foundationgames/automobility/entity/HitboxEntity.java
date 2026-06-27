@@ -72,6 +72,15 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
         return this.size.height();
     }
 
+    public boolean matches(AutomobileFrame.Hitbox hitbox) {
+        var origin = this.boxOrigin();
+        return Math.abs(origin.x - hitbox.origin().x()) < 0.0001
+                && Math.abs(origin.y - hitbox.origin().y()) < 0.0001
+                && Math.abs(origin.z - hitbox.origin().z()) < 0.0001
+                && Math.abs(this.width() - hitbox.width()) < 0.0001
+                && Math.abs(this.height() - hitbox.height()) < 0.0001;
+    }
+
     @Override
     public void tick() {
         var automobile = automobile();
@@ -141,14 +150,26 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
         return super.getName();
     }
 
-    @Override
-    public boolean canBeCollidedWith(Entity other) {
+    private boolean canCollideWithAutomobileHitbox(Entity other) {
         var automobile = automobile();
+        if (other instanceof HitboxEntity hitbox) {
+            return automobile != null && hitbox.automobile() != automobile;
+        }
+
         return automobile != null
                 && other.getVehicle() != automobile
                 && !(other instanceof AutomobileEntity)
-                && !(other instanceof HitboxEntity hitbox && hitbox.automobile() == automobile)
                 && Boat.canVehicleCollide(this, other);
+    }
+
+    @Override
+    public boolean canCollideWith(Entity other) {
+        return this.canCollideWithAutomobileHitbox(other);
+    }
+
+    @Override
+    public boolean canBeCollidedWith(Entity other) {
+        return this.canCollideWithAutomobileHitbox(other);
     }
 
     @Override

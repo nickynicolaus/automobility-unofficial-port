@@ -595,18 +595,49 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         var boxes = frame.hitboxes();
         if (boxes.isEmpty()) boxes = List.of(AutomobileFrame.Hitbox.DEFAULT);
 
+        if (!this.hitboxesMatch(boxes)) {
+            this.recreateHitboxes(boxes);
+        }
+    }
+
+    private boolean hitboxesMatch(List<AutomobileFrame.Hitbox> boxes) {
         if (this.hitboxes.size() != boxes.size()) {
-            this.hitboxes.forEach(e -> e.remove(RemovalReason.DISCARDED));
-            this.hitboxes.clear();
+            return false;
+        }
 
-            for (var box : boxes) {
-                var boxEntity = new HitboxEntity(this.level(), this, box);
-                boxEntity.setPos(this.position());
-                this.hitboxes.add(boxEntity);
-
-                this.level().addFreshEntity(boxEntity);
+        for (int i = 0; i < boxes.size(); i++) {
+            if (!this.hitboxes.get(i).matches(boxes.get(i))) {
+                return false;
             }
         }
+
+        return true;
+    }
+
+    private void recreateHitboxes(List<AutomobileFrame.Hitbox> boxes) {
+        if (this.level().isClientSide()) {
+            return;
+        }
+
+        this.hitboxes.forEach(e -> e.remove(RemovalReason.DISCARDED));
+        this.hitboxes.clear();
+
+        for (var box : boxes) {
+            var boxEntity = new HitboxEntity(this.level(), this, box);
+            boxEntity.updatePositionFromAutomobile();
+            this.hitboxes.add(boxEntity);
+
+            this.level().addFreshEntity(boxEntity);
+        }
+
+        this.updateCullingBox();
+    }
+
+    private void recreateHitboxesFor(AutomobileFrame frame) {
+        var boxes = frame.hitboxes();
+        if (boxes.isEmpty()) boxes = List.of(AutomobileFrame.Hitbox.DEFAULT);
+
+        this.recreateHitboxes(boxes);
     }
 
     @Override
@@ -1638,9 +1669,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         this.hadVehicleCollision = 0;
         this.markDirty();
         this.hurtMarked = true;
-        this.updateHitboxPositions();
         if (!this.level().isClientSide()) {
+            this.recreateHitboxesFor(this.getFrame());
             this.syncData();
+        } else {
+            this.updateHitboxPositions();
         }
     }
 
@@ -1923,14 +1956,23 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         return new Vec3(this.getX() + dir.x(), this.getY() + maxHeight, this.getZ() + dir.z());
     }
 
-    @Override
-    public boolean canBeCollidedWith(Entity entity) {
+    private boolean canCollideWithAutomobile(Entity entity) {
         if (entity instanceof HitboxEntity hitbox) {
             return hitbox.automobile() != this;
         }
 
         return entity instanceof LivingEntity living
                 && living.getVehicle() != this;
+    }
+
+    @Override
+    public boolean canCollideWith(Entity entity) {
+        return this.canCollideWithAutomobile(entity);
+    }
+
+    @Override
+    public boolean canBeCollidedWith(Entity entity) {
+        return this.canCollideWithAutomobile(entity);
     }
 
     @Override

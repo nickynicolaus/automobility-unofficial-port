@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-unofficial.15 - 2026-06-27
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Made automobile and auxiliary hitbox entity collision checks symmetric.
+- Rebuilt auxiliary hitboxes after an unmanned automobile finishes coasting, preventing stale collision areas from lingering on some vehicle parts.
+
 ## 0.5.0-unofficial.14 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
