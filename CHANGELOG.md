@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-unofficial.25 - 2026-06-30
+
+Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
+
+### Fixed
+- Made client-side auxiliary automobile hitboxes inert while their parent automobile entity is missing. This prevents stale invisible hitboxes from mounting players into an automobile that the client is not tracking.
+
 ## 0.5.0-unofficial.24 - 2026-06-27
 
 Patch release for the unofficial Minecraft Java 26.1.2 Fabric port.
