@@ -142,7 +142,7 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 hitLocation) {
         var automobile = automobile();
-        if (automobile == null) return super.interact(player, hand, hitLocation);
+        if (automobile == null) return InteractionResult.PASS;
 
         return automobile.handleInteraction(player, hand);
     }
@@ -189,7 +189,9 @@ public class HitboxEntity extends Entity implements EntityWithContainer {
 
     @Override
     public boolean isPickable() {
-        return !this.isRemoved();
+        // Client hitboxes can briefly outlive their parent automobile after entity tracking desync.
+        // Keep those placeholders inert so they cannot mount the player into an invisible vehicle.
+        return !this.isRemoved() && automobile() != null;
     }
 
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
