@@ -1,78 +1,67 @@
-# Modrinth Release Plan - Automobility 26.1.x Port
+# Modrinth Release - Automobility 0.5.0-unofficial.26 for 26.1.x
 
-Use this file as the source of truth for the first public Modrinth upload.
+Use this file for the 26.1.x upload after the release candidate passes the in-game smoke test.
 
-## Project Metadata
+## Project
 
-- Project type: Mod
-- Current project URL: `https://modrinth.com/project/automobility-unofficial-port`
-- Suggested project title: `Automobility Unofficial Port`
-- Suggested slug: `automobility-unofficial-port`
-- Summary: `Unofficial Fabric ports of FoundationGames' Automobility vehicle mod for newer Minecraft versions.`
+- Project: `https://modrinth.com/mod/automobility-unofficial-port`
+- Environment: `Client and server, required on both`
 - License: MIT
-- Client side: Required
-- Server side: Required
-- Categories: Transportation, Technology, Equipment
-- Loaders: Fabric
-- Game versions: 26.1, 26.1.1, 26.1.2
-- Release channel for first upload: Beta
-
-Do not upload this as a version of the original Automobility project unless FoundationGames explicitly grants project access or asks for it.
-
-## Required Links
-
 - Source: `https://github.com/nickynicolaus/automobility-unofficial-port`
 - Issues: `https://github.com/nickynicolaus/automobility-unofficial-port/issues`
-- Wiki/Discord: leave empty unless there is a port-specific support location
 
-Do not point fork-specific bug reports at upstream FoundationGames support channels.
+## Version Form
 
-## Version Metadata
+- Version type: `beta`
+- Version number: `0.5.0-unofficial.26+26.1.2`
+- Version subtitle: `for Minecraft 26.1.x`
+- Loaders: `Fabric`
+- Game versions: `26.1`, `26.1.1`, `26.1.2`
+- Environment: `Client and server, required on both`
 
-- Version title: `0.5.0-unofficial.24 for Minecraft 26.1.x`
-- Version number: `0.5.0-unofficial.24+26.1.2`
-- Environment: Client and server
-- Loaders: Fabric
-- Game versions: 26.1, 26.1.1, 26.1.2
-- Dependencies:
-  - Fabric API: required
-  - Fabric Loader 0.19.2 or newer: required
-  - Controlify: optional
+## Dependencies
+
+- Fabric API: required
+- Controlify (Controller support): optional
+- Momentum for Automobility: Unofficial Port: optional
+
+Do not add Fabric Loader as a project dependency. The JAR metadata already requires Fabric Loader 0.19.2 or newer.
 
 ## Upload File
 
-- Local jar: `dist\automobility-0.5.0-unofficial.24+26.1.2-fabric.jar`
-- Size: `1393293`
-- SHA-256: `60f35bd94f84f70149984078e0cae78861c9a322c1810f015c77b3764e05b683`
+- Local JAR: `dist\release-candidate-0.5.0-unofficial.26\automobility-0.5.0-unofficial.26+26.1.2-fabric.jar`
+- Size: `1324901` bytes
+- SHA-256: `F4949E3C68BA417C7D15A1FA8B1AAF94374A7EC19F7666CE97F097DD9DA0F965`
 
-## Changelog Text
+## Version Changelog
 
-Paste the `0.5.0-unofficial.1` section from `CHANGELOG.md`.
+```markdown
+Patch release for the unofficial Minecraft Java 26.1.x Fabric port.
 
-## Project Description Text
+### Fixed
+- Preserved all autopilot heading vectors when routes are saved and loaded.
+- Counted multiple copies in the same inventory stack correctly for Auto Mechanic Table recipes with repeated ingredients.
+- Fixed the sticky-slope grace timer and block sampling at negative coordinates.
+- Prevented a false first-tick vehicle collision measurement after an automobile is spawned or loaded.
+- Guarded autopilot obstacle checks against stale hitboxes and clamped attachment animation states to valid values.
 
-Paste `MODRINTH_DESCRIPTION.md` into the long project description.
+### Changed
+- Limited periodic client state uploads to the locally driven automobile.
+- Validated automobile state packet sizes and numeric values, capped packet size, and rate-limited accepted client syncs.
+- Distributed automobile state through actual entity tracking and reduced visual state updates to the existing four-tick interpolation interval.
+- Added automated regression tests for autopilot serialization, repeated recipe ingredients, and network state validation.
+```
 
-## Gallery Assets
+## Before Upload
 
-Use the existing images from the `md` directory:
+- Complete the 26.1.2 singleplayer and multiplayer smoke test.
+- Push the `main` branch and create the matching GitHub release.
+- Upload exactly the JAR and metadata listed above.
+- Keep the version as beta while the port still has limited public testing.
+- Use `MODRINTH_DESCRIPTION.md` as the project description.
 
-- `md/banner.png`
-- `md/construction.png`
-- `md/parking.png`
-- `md/driving.png`
+## After Upload
 
-## Pre-Publish Checklist
-
-- Public source fork exists and contains `README.md`, `LICENSE`, `NOTICE.md`, and `CHANGELOG.md`.
-- `README.md` clearly says this is an unofficial 26.1.x port and notes that the current build was smoke-tested on 26.1.2.
-- Modrinth project description clearly says this is an unofficial fork/port.
-- Modrinth links point to the fork, not to upstream support for fork bugs.
-- Jar uploaded is the file listed above, not an older build from `fabric/build/libs`.
-- Release channel is `Beta`.
-- Dependencies include Fabric API as required.
-
-## After Publish
-
-- Save the Modrinth project URL and version URL.
-- Download the uploaded jar from Modrinth once and compare SHA-256 with the hash above.
+- Download the public Modrinth file and compare its SHA-256 with the value above.
+- Confirm Modrinth shows Fabric and all three 26.1.x game versions.
+- Confirm Fabric API is required and both Controlify and Momentum are optional.
