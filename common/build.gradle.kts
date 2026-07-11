@@ -1,17 +1,17 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("net.fabricmc.fabric-loom") version ("1.17.11")
+    id("net.fabricmc.fabric-loom") version ("1.17.14")
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${rootProject.properties["minecraft_version"]}")
+    minecraft("com.mojang:minecraft:${rootProject.providers.gradleProperty("minecraft_version").get()}")
 
     compileOnly("io.github.llamalad7:mixinextras-common:0.3.5")
     annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.5")
 
     compileOnly("net.fabricmc:sponge-mixin:0.15.3+mixin.0.8.7")
-    implementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
+    implementation("net.fabricmc:fabric-loader:${rootProject.providers.gradleProperty("fabric_version").get()}")
     compileOnly("de.javagl:obj:0.4.0")
 }
 

@@ -3,7 +3,7 @@
   "id": "automobility",
   "version": "${version}",
   "name": "Automobility",
-  "description": "Unofficial Automobility Fabric port for Minecraft 26.1.2.",
+  "description": "Unofficial Automobility Fabric port for Minecraft 26.1.x, built and tested on 26.1.2.",
   "authors": [
     "FoundationGames"
   ],
@@ -32,8 +32,8 @@
   ],
   "accessWidener" : "automobility.accesswidener",
   "depends": {
-    "fabricloader": ">=0.19.2",
-    "fabric-api": "*",
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
     "minecraft": "26.1.x",
     "java": ">=25"
   }
