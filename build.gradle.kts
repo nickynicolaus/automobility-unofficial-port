@@ -1,6 +1,6 @@
 plugins {
 	id("java")
-	id("net.fabricmc.fabric-loom") version "1.17.11" apply false
+	id("net.fabricmc.fabric-loom") version "1.17.14" apply false
 }
 
 allprojects {
@@ -61,11 +61,11 @@ subprojects {
 		}
 	}
 
-	version = "${properties["mod_version"].toString()}+${rootProject.properties["minecraft_version"]}-${project.name}"
-	group = properties["maven_group"].toString()
+	version = "${providers.gradleProperty("mod_version").get()}+${rootProject.providers.gradleProperty("minecraft_version").get()}-${project.name}"
+	group = providers.gradleProperty("maven_group").get()
 
 	base {
-		archivesName = "${rootProject.properties["archives_base_name"]}"
+		archivesName = rootProject.providers.gradleProperty("archives_base_name").get()
 	}
 
 	dependencies {

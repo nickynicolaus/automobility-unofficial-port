@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.5.0-unofficial.26 - 2026-07-11
+
+Patch release for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
+
+### Fixed
+- Preserved all autopilot heading vectors when routes are saved and loaded.
+- Counted multiple copies in the same inventory stack correctly for Auto Mechanic Table recipes with repeated ingredients.
+- Fixed the sticky-slope grace timer and block sampling at negative coordinates.
+- Prevented a false first-tick vehicle collision measurement after an automobile is spawned or loaded.
+- Guarded autopilot obstacle checks against stale hitboxes and clamped attachment animation states to valid values.
+
+### Changed
+- Limited periodic client state uploads to the locally driven automobile.
+- Validated automobile state packet sizes and numeric values, capped packet size, and rate-limited accepted client syncs.
+- Distributed automobile state through actual entity tracking and reduced visual state updates to the existing four-tick interpolation interval.
+- Added automated regression tests for autopilot serialization, repeated recipe ingredients, and network state validation.
+
+## Momentum 0.1.11-unofficial.4 - 2026-07-11
+
+Patch release for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports of Momentum for Automobility.
+
+### Added
+- Added working optional Mod Menu integration when YACL is installed.
+- Added backward-compatible server-to-client gameplay configuration sync so vehicle physics use the server's settings in multiplayer.
+- Added remote brake and drift input sync for automobiles tracked by other clients.
+- Added Controlify brake and drift input through Automobility's existing controller bindings.
+
+### Fixed
+- Restricted client input to the automobile driven by the local player instead of applying static brake or drift state to every loaded automobile.
+- Ignored raw brake and drift keys while a chat, menu, or other screen is open.
+- Made automatic drift direction deterministic across the client and server and used automobile-specific ground detection on slopes.
+- Recovered safely from malformed configuration files, validated unsafe numeric values, and wrote configuration updates atomically.
+- Reset key-state synchronization between multiplayer connections and stopped rendering a filled speed bar at zero speed.
+
+### Changed
+- Moved the default speed HUD position to the upper-right corner for new configurations.
+- Kept HUD, camera, and key preferences client-side while treating movement, steering, drift, and cruise behavior as server-authoritative in multiplayer.
+
 ## 0.5.0-unofficial.25 - 2026-06-30
 
 Patch release for the unofficial Minecraft Java 26.x Fabric port.

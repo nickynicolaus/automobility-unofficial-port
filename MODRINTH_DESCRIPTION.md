@@ -15,14 +15,14 @@ This is an unofficial fork/port. It is not affiliated with or endorsed by Founda
 - Optional Controlify controller support on Fabric
 - Data-pack and resource-pack support for custom vehicles
 
-## Current Version
+## Supported Versions
 
-Public builds are published per Minecraft target. Current targets include Minecraft Java 26.1.x and 26.2 on Fabric.
+The current public beta supports Minecraft Java 26.1.x and 26.2 on Fabric through separate matching files. The 26.1.x build is built and smoke-tested on 26.1.2; the 26.2 build is tested on 26.2.
 
 ### Requirements
 
-- A matching Minecraft Java 26.x build
-- Fabric Loader 0.19.2 or newer
+- A matching Minecraft Java 26.1.x or 26.2 build
+- Fabric Loader version required by the selected file
 - Fabric API
 - Java 25 or newer
 
@@ -36,6 +36,6 @@ Public builds are published per Minecraft target. Current targets include Minecr
 
 ## Status
 
-This port is beta. Core vehicle gameplay, rendering, sounds, particles, crafting screens, assembler flow, attachments, slopes, and multiplayer vehicle visual sync are working.
+This port is beta. Core vehicle gameplay, rendering, sounds, particles, crafting screens, assembler flow, attachments, slopes, and multiplayer vehicle visual sync are working. Network state is validated and distributed using actual entity tracking.
 
 Compatibility testing has been done in singleplayer and on a multiplayer Fabric 26.1.2 server with a large mod set, including common performance mods, world generation mods, mapping mods, voice chat, controller support, shader/renderer mods, and quality-of-life mods. This does not guarantee compatibility with every modpack, so please include logs and a full mod list when reporting issues.

@@ -1,6 +1,6 @@
 plugins {
     id("idea")
-    id("net.fabricmc.fabric-loom") version "1.17.11"
+    id("net.fabricmc.fabric-loom") version "1.17.14"
 }
 
 repositories {
@@ -15,17 +15,17 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${rootProject.properties["minecraft_version"]}")
+    minecraft("com.mojang:minecraft:${rootProject.providers.gradleProperty("minecraft_version").get()}")
 
-    implementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
-    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.properties["fabric_api_version"]}")
-    testImplementation("net.fabricmc:fabric-loader-junit:${rootProject.properties["fabric_version"]}")
+    implementation("net.fabricmc:fabric-loader:${rootProject.providers.gradleProperty("fabric_version").get()}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.providers.gradleProperty("fabric_api_version").get()}")
+    testImplementation("net.fabricmc:fabric-loader-junit:${rootProject.providers.gradleProperty("fabric_version").get()}")
 
     implementation("de.javagl:obj:0.4.0")
     include("de.javagl:obj:0.4.0")
 
     // Controlify
-    compileOnly("dev.isxander:controlify:${rootProject.properties["controlify_version"]}-fabric") {
+    compileOnly("dev.isxander:controlify:${rootProject.providers.gradleProperty("controlify_version").get()}-fabric") {
         isTransitive = false
     }
 
@@ -90,13 +90,21 @@ tasks {
     javadoc { source(project(":common").sourceSets.main.get().allJava) }
 
     processResources {
-        val modVersion = rootProject.properties["mod_version"].toString()
+        val modVersion = rootProject.providers.gradleProperty("mod_version").get()
+        val loaderVersion = rootProject.providers.gradleProperty("fabric_version").get()
+        val fabricApiVersion = rootProject.providers.gradleProperty("fabric_api_version").get()
         inputs.property("version", modVersion)
+        inputs.property("fabric_loader_version", loaderVersion)
+        inputs.property("fabric_api_version", fabricApiVersion)
 
         from(project(":common").sourceSets.main.get().resources)
 
         filesMatching("fabric.mod.json") {
-            expand(mapOf("version" to modVersion))
+            expand(mapOf(
+                "version" to modVersion,
+                "fabric_loader_version" to loaderVersion,
+                "fabric_api_version" to fabricApiVersion
+            ))
         }
     }
 
