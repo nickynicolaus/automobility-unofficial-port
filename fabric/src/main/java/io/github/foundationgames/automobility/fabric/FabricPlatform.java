@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityDataRegistry;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -48,6 +49,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class FabricPlatform implements Platform {
@@ -116,6 +118,11 @@ public class FabricPlatform implements Platform {
     @Override
     public void clientSendPacket(Identifier rl, FriendlyByteBuf buf) {
         ClientPlayNetworking.send(new AutomobilityPacketPayload(rl, AUtils.arrayOf(buf)));
+    }
+
+    @Override
+    public void forEachTrackingPlayer(Entity entity, Consumer<ServerPlayer> action) {
+        PlayerLookup.tracking(entity).forEach(action);
     }
 
     @Override

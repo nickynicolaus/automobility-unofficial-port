@@ -140,7 +140,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     private int lerpTicks;
 
     private static final int CLIENT_SYNC_INTERVAL = 4;
+    private static final int SERVER_SYNC_INTERVAL = 4;
+    private static final int MAX_CLIENT_SYNCS_PER_TICK = 2;
     private int clientSyncTicks = CLIENT_SYNC_INTERVAL;
+    private int serverSyncTicks = 0;
+    private long lastClientSyncTick = Long.MIN_VALUE;
+    private int clientSyncsThisTick = 0;
 
     public final List<HitboxEntity> hitboxes = new ArrayList<>();
     private EntityDimensions size;
@@ -723,15 +728,11 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     }
 
     public void forPlayersTrackingMe(boolean ignoreDriver, Consumer<ServerPlayer> action) {
-        if (level() instanceof ServerLevel sl) {
-            var cPos = ChunkPos.containing(blockPosition());
-            for (var p : sl.getPlayers(s -> s.getChunkTrackingView().contains(cPos))) {
-                if (ignoreDriver && isDriving(p)) {
-                    continue;
-                }
-                action.accept(p);
+        Platform.get().forEachTrackingPlayer(this, player -> {
+            if (!ignoreDriver || !isDriving(player)) {
+                action.accept(player);
             }
-        }
+        });
     }
 
     public Vec3 getTailPos() {
@@ -862,7 +863,10 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
             this.rearAttachment.pull(prevTailPos.subtract(tailPos));
             this.prevTailPos = tailPos;
 
-            if (dirty) {
+            if (serverSyncTicks > 0) {
+                serverSyncTicks--;
+            }
+            if (dirty && serverSyncTicks <= 0) {
                 syncData();
                 dirty = false;
             }
@@ -907,11 +911,14 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
                 this.standStillTime = AUtils.shift(this.standStillTime, 0.15f, -1.3f);
             }
 
-            this.clientSyncTicks--;
-            if (this.clientSyncTicks <= 0) {
+            if (this.getFirstPassenger() instanceof Player player && player.isLocalPlayer()) {
+                this.clientSyncTicks--;
+                if (this.clientSyncTicks <= 0) {
+                    this.clientSyncTicks = CLIENT_SYNC_INTERVAL;
+                    ClientPackets.sendServerboundAutomobileSyncPacket(this);
+                }
+            } else {
                 this.clientSyncTicks = CLIENT_SYNC_INTERVAL;
-
-                ClientPackets.sendServerboundAutomobileSyncPacket(this);
             }
         }
 
@@ -940,6 +947,25 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
     private void syncData() {
         forPlayersTrackingMe(true, player -> CommonPackets.sendClientboundAutomobileSyncPacket(this, player));
+        this.serverSyncTicks = SERVER_SYNC_INTERVAL;
+    }
+
+    public boolean tryAcquireClientSyncSlot() {
+        if (this.level().isClientSide()) {
+            return false;
+        }
+
+        long currentTick = this.level().getGameTime();
+        if (currentTick != this.lastClientSyncTick) {
+            this.lastClientSyncTick = currentTick;
+            this.clientSyncsThisTick = 0;
+        }
+        if (this.clientSyncsThisTick >= MAX_CLIENT_SYNCS_PER_TICK) {
+            return false;
+        }
+
+        this.clientSyncsThisTick++;
+        return true;
     }
 
     private void syncAttachments() {
