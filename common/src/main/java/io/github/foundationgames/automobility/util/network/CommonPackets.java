@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum CommonPackets {;
+    static final int AUTOMOBILE_SYNC_STATE_SIZE = 86;
     public static final Map<Identifier, TriCons<MinecraftServer, ServerPlayer, FriendlyByteBuf>> SERVERBOUND_HANDLERS = new HashMap<>();
 
     public static void registerReceiver(Identifier rl, TriCons<MinecraftServer, ServerPlayer, FriendlyByteBuf> run) {
@@ -68,11 +69,22 @@ public enum CommonPackets {;
 
     public static void init() {
         CommonPackets.registerReceiver(Automobility.rl("sync_automobile_data"), (server, player, buf) -> {
-            var dup = new FriendlyByteBuf(buf.copy());
-            int entityId = dup.readInt();
+            if (buf.readableBytes() != Integer.BYTES + AUTOMOBILE_SYNC_STATE_SIZE) {
+                return;
+            }
+
+            int entityId = buf.readInt();
+            if (!isValidAutomobileSyncState(buf)) {
+                return;
+            }
+
+            byte[] stateData = new byte[AUTOMOBILE_SYNC_STATE_SIZE];
+            buf.readBytes(stateData);
             server.execute(() -> {
-                if (player.level().getEntity(entityId) instanceof AutomobileEntity automobile && automobile.isDriving(player)) {
-                    automobile.readSyncStateData(dup);
+                if (player.level().getEntity(entityId) instanceof AutomobileEntity automobile
+                        && automobile.isDriving(player)
+                        && automobile.tryAcquireClientSyncSlot()) {
+                    automobile.readSyncStateData(new FriendlyByteBuf(Unpooled.wrappedBuffer(stateData)));
                     automobile.markDirty();
                 }
             });
@@ -91,5 +103,62 @@ public enum CommonPackets {;
                 }
             });
         });
+    }
+
+    static boolean isValidAutomobileSyncState(FriendlyByteBuf buf) {
+        if (buf.readableBytes() != AUTOMOBILE_SYNC_STATE_SIZE) {
+            return false;
+        }
+
+        int readerIndex = buf.readerIndex();
+        try {
+            int boostTimer = buf.readInt();
+            float steering = buf.readFloat();
+            float wheelAngle = buf.readFloat();
+            int turboCharge = buf.readInt();
+            float engineSpeed = buf.readFloat();
+            float boostSpeed = buf.readFloat();
+            double x = buf.readDouble();
+            double y = buf.readDouble();
+            double z = buf.readDouble();
+            float yaw = buf.readFloat();
+            buf.readBoolean();
+            buf.readBoolean();
+            float inputSteering = buf.readFloat();
+            buf.readBoolean();
+            buf.readBoolean();
+            buf.readBoolean();
+            buf.readBoolean();
+            double vertical = buf.readDouble();
+            float qx = buf.readFloat();
+            float qy = buf.readFloat();
+            float qz = buf.readFloat();
+            float qw = buf.readFloat();
+
+            double quaternionLength = qx * qx + qy * qy + qz * qz + qw * qw;
+            return boostTimer >= 0 && boostTimer <= 1_000_000
+                    && turboCharge >= 0 && turboCharge <= 1_000_000
+                    && finiteInRange(steering, -1.01, 1.01)
+                    && Float.isFinite(wheelAngle)
+                    && finiteInRange(engineSpeed, -1000, 1000)
+                    && finiteInRange(boostSpeed, -1000, 1000)
+                    && finiteInRange(x, -32_000_000, 32_000_000)
+                    && finiteInRange(y, -32_000_000, 32_000_000)
+                    && finiteInRange(z, -32_000_000, 32_000_000)
+                    && Float.isFinite(yaw)
+                    && finiteInRange(inputSteering, -1.01, 1.01)
+                    && finiteInRange(vertical, -32_000_000, 32_000_000)
+                    && Float.isFinite(qx) && Float.isFinite(qy) && Float.isFinite(qz) && Float.isFinite(qw)
+                    && quaternionLength >= 0.5 && quaternionLength <= 1.5
+                    && !buf.isReadable();
+        } catch (IndexOutOfBoundsException ignored) {
+            return false;
+        } finally {
+            buf.readerIndex(readerIndex);
+        }
+    }
+
+    private static boolean finiteInRange(double value, double min, double max) {
+        return Double.isFinite(value) && value >= min && value <= max;
     }
 }

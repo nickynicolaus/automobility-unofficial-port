@@ -9,10 +9,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
 public record AutomobilityPacketPayload(Identifier id, byte[] bytes) implements CustomPacketPayload {
+    private static final int MAX_PAYLOAD_SIZE = 64 * 1024;
     public static final Type<AutomobilityPacketPayload> TYPE = new Type<>(Automobility.rl("message_packet"));
     public static final StreamCodec<FriendlyByteBuf, AutomobilityPacketPayload> STREAM_CODEC = StreamCodec.composite(
             Identifier.STREAM_CODEC, AutomobilityPacketPayload::id,
-            ByteBufCodecs.BYTE_ARRAY, AutomobilityPacketPayload::bytes,
+            ByteBufCodecs.byteArray(MAX_PAYLOAD_SIZE), AutomobilityPacketPayload::bytes,
             AutomobilityPacketPayload::new
     );
 

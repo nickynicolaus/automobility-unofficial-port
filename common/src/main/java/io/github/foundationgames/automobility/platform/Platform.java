@@ -12,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -32,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.nio.file.Path;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface Platform {
@@ -65,6 +68,13 @@ public interface Platform {
     void serverSendPacket(ServerPlayer player, Identifier rl, FriendlyByteBuf buf);
 
     void clientSendPacket(Identifier rl, FriendlyByteBuf buf);
+
+    default void forEachTrackingPlayer(Entity entity, Consumer<ServerPlayer> action) {
+        if (entity.level() instanceof ServerLevel level) {
+            var chunkPos = ChunkPos.containing(entity.blockPosition());
+            level.getPlayers(player -> player.getChunkTrackingView().contains(chunkPos)).forEach(action);
+        }
+    }
 
     <T extends Entity> EntityType<T> entityType(MobCategory category, BiFunction<EntityType<?>, Level, T> factory, EntityDimensions size, int updateRate, int updateRange, boolean internal, String key);
 
