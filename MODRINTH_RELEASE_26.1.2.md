@@ -44,6 +44,7 @@ Patch release for the unofficial Minecraft Java 26.1.x Fabric port.
 - Fixed the sticky-slope grace timer and block sampling at negative coordinates.
 - Prevented a false first-tick vehicle collision measurement after an automobile is spawned or loaded.
 - Guarded autopilot obstacle checks against stale hitboxes and clamped attachment animation states to valid values.
+- Prevented client-side automobile creation from calling Fabric's server-only entity tracking API, which disconnected worlds containing existing vehicles with a network protocol error.
 
 ### Changed
 - Limited periodic client state uploads to the locally driven automobile.
