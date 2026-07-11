@@ -9,6 +9,7 @@ import io.github.milkucha.momentum.MomentumDriftState;
 import io.github.milkucha.momentum.accessor.SteeringDebugAccessor;
 import io.github.milkucha.momentum.config.MomentumConfig;
 import io.github.milkucha.momentum.network.ServerKeyState;
+import io.github.milkucha.momentum.network.VehicleInputPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import java.util.UUID;
@@ -102,6 +103,13 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
     @Unique private int     momentum$responsiveDriftDir     = 0;
     @Unique private int     momentum$responsiveHeldTimer    = 0;   // ticks drift key held without drift active
     @Unique private float   momentum$responsiveSteerAccum   = 0f;  // 0..1 steering time accumulator
+    @Unique private int     momentum$lastDriftDirection     = 0;
+    @Unique private boolean momentum$remoteBrakeHeld        = false;
+    @Unique private boolean momentum$remoteDriftHeld        = false;
+    @Unique private UUID    momentum$lastSyncedRider        = null;
+    @Unique private boolean momentum$lastSyncedBrake        = false;
+    @Unique private boolean momentum$lastSyncedDrift        = false;
+    @Unique private int     momentum$remoteInputSyncTicks   = 0;
 
     // ── Key-state helpers (client vs. dedicated server) ───────────────────────
     //
@@ -116,36 +124,95 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
     }
 
     @Unique private boolean momentum$brake() {
-        if (((Entity)(Object)this).level().isClientSide()) return MomentumBrakeState.brakeHeld;
+        Entity self = (Entity) (Object) this;
+        if (self.level().isClientSide()) {
+            if (self.getFirstPassenger() instanceof Player player && player.isLocalPlayer()) {
+                return MomentumBrakeState.brakeHeld;
+            }
+            return momentum$remoteBrakeHeld;
+        }
         UUID id = momentum$getRiderUuid(); return id != null && ServerKeyState.getBrake(id);
     }
 
     /** Raw drift key state - true if the Handbrake (drift) key is currently held. */
     @Unique private boolean momentum$driftKey() {
-        if (((Entity)(Object)this).level().isClientSide()) return MomentumDriftState.driftKeyHeld;
+        Entity self = (Entity) (Object) this;
+        if (self.level().isClientSide()) {
+            if (self.getFirstPassenger() instanceof Player player && player.isLocalPlayer()) {
+                return MomentumDriftState.driftKeyHeld;
+            }
+            return momentum$remoteDriftHeld;
+        }
         UUID id = momentum$getRiderUuid(); return id != null && ServerKeyState.getDrift(id);
     }
 
     /** Drift key held AND active profile is Vanilla Drift. */
     @Unique private boolean momentum$vanillaDriftKey() {
-        return momentum$driftKey() && MomentumConfig.get().oDrift.profile == MomentumConfig.ODrift.Profile.VANILLA;
+        return momentum$driftKey() && MomentumConfig.gameplay().oDrift.profile == MomentumConfig.ODrift.Profile.VANILLA;
     }
 
     /** Drift key held AND active profile is Arcade Drift. */
     @Unique private boolean momentum$arcadeDriftKey() {
-        return momentum$driftKey() && MomentumConfig.get().oDrift.profile == MomentumConfig.ODrift.Profile.ARCADE;
+        return momentum$driftKey() && MomentumConfig.gameplay().oDrift.profile == MomentumConfig.ODrift.Profile.ARCADE;
     }
 
     /** Drift key held AND active profile is Responsive Drift. */
     @Unique private boolean momentum$responsiveDriftKey() {
-        return momentum$driftKey() && MomentumConfig.get().oDrift.profile == MomentumConfig.ODrift.Profile.RESPONSIVE;
+        return momentum$driftKey() && MomentumConfig.gameplay().oDrift.profile == MomentumConfig.ODrift.Profile.RESPONSIVE;
     }
 
     @Unique
     private int momentum$driftDirForSteering(float steeringValue, int fallback) {
-        if (steeringValue > 0f) return -1;
-        if (steeringValue < 0f) return 1;
+        if (steeringValue > 0f) {
+            momentum$lastDriftDirection = -1;
+            return -1;
+        }
+        if (steeringValue < 0f) {
+            momentum$lastDriftDirection = 1;
+            return 1;
+        }
+        if (fallback != 0) {
+            momentum$lastDriftDirection = fallback;
+        }
         return fallback;
+    }
+
+    @Unique
+    private int momentum$stableAutoDriftDirection() {
+        if (momentum$lastDriftDirection != 0) {
+            return momentum$lastDriftDirection;
+        }
+        long bits = ((Entity) (Object) this).getUUID().getLeastSignificantBits();
+        return (bits & 1L) == 0 ? 1 : -1;
+    }
+
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void momentum$syncRemoteInputs(CallbackInfo ci) {
+        Entity self = (Entity) (Object) this;
+        if (self.level().isClientSide()) {
+            return;
+        }
+
+        var automobile = (AutomobileEntity) (Object) this;
+        Entity rider = self.getFirstPassenger();
+        boolean hasDriver = rider != null && automobile.isDriving(rider);
+        UUID riderId = hasDriver ? rider.getUUID() : null;
+        boolean brake = hasDriver && ServerKeyState.getBrake(riderId);
+        boolean drift = hasDriver && ServerKeyState.getDrift(riderId);
+        boolean changed = !java.util.Objects.equals(riderId, momentum$lastSyncedRider)
+                || brake != momentum$lastSyncedBrake
+                || drift != momentum$lastSyncedDrift;
+
+        if (momentum$remoteInputSyncTicks > 0) {
+            momentum$remoteInputSyncTicks--;
+        }
+        if (changed || (hasDriver && momentum$remoteInputSyncTicks <= 0)) {
+            VehicleInputPacket.sendToTracking(automobile, brake, drift);
+            momentum$lastSyncedRider = riderId;
+            momentum$lastSyncedBrake = brake;
+            momentum$lastSyncedDrift = drift;
+            momentum$remoteInputSyncTicks = 4;
+        }
     }
 
     // ── Coasting fix ─────────────────────────────────────────────────────────
@@ -159,10 +226,10 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         )
     )
     private float momentum$replaceCoastDecay(float value, float rate) {
-        if (!MomentumConfig.get().enabled) return AUtils.zero(value, 0.025f);
-        if (!MomentumConfig.get().movement.enabled) return AUtils.zero(value, 0.025f);
+        if (!MomentumConfig.gameplay().enabled) return AUtils.zero(value, 0.025f);
+        if (!MomentumConfig.gameplay().movement.enabled) return AUtils.zero(value, 0.025f);
         if (momentum$brake()) return value;  // brake inject handles decel this tick
-        return AUtils.zero(value, MomentumConfig.get().movement.coastDecay);
+        return AUtils.zero(value, MomentumConfig.gameplay().movement.coastDecay);
     }
 
     // ── Acceleration scale ────────────────────────────────────────────────────
@@ -187,8 +254,8 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         constant = @Constant(doubleValue = 0.5)
     )
     private double momentum$removeSteeringAccelGate(double original) {
-        if (!MomentumConfig.get().enabled) return original;
-        if (!MomentumConfig.get().movement.enabled) return original;
+        if (!MomentumConfig.gameplay().enabled) return original;
+        if (!MomentumConfig.gameplay().movement.enabled) return original;
         return Double.MAX_VALUE;
     }
 
@@ -201,9 +268,9 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         index = 0
     )
     private float momentum$scaleAcceleration(float speed) {
-        if (!MomentumConfig.get().enabled) return speed;
-        if (!MomentumConfig.get().movement.enabled) return speed;
-        return speed / MomentumConfig.get().movement.accelerationScale;
+        if (!MomentumConfig.gameplay().enabled) return speed;
+        if (!MomentumConfig.gameplay().movement.enabled) return speed;
+        return speed / MomentumConfig.gameplay().movement.accelerationScale;
     }
 
     // ── Steering ramp rate ────────────────────────────────────────────────────
@@ -218,11 +285,11 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         constant = @Constant(floatValue = 0.42f)
     )
     private float momentum$steeringRampRate(float original) {
-        if (!MomentumConfig.get().enabled) return original;
-        if (!MomentumConfig.get().steering.enabled) return original;
+        if (!MomentumConfig.gameplay().enabled) return original;
+        if (!MomentumConfig.gameplay().steering.enabled) return original;
         if (drifting) return original;
-        if (input.steering != 0) return MomentumConfig.get().steering.rampRate;
-        return MomentumConfig.get().steering.centerRate;
+        if (input.steering != 0) return MomentumConfig.gameplay().steering.rampRate;
+        return MomentumConfig.gameplay().steering.centerRate;
     }
 
     // ── Speed-based understeer ────────────────────────────────────────────────
@@ -253,17 +320,17 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         index = 2
     )
     private float momentum$applyUndersteer(float target) {
-        if (!MomentumConfig.get().enabled) return target;
-        if (!MomentumConfig.get().steering.enabled) return target;
+        if (!MomentumConfig.gameplay().enabled) return target;
+        if (!MomentumConfig.gameplay().steering.enabled) return target;
         if (drifting || momentum$arcadeDriftActive || momentum$responsiveDriftActive) return target;
-        MomentumConfig.Steering s = MomentumConfig.get().steering;
+        MomentumConfig.Steering s = MomentumConfig.gameplay().steering;
         float speedCurved = (float) Math.pow(Math.abs(hSpeed), s.understeerCurve);
         return target / (1f + s.understeer * speedCurved);
     }
 
     @Inject(method = "postMovementTick", at = @At("HEAD"))
     private void momentum$cancelCruiseOnImpact(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled || !MomentumConfig.get().cruise.enabled) return;
+        if (!MomentumConfig.gameplay().enabled || !MomentumConfig.gameplay().cruise.enabled) return;
         Entity self = (Entity) (Object) this;
         if (!self.level().isClientSide()) return;
         if (!(self.getControllingPassenger() instanceof Player player) || !player.isLocalPlayer()) return;
@@ -289,13 +356,13 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "driftingTick", at = @At("HEAD"), cancellable = true)
     private void momentum$vanillaDriftTick(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         ci.cancel();
 
         boolean driftHeld = momentum$vanillaDriftKey();
         boolean prevDrift = momentum$prevDriftKeyHeld;
 
-        boolean mcOnGnd = ((Entity)(Object)this).onGround();
+        boolean mcOnGnd = automobileOnGround();
 
         // Rising edge: drift key just pressed this tick
         if (!prevDrift && driftHeld) {
@@ -346,11 +413,11 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("HEAD"))
     private void momentum$arcadeDriftStateMachine(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         boolean kHeld = momentum$arcadeDriftKey();
-        MomentumConfig.ArcadeDrift cfg = MomentumConfig.get().arcadeDrift;
+        MomentumConfig.ArcadeDrift cfg = MomentumConfig.gameplay().arcadeDrift;
 
-        boolean kMcOnGnd = ((Entity)(Object)this).onGround();
+        boolean kMcOnGnd = automobileOnGround();
 
         if (!momentum$arcadeDriftActive) {
             if (kHeld) {
@@ -364,11 +431,11 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                     momentum$arcadeDriftTimer  = 0;
                     momentum$arcadeDriftOffset = momentum$arcadeDriftDir * cfg.slipAngle;
                 }
-                // Auto-trigger: random direction after holding long enough without drift starting
+                // Auto-trigger: use a stable direction on both logical sides.
                 else if (cfg.autoTriggerTicks > 0 && momentum$arcadeHeldTimer >= cfg.autoTriggerTicks
                         && !drifting && hSpeed > cfg.minSpeedKmh / 72f && kMcOnGnd) {
                     momentum$arcadeDriftActive = true;
-                    momentum$arcadeDriftDir    = (Math.random() < 0.5) ? 1 : -1;
+                    momentum$arcadeDriftDir    = momentum$stableAutoDriftDirection();
                     momentum$arcadeDriftTimer  = 0;
                     momentum$arcadeDriftOffset = momentum$arcadeDriftDir * cfg.slipAngle;
                 }
@@ -403,7 +470,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                 }
             } else {
                 // Drift released: fade slip angle back to zero (speed-adjusted)
-                MomentumConfig.ArcadeDrift arcadeCfg = MomentumConfig.get().arcadeDrift;
+                MomentumConfig.ArcadeDrift arcadeCfg = MomentumConfig.gameplay().arcadeDrift;
                 float kDecay = arcadeCfg.slipDecaySpeedRef > 0
                     ? arcadeCfg.slipDecay * arcadeCfg.slipDecaySpeedRef / Math.max(0.1f, Math.abs(hSpeed))
                     : arcadeCfg.slipDecay;
@@ -429,7 +496,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("RETURN"))
     private void momentum$applyArcadeDriftSlip(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         if (!momentum$arcadeDriftActive || Math.abs(momentum$arcadeDriftOffset) < 0.01f) return;
         Entity self = (Entity)(Object)this;
         Vec3 mov = self.getDeltaMovement();
@@ -454,10 +521,10 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("HEAD"))
     private void momentum$responsiveDriftStateMachine(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         boolean mHeld = momentum$responsiveDriftKey();
-        MomentumConfig.ResponsiveDrift cfg = MomentumConfig.get().responsiveDrift;
-        boolean mMcOnGnd = ((Entity)(Object)this).onGround();
+        MomentumConfig.ResponsiveDrift cfg = MomentumConfig.gameplay().responsiveDrift;
+        boolean mMcOnGnd = automobileOnGround();
 
         if (!momentum$responsiveDriftActive) {
             if (mHeld) {
@@ -475,7 +542,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
                     if (threshold > 0 && momentum$responsiveHeldTimer >= threshold
                             && !drifting && hSpeed > mMinSpd && mMcOnGnd) {
                         momentum$responsiveDriftActive = true;
-                        momentum$responsiveDriftDir    = Math.random() > 0.5 ? 1 : -1;
+                        momentum$responsiveDriftDir    = momentum$stableAutoDriftDirection();
                         momentum$responsiveDriftTimer  = 0;
                         momentum$responsiveDriftOffset = 0f;
                         momentum$responsiveHeldTimer   = 0;
@@ -539,7 +606,7 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("RETURN"))
     private void momentum$applyResponsiveDriftSlip(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         if (!momentum$responsiveDriftActive || Math.abs(momentum$responsiveDriftOffset) < 0.01f) return;
         Entity self = (Entity)(Object)this;
         Vec3 mov = self.getDeltaMovement();
@@ -558,13 +625,13 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("RETURN"))
     private void momentum$applyResponsiveBrake(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
-        if (!MomentumConfig.get().movement.enabled) return;
-        if (!MomentumConfig.get().responsiveDrift.brakeEnabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
+        if (!MomentumConfig.gameplay().movement.enabled) return;
+        if (!MomentumConfig.gameplay().responsiveDrift.brakeEnabled) return;
         if (!momentum$responsiveDriftKey()) return;
         if (momentum$responsiveDriftActive) return;
         if (drifting) return;
-        float decay = MomentumConfig.get().movement.brakeDecay;
+        float decay = MomentumConfig.gameplay().movement.brakeDecay;
         engineSpeed = Math.max(engineSpeed - decay, 0f);
     }
 
@@ -573,14 +640,14 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("RETURN"))
     private void momentum$applyArcadeBrake(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
-        if (!MomentumConfig.get().movement.enabled) return;
-        if (!MomentumConfig.get().arcadeDrift.brakeEnabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
+        if (!MomentumConfig.gameplay().movement.enabled) return;
+        if (!MomentumConfig.gameplay().arcadeDrift.brakeEnabled) return;
         if (!momentum$arcadeDriftKey()) return;
         if (momentum$arcadeDriftActive) return;
         if (momentum$responsiveDriftActive) return;
         if (drifting) return;
-        float decay = MomentumConfig.get().movement.brakeDecay;
+        float decay = MomentumConfig.gameplay().movement.brakeDecay;
         engineSpeed = Math.max(engineSpeed - decay, 0f);
     }
 
@@ -618,8 +685,8 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         remap = false
     )
     private boolean momentum$suppressVanillaBackInput(boolean back) {
-        if (!MomentumConfig.get().enabled) return back;
-        if (!MomentumConfig.get().movement.enabled) return back;
+        if (!MomentumConfig.gameplay().enabled) return back;
+        if (!MomentumConfig.gameplay().movement.enabled) return back;
         return false;
     }
 
@@ -635,8 +702,8 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
         )
     )
     private float momentum$suppressVanillaBrakeDecay(float a, float b) {
-        if (!MomentumConfig.get().enabled) return Math.max(a, b);
-        if (!MomentumConfig.get().movement.enabled) return Math.max(a, b);
+        if (!MomentumConfig.gameplay().enabled) return Math.max(a, b);
+        if (!MomentumConfig.gameplay().movement.enabled) return Math.max(a, b);
         return engineSpeed;  // no-op: Momentum's @Inject at RETURN owns braking
     }
 
@@ -646,11 +713,11 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
      */
     @Inject(method = "movementTick", at = @At("RETURN"))
     private void momentum$applyBrake(CallbackInfo ci) {
-        if (!MomentumConfig.get().enabled) return;
-        if (!MomentumConfig.get().movement.enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
+        if (!MomentumConfig.gameplay().movement.enabled) return;
         if (!momentum$brake()) return;
         if (drifting) return;  // braking reduces hSpeed which would cancel the drift
-        float decay = MomentumConfig.get().movement.brakeDecay;
+        float decay = MomentumConfig.gameplay().movement.brakeDecay;
         engineSpeed = Math.max(engineSpeed - decay, -0.25f);
     }
 
@@ -660,10 +727,17 @@ public abstract class AutomobileEntityMixin implements SteeringDebugAccessor {
     @Unique @Override public float   momentum$getHSpeed()                  { return hSpeed; }
     @Unique @Override public float   momentum$getAngularSpeed()            { return angularSpeed; }
     @Unique @Override public boolean momentum$isDrifting()                 { return drifting; }
-    @Unique @Override public boolean momentum$isOnGround()                 { return ((Entity)(Object)this).onGround(); }
+    @Unique @Override public boolean momentum$isOnGround()                 { return automobileOnGround(); }
     @Unique @Override public boolean momentum$isArcadeDriftActive()        { return momentum$arcadeDriftActive; }
     @Unique @Override public float   momentum$getArcadeDriftOffset()       { return momentum$arcadeDriftOffset; }
     @Unique @Override public boolean momentum$isResponsiveDriftActive()    { return momentum$responsiveDriftActive; }
     @Unique @Override public float   momentum$getResponsiveDriftOffset()   { return momentum$responsiveDriftOffset; }
     @Unique @Override public float   momentum$getEngineSpeed()             { return engineSpeed; }
+    @Unique @Override public void momentum$setRemoteInputState(boolean brake, boolean drift) {
+        Entity self = (Entity) (Object) this;
+        if (!(self.getFirstPassenger() instanceof Player player) || !player.isLocalPlayer()) {
+            momentum$remoteBrakeHeld = brake;
+            momentum$remoteDriftHeld = drift;
+        }
+    }
 }

@@ -16,4 +16,5 @@ public interface SteeringDebugAccessor {
     boolean momentum$isResponsiveDriftActive();
     float   momentum$getResponsiveDriftOffset();
     float   momentum$getEngineSpeed();
+    void momentum$setRemoteInputState(boolean brake, boolean drift);
 }

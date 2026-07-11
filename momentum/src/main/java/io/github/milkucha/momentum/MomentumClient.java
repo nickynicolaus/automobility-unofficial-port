@@ -1,10 +1,13 @@
 package io.github.milkucha.momentum;
 
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import io.github.foundationgames.automobility.platform.Platform;
 import io.github.milkucha.momentum.accessor.SteeringDebugAccessor;
 import io.github.milkucha.momentum.config.MomentumConfig;
 import io.github.milkucha.momentum.hud.BarHud;
 import io.github.milkucha.momentum.network.KeyStatePacket;
+import io.github.milkucha.momentum.network.GameplayConfigPacket;
+import io.github.milkucha.momentum.network.VehicleInputPacket;
 import io.github.milkucha.momentum.sound.BrakingSkidSound;
 import io.github.milkucha.momentum.sound.ArcadeDriftSkidSound;
 import io.github.milkucha.momentum.sound.ResponsiveDriftSkidSound;
@@ -14,6 +17,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.loader.api.FabricLoader;
@@ -49,10 +53,41 @@ public class MomentumClient implements ClientModInitializer {
     // Last key-state snapshot sent to the server; used to send only on changes.
     private boolean pktBrake = false;
     private boolean pktDrift = false;
+    private boolean forceKeyStatePacket = true;
 
     @Override
     public void onInitializeClient() {
         MomentumConfig.get();
+
+        ClientPlayNetworking.registerGlobalReceiver(GameplayConfigPacket.TYPE, (payload, context) -> {
+            if (payload.protocolVersion() != GameplayConfigPacket.PROTOCOL_VERSION) {
+                Momentum.LOGGER.warn("Ignoring unsupported Momentum gameplay config protocol {}", payload.protocolVersion());
+                return;
+            }
+            context.client().execute(() -> {
+                if (context.client().hasSingleplayerServer()) {
+                    MomentumConfig.clearServerGameplayConfig();
+                } else {
+                    MomentumConfig.applyServerGameplayConfig(payload.json());
+                }
+            });
+        });
+        ClientPlayNetworking.registerGlobalReceiver(VehicleInputPacket.TYPE, (payload, context) ->
+                context.client().execute(() -> {
+                    if (context.client().level != null
+                            && context.client().level.getEntity(payload.entityId()) instanceof AutomobileEntity automobile) {
+                        ((SteeringDebugAccessor) automobile).momentum$setRemoteInputState(payload.brake(), payload.drift());
+                    }
+                }));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            MomentumConfig.clearServerGameplayConfig();
+            MomentumCruiseControl.deactivate();
+            MomentumBrakeState.brakeHeld = false;
+            MomentumDriftState.driftKeyHeld = false;
+            pktBrake = false;
+            pktDrift = false;
+            forceKeyStatePacket = true;
+        });
 
         // ── KeyBinding registrations ──────────────────────────────────────────
         // These appear in Minecraft's vanilla Controls screen under "Momentum".
@@ -87,7 +122,7 @@ public class MomentumClient implements ClientModInitializer {
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, Identifier.fromNamespaceAndPath("momentum", "bar_hud"), (drawContext, tickCounter) -> {
             MomentumConfig cfg = MomentumConfig.get();
-            if (!cfg.enabled) return;
+            if (!MomentumConfig.gameplay().enabled) return;
             if (!cfg.barHud.enabled) return;
             float tickDelta = tickCounter.getGameTimeDeltaPartialTick(true);
             BarHud.render(drawContext, tickDelta);
@@ -99,14 +134,22 @@ public class MomentumClient implements ClientModInitializer {
         // server entities read the correct values this frame.
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (client.player != null && client.player.getVehicle() instanceof AutomobileEntity auto && auto.isDriving(client.player)) {
-                long win = client.getWindow().handle();
-                MomentumConfig mc = MomentumConfig.get();
-                MomentumBrakeState.brakeHeld    = isKeyHeld(mc.brakeKey, win);
-                MomentumDriftState.driftKeyHeld = isKeyHeld(mc.driftKey, win);
+            boolean locallyDriving = client.player != null
+                    && client.player.getVehicle() instanceof AutomobileEntity auto
+                    && auto.isDriving(client.player);
+
+            if (locallyDriving && client.screen == null) {
+                long window = client.getWindow().handle();
+                MomentumConfig config = MomentumConfig.get();
+                var controller = Platform.get().controller();
+                MomentumBrakeState.brakeHeld = isKeyHeld(config.brakeKey, window) || controller.braking();
+                MomentumDriftState.driftKeyHeld = isKeyHeld(config.driftKey, window) || controller.drifting();
             } else {
-                MomentumBrakeState.brakeHeld    = false;
+                MomentumBrakeState.brakeHeld = false;
                 MomentumDriftState.driftKeyHeld = false;
+            }
+
+            if (!locallyDriving) {
                 MomentumCruiseControl.deactivate();
             }
 
@@ -114,8 +157,9 @@ public class MomentumClient implements ClientModInitializer {
             boolean nb = MomentumBrakeState.brakeHeld;
             boolean nd = MomentumDriftState.driftKeyHeld;
             if (client.getConnection() != null
-                    && (nb != pktBrake || nd != pktDrift)) {
+                    && (forceKeyStatePacket || nb != pktBrake || nd != pktDrift)) {
                 pktBrake = nb; pktDrift = nd;
+                forceKeyStatePacket = false;
                 ClientPlayNetworking.send(new KeyStatePacket(nb, nd));
             }
         });
@@ -123,7 +167,8 @@ public class MomentumClient implements ClientModInitializer {
         // ── Per-tick effects ──────────────────────────────────────────────────
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (cruiseKey.consumeClick() && client.player != null) {
+            boolean cruisePressed = cruiseKey.consumeClick();
+            if (cruisePressed && client.screen == null && client.player != null) {
                 if (client.player.getVehicle() instanceof AutomobileEntity auto && auto.isDriving(client.player)) {
                     boolean active = MomentumCruiseControl.toggle(auto);
                     if (active) {
@@ -159,7 +204,7 @@ public class MomentumClient implements ClientModInitializer {
                 MomentumConfig cfg = MomentumConfig.get();
                 SteeringDebugAccessor accessor = (SteeringDebugAccessor) auto;
 
-                if (!cfg.enabled) {
+                if (!MomentumConfig.gameplay().enabled) {
                     resetTickState();
                     return;
                 }

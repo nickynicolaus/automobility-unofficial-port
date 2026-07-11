@@ -17,7 +17,7 @@ public final class MomentumCruiseControl {
     }
 
     public static boolean toggle(AutomobileEntity auto) {
-        if (!MomentumConfig.get().enabled || !MomentumConfig.get().cruise.enabled) {
+        if (!MomentumConfig.gameplay().enabled || !MomentumConfig.gameplay().cruise.enabled) {
             deactivate();
             return false;
         }
@@ -32,7 +32,7 @@ public final class MomentumCruiseControl {
             return false;
         }
 
-        MomentumConfig.Cruise cruise = MomentumConfig.get().cruise;
+        MomentumConfig.Cruise cruise = MomentumConfig.gameplay().cruise;
         float speed = currentKmh(auto);
         if (speed < cruise.minActivationKmh) {
             deactivate();
@@ -51,7 +51,7 @@ public final class MomentumCruiseControl {
         if (!active) {
             return null;
         }
-        if (!MomentumConfig.get().enabled || !MomentumConfig.get().cruise.enabled || entityId != auto.getId()) {
+        if (!MomentumConfig.gameplay().enabled || !MomentumConfig.gameplay().cruise.enabled || entityId != auto.getId()) {
             deactivate();
             return null;
         }
@@ -61,7 +61,7 @@ public final class MomentumCruiseControl {
             return null;
         }
 
-        MomentumConfig.Cruise cruise = MomentumConfig.get().cruise;
+        MomentumConfig.Cruise cruise = MomentumConfig.gameplay().cruise;
         float speed = currentKmh(auto);
 
         if (lastSpeedKmh >= cruise.impactCancelMinSpeedKmh
@@ -87,7 +87,7 @@ public final class MomentumCruiseControl {
 
     public static void cancelOnImpact(AutomobileEntity auto, float speedKmh) {
         if (active && auto != null && entityId == auto.getId()
-                && speedKmh >= MomentumConfig.get().cruise.impactCancelMinSpeedKmh) {
+                && speedKmh >= MomentumConfig.gameplay().cruise.impactCancelMinSpeedKmh) {
             deactivate();
         }
     }

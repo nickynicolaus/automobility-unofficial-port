@@ -2,12 +2,16 @@ package io.github.milkucha.momentum.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.github.milkucha.momentum.Momentum;
 import net.fabricmc.loader.api.FabricLoader;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 
 public class MomentumConfig {
 
@@ -67,10 +71,10 @@ public class MomentumConfig {
 
     public static class BarHud {
         public boolean enabled    = true;
-        // Position. -1 = anchor to right/bottom edge using the margin fields.
+        // Negative coordinates use edge anchoring; defaults place the HUD at top right.
         public int   x            = -1;
-        public int   y            = -1;
-        public float xFraction    = 0.5f;    // fraction of screenW from right edge; resolution-independent
+        public int   y            = 18;
+        public float xFraction    = 0.016f;  // fraction of screenW from right edge; resolution-independent
         public int   marginBottom = 29;
 
         // Overall size of the velocimeter area in pixels.
@@ -182,14 +186,43 @@ public class MomentumConfig {
             .getConfigDir().resolve("momentum.json");
 
     private static MomentumConfig instance;
+    private static volatile MomentumConfig serverGameplayConfig;
 
     public static MomentumConfig get() {
         if (instance == null) instance = load();
         return instance;
     }
 
+    public static MomentumConfig gameplay() {
+        var serverConfig = serverGameplayConfig;
+        return serverConfig != null ? serverConfig : get();
+    }
+
     public static void reload() {
         instance = load();
+    }
+
+    public static String serializeForSync() {
+        return GSON.toJson(get());
+    }
+
+    public static boolean applyServerGameplayConfig(String json) {
+        try {
+            var loaded = GSON.fromJson(json, MomentumConfig.class);
+            if (loaded == null) {
+                return false;
+            }
+            loaded.sanitize();
+            serverGameplayConfig = loaded;
+            return true;
+        } catch (RuntimeException e) {
+            Momentum.LOGGER.warn("Ignoring malformed Momentum gameplay config from server", e);
+            return false;
+        }
+    }
+
+    public static void clearServerGameplayConfig() {
+        serverGameplayConfig = null;
     }
 
     public static MomentumConfig load() {
@@ -198,34 +231,164 @@ public class MomentumConfig {
                 String json = Files.readString(CONFIG_PATH);
                 MomentumConfig loaded = GSON.fromJson(json, MomentumConfig.class);
                 if (loaded != null) {
-                    // Ensure nested objects are never null (old flat config won't have them)
-                    if (loaded.movement == null) loaded.movement = new Movement();
-                    if (loaded.steering == null) loaded.steering = new Steering();
-                    if (loaded.camera   == null) loaded.camera   = new Camera();
-                    if (loaded.barHud   == null) loaded.barHud   = new BarHud();
-                    if (loaded.cruise   == null) loaded.cruise   = new Cruise();
-                    if (loaded.arcadeDrift    == null) loaded.arcadeDrift    = new ArcadeDrift();
-                    if (loaded.responsiveDrift == null) loaded.responsiveDrift = new ResponsiveDrift();
-                    if (loaded.oDrift   == null) loaded.oDrift   = new ODrift();
-                    if (loaded.oDrift.profile == null) loaded.oDrift.profile = new ODrift().profile; // old JSON had J/K/M enum values
-                    if (loaded.sound    == null) loaded.sound    = new Sound();
+                    loaded.sanitize();
                     loaded.save();
                     return loaded;
                 }
+                backupMalformedConfig();
+                Momentum.LOGGER.warn("Momentum config was empty; using defaults");
             } catch (IOException e) {
-                System.err.println("[Momentum] Failed to read config, using defaults: " + e.getMessage());
+                Momentum.LOGGER.warn("Failed to read Momentum config; using defaults", e);
+            } catch (RuntimeException e) {
+                backupMalformedConfig();
+                Momentum.LOGGER.warn("Momentum config is malformed; using defaults", e);
             }
         }
         MomentumConfig defaults = new MomentumConfig();
+        defaults.sanitize();
         defaults.save();
         return defaults;
     }
 
     public void save() {
+        sanitize();
+        Path temporary = CONFIG_PATH.resolveSibling(CONFIG_PATH.getFileName() + ".tmp");
         try {
-            Files.writeString(CONFIG_PATH, GSON.toJson(this));
+            Files.createDirectories(CONFIG_PATH.getParent());
+            Files.writeString(temporary, GSON.toJson(this));
+            try {
+                Files.move(temporary, CONFIG_PATH, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporary, CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
-            System.err.println("[Momentum] Failed to save config: " + e.getMessage());
+            Momentum.LOGGER.warn("Failed to save Momentum config", e);
+        } finally {
+            try {
+                Files.deleteIfExists(temporary);
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    void sanitize() {
+        var defaults = new MomentumConfig();
+
+        if (movement == null) movement = new Movement();
+        if (steering == null) steering = new Steering();
+        if (camera == null) camera = new Camera();
+        if (barHud == null) barHud = new BarHud();
+        if (cruise == null) cruise = new Cruise();
+        if (arcadeDrift == null) arcadeDrift = new ArcadeDrift();
+        if (responsiveDrift == null) responsiveDrift = new ResponsiveDrift();
+        if (oDrift == null) oDrift = new ODrift();
+        if (oDrift.profile == null) oDrift.profile = defaults.oDrift.profile;
+        if (sound == null) sound = new Sound();
+
+        brakeKey = validKey(brakeKey, defaults.brakeKey);
+        driftKey = validKey(driftKey, defaults.driftKey);
+
+        movement.coastDecay = finite(movement.coastDecay, 0f, 1f, defaults.movement.coastDecay);
+        movement.accelerationScale = finite(movement.accelerationScale, 0.01f, 100f, defaults.movement.accelerationScale);
+        movement.brakeDecay = finite(movement.brakeDecay, 0f, 1f, defaults.movement.brakeDecay);
+        movement.comfortableSpeedMultiplier = finite(movement.comfortableSpeedMultiplier, 0.1f, 10f, defaults.movement.comfortableSpeedMultiplier);
+
+        steering.rampRate = finite(steering.rampRate, 0f, 1f, defaults.steering.rampRate);
+        steering.centerRate = finite(steering.centerRate, 0f, 1f, defaults.steering.centerRate);
+        steering.understeer = finite(steering.understeer, 0f, 100f, defaults.steering.understeer);
+        steering.understeerCurve = finite(steering.understeerCurve, 0.01f, 20f, defaults.steering.understeerCurve);
+
+        camera.pitch = finite(camera.pitch, -90f, 90f, defaults.camera.pitch);
+        camera.steeringTilt = finite(camera.steeringTilt, -180f, 180f, defaults.camera.steeringTilt);
+        camera.steeringTiltLerp = finite(camera.steeringTiltLerp, 0f, 1f, defaults.camera.steeringTiltLerp);
+        camera.reverseFlipLerp = finite(camera.reverseFlipLerp, 0f, 1f, defaults.camera.reverseFlipLerp);
+        camera.brakeZoomFov = finite(camera.brakeZoomFov, 0f, 179f, defaults.camera.brakeZoomFov);
+        camera.brakeZoomInputScale = finite(camera.brakeZoomInputScale, 0f, 1000f, defaults.camera.brakeZoomInputScale);
+        camera.brakeZoomSpring = finite(camera.brakeZoomSpring, 0f, 10f, defaults.camera.brakeZoomSpring);
+        camera.brakeZoomDamping = finite(camera.brakeZoomDamping, 0f, 1f, defaults.camera.brakeZoomDamping);
+
+        barHud.x = bounded(barHud.x, -1, 1_000_000);
+        barHud.y = bounded(barHud.y, -1, 1_000_000);
+        barHud.xFraction = finite(barHud.xFraction, 0f, 1f, defaults.barHud.xFraction);
+        barHud.marginBottom = bounded(barHud.marginBottom, 0, 1_000_000);
+        barHud.totalWidth = bounded(barHud.totalWidth, 1, 4096);
+        barHud.totalHeight = bounded(barHud.totalHeight, 1, 4096);
+        barHud.barWidth = bounded(barHud.barWidth, 1, 4096);
+        barHud.barSpacing = bounded(barHud.barSpacing, 0, 4096);
+        barHud.maxSpeedKmh = finite(barHud.maxSpeedKmh, 1f, 10_000f, defaults.barHud.maxSpeedKmh);
+        barHud.textOffsetX = bounded(barHud.textOffsetX, -4096, 4096);
+        barHud.textOffsetY = bounded(barHud.textOffsetY, -4096, 4096);
+        barHud.debugX = bounded(barHud.debugX, -1, 1_000_000);
+        barHud.debugY = bounded(barHud.debugY, 0, 1_000_000);
+        barHud.debugXFraction = finite(barHud.debugXFraction, 0f, 1f, defaults.barHud.debugXFraction);
+
+        cruise.minActivationKmh = finite(cruise.minActivationKmh, 0f, 10_000f, defaults.cruise.minActivationKmh);
+        cruise.maxTargetKmh = finite(cruise.maxTargetKmh, cruise.minActivationKmh, 10_000f, defaults.cruise.maxTargetKmh);
+        cruise.resumeThrottleBelowTargetKmh = finite(cruise.resumeThrottleBelowTargetKmh, 0f, 1000f, defaults.cruise.resumeThrottleBelowTargetKmh);
+        cruise.cutThrottleBelowTargetKmh = finite(cruise.cutThrottleBelowTargetKmh, 0f, 1000f, defaults.cruise.cutThrottleBelowTargetKmh);
+        cruise.impactCancelMinSpeedKmh = finite(cruise.impactCancelMinSpeedKmh, 0f, 10_000f, defaults.cruise.impactCancelMinSpeedKmh);
+        cruise.impactCancelDropKmh = finite(cruise.impactCancelDropKmh, 0f, 10_000f, defaults.cruise.impactCancelDropKmh);
+
+        sanitizeArcade(defaults.arcadeDrift);
+        sanitizeResponsive(defaults.responsiveDrift);
+        sound.enginePitchCeiling = finite(sound.enginePitchCeiling, 1f, 10_000f, defaults.sound.enginePitchCeiling);
+    }
+
+    private void sanitizeArcade(ArcadeDrift defaults) {
+        arcadeDrift.slipAngle = finite(arcadeDrift.slipAngle, 0f, 180f, defaults.slipAngle);
+        arcadeDrift.slipConvergeRate = finite(arcadeDrift.slipConvergeRate, 0f, 180f, defaults.slipConvergeRate);
+        arcadeDrift.slipDecay = finite(arcadeDrift.slipDecay, 0f, 180f, defaults.slipDecay);
+        arcadeDrift.slipDecaySpeedRef = finite(arcadeDrift.slipDecaySpeedRef, 0f, 100f, defaults.slipDecaySpeedRef);
+        arcadeDrift.boost = finite(arcadeDrift.boost, 0f, 10f, defaults.boost);
+        arcadeDrift.boostDuration = bounded(arcadeDrift.boostDuration, 0, 12_000);
+        arcadeDrift.minTicks = bounded(arcadeDrift.minTicks, 0, 12_000);
+        arcadeDrift.steerThreshold = finite(arcadeDrift.steerThreshold, 0f, 1f, defaults.steerThreshold);
+        arcadeDrift.minHoldTicks = bounded(arcadeDrift.minHoldTicks, 0, 12_000);
+        arcadeDrift.autoTriggerTicks = bounded(arcadeDrift.autoTriggerTicks, 0, 12_000);
+        arcadeDrift.minSpeedKmh = finite(arcadeDrift.minSpeedKmh, 0f, 10_000f, defaults.minSpeedKmh);
+        arcadeDrift.cameraScale = finite(arcadeDrift.cameraScale, 0f, 100f, defaults.cameraScale);
+        arcadeDrift.cameraLerpIn = finite(arcadeDrift.cameraLerpIn, 0f, 1f, defaults.cameraLerpIn);
+        arcadeDrift.cameraLerpOut = finite(arcadeDrift.cameraLerpOut, 0f, 1f, defaults.cameraLerpOut);
+    }
+
+    private void sanitizeResponsive(ResponsiveDrift defaults) {
+        responsiveDrift.slipAngle = finite(responsiveDrift.slipAngle, 0f, 180f, defaults.slipAngle);
+        responsiveDrift.slipConvergeRate = finite(responsiveDrift.slipConvergeRate, 0f, 1f, defaults.slipConvergeRate);
+        responsiveDrift.slipDecay = finite(responsiveDrift.slipDecay, 0f, 180f, defaults.slipDecay);
+        responsiveDrift.slipDecaySpeedRef = finite(responsiveDrift.slipDecaySpeedRef, 0f, 100f, defaults.slipDecaySpeedRef);
+        responsiveDrift.boost = finite(responsiveDrift.boost, 0f, 10f, defaults.boost);
+        responsiveDrift.boostDuration = bounded(responsiveDrift.boostDuration, 0, 12_000);
+        responsiveDrift.minTicks = bounded(responsiveDrift.minTicks, 0, 12_000);
+        responsiveDrift.steerSensitivity = finite(responsiveDrift.steerSensitivity, 0.01f, 100f, defaults.steerSensitivity);
+        responsiveDrift.steerBuildRate = finite(responsiveDrift.steerBuildRate, 0f, 1f, defaults.steerBuildRate);
+        responsiveDrift.steerDecayRate = finite(responsiveDrift.steerDecayRate, 0f, 1f, defaults.steerDecayRate);
+        responsiveDrift.minHoldTicks = bounded(responsiveDrift.minHoldTicks, 0, 12_000);
+        responsiveDrift.autoTriggerTicks = bounded(responsiveDrift.autoTriggerTicks, 0, 12_000);
+        responsiveDrift.steerThreshold = finite(responsiveDrift.steerThreshold, 0f, 1f, defaults.steerThreshold);
+        responsiveDrift.minSpeedKmh = finite(responsiveDrift.minSpeedKmh, 0f, 10_000f, defaults.minSpeedKmh);
+        responsiveDrift.cameraScale = finite(responsiveDrift.cameraScale, 0f, 100f, defaults.cameraScale);
+        responsiveDrift.cameraLerpIn = finite(responsiveDrift.cameraLerpIn, 0f, 1f, defaults.cameraLerpIn);
+        responsiveDrift.cameraLerpOut = finite(responsiveDrift.cameraLerpOut, 0f, 1f, defaults.cameraLerpOut);
+    }
+
+    private static int validKey(int key, int fallback) {
+        return key >= GLFW.GLFW_KEY_UNKNOWN && key <= GLFW.GLFW_KEY_LAST ? key : fallback;
+    }
+
+    private static float finite(float value, float min, float max, float fallback) {
+        return Math.clamp(Float.isFinite(value) ? value : fallback, min, max);
+    }
+
+    private static int bounded(int value, int min, int max) {
+        return Math.clamp(value, min, max);
+    }
+
+    private static void backupMalformedConfig() {
+        try {
+            String backupName = CONFIG_PATH.getFileName() + ".broken-" + Instant.now().toEpochMilli();
+            Files.copy(CONFIG_PATH, CONFIG_PATH.resolveSibling(backupName));
+        } catch (IOException e) {
+            Momentum.LOGGER.warn("Failed to back up malformed Momentum config", e);
         }
     }
 }

@@ -3,18 +3,15 @@ package io.github.milkucha.momentum.modmenu;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import io.github.milkucha.momentum.config.MomentumConfigScreen;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class MomentumModMenuImpl implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        try {
-            // MomentumConfigScreen imports YACL - loading it will throw NoClassDefFoundError
-            // if YACL is not installed at runtime. We catch that here so the mod still loads.
-            return MomentumConfigScreen::create;
-        } catch (NoClassDefFoundError e) {
-            // YACL not installed - ModMenu will not show a config button
+        if (!FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3")) {
             return null;
         }
+        return MomentumConfigScreen::create;
     }
 }
