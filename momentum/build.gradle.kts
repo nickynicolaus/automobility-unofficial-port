@@ -1,6 +1,6 @@
 plugins {
     id("idea")
-    id("net.fabricmc.fabric-loom") version "1.17.11"
+    id("net.fabricmc.fabric-loom") version "1.17.14"
 }
 
 val commonMainOutput = project(":common").extensions.getByType<SourceSetContainer>()["main"].output
@@ -15,27 +15,21 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${rootProject.properties["minecraft_version"]}")
+    minecraft("com.mojang:minecraft:${rootProject.providers.gradleProperty("minecraft_version").get()}")
 
-    implementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
-    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.properties["fabric_api_version"]}")
+    implementation("net.fabricmc:fabric-loader:${rootProject.providers.gradleProperty("fabric_version").get()}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.providers.gradleProperty("fabric_api_version").get()}")
 
     compileOnly(commonMainOutput)
     compileOnly(fabricMainOutput)
     runtimeOnly(fabricMainOutput)
 
-    compileOnly("maven.modrinth:yacl:3.9.5+26.2-fabric")
+    compileOnly("maven.modrinth:yacl:${rootProject.providers.gradleProperty("yacl_version").get()}")
+    compileOnly("com.terraformersmc:modmenu:${rootProject.providers.gradleProperty("modmenu_version").get()}")
+    testImplementation("net.fabricmc:fabric-loader-junit:${rootProject.providers.gradleProperty("fabric_version").get()}")
 }
 
-sourceSets {
-    main {
-        java {
-            exclude("**/modmenu/MomentumModMenuImpl.java")
-        }
-    }
-}
-
-version = "${rootProject.properties["momentum_version"]}+${rootProject.properties["minecraft_version"]}-fabric"
+version = "${rootProject.providers.gradleProperty("momentum_version").get()}+${rootProject.providers.gradleProperty("minecraft_version").get()}-fabric"
 group = "io.github.milkucha"
 
 base {
@@ -68,13 +62,28 @@ tasks {
     }
 
     processResources {
+        val loaderVersion = rootProject.providers.gradleProperty("fabric_version").get()
+        val fabricApiVersion = rootProject.providers.gradleProperty("fabric_api_version").get()
+        val automobilityVersion = rootProject.providers.gradleProperty("mod_version").get()
         inputs.property("version", version)
+        inputs.property("fabric_loader_version", loaderVersion)
+        inputs.property("fabric_api_version", fabricApiVersion)
+        inputs.property("automobility_version", automobilityVersion)
         filesMatching("fabric.mod.json") {
-            expand(mapOf("version" to version))
+            expand(mapOf(
+                "version" to version,
+                "fabric_loader_version" to loaderVersion,
+                "fabric_api_version" to fabricApiVersion,
+                "automobility_version" to automobilityVersion
+            ))
         }
     }
 
     withType<Jar> {
         destinationDirectory = rootDir.resolve(project.name).resolve("build").resolve("libs")
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
     }
 }

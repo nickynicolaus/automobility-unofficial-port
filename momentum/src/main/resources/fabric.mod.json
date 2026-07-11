@@ -14,17 +14,20 @@
     ],
     "client": [
       "io.github.milkucha.momentum.MomentumClient"
+    ],
+    "modmenu": [
+      "io.github.milkucha.momentum.modmenu.MomentumModMenuImpl"
     ]
   },
   "mixins": [
     "momentum.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.19.3",
-    "fabric-api": "*",
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
     "minecraft": "26.2",
     "java": ">=25",
-    "automobility": ">=0.5.0-unofficial.24"
+    "automobility": ">=${automobility_version}"
   },
   "suggests": {
     "modmenu": "*",

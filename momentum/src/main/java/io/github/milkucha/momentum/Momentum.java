@@ -1,11 +1,15 @@
 package io.github.milkucha.momentum;
 
 import io.github.milkucha.momentum.network.KeyStatePacket;
+import io.github.milkucha.momentum.network.GameplayConfigPacket;
+import io.github.milkucha.momentum.network.VehicleInputPacket;
 import io.github.milkucha.momentum.network.ServerKeyState;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common (both-sides) initializer for Momentum.
@@ -18,11 +22,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
  * entries causing phantom braking or drifting on respawn.
  */
 public class Momentum implements ModInitializer {
+    public static final Logger LOGGER = LoggerFactory.getLogger("Momentum");
 
     @Override
     public void onInitialize() {
         // Register the payload type for the C2S key-state packet.
         PayloadTypeRegistry.serverboundPlay().register(KeyStatePacket.TYPE, KeyStatePacket.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(GameplayConfigPacket.TYPE, GameplayConfigPacket.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(VehicleInputPacket.TYPE, VehicleInputPacket.CODEC);
 
         // Receive key state from client and store it per-player.
         // Runs on the Netty network thread - ServerKeyState uses ConcurrentHashMap.
@@ -32,5 +39,11 @@ public class Momentum implements ModInitializer {
         // Clear state on disconnect so a reconnecting player starts clean.
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
             ServerKeyState.remove(handler.player.getUUID()));
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            if (ServerPlayNetworking.canSend(handler.player, GameplayConfigPacket.TYPE)) {
+                ServerPlayNetworking.send(handler.player, GameplayConfigPacket.current());
+            }
+        });
     }
 }

@@ -28,7 +28,7 @@ public class CameraLockMixin {
     private void momentum$blockMouseLook(double yaw, double pitch, CallbackInfo ci) {
         if (!((Object) this instanceof LocalPlayer player)) return;
         if (!(player.getVehicle() instanceof AutomobileEntity)) return;
-        if (!MomentumConfig.get().enabled) return;
+        if (!MomentumConfig.gameplay().enabled) return;
         if (!MomentumConfig.get().camera.lock) return;
         ci.cancel();
     }
