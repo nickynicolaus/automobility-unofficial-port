@@ -138,7 +138,7 @@ public class MomentumClient implements ClientModInitializer {
                     && client.player.getVehicle() instanceof AutomobileEntity auto
                     && auto.isDriving(client.player);
 
-            if (locallyDriving && client.screen == null) {
+            if (locallyDriving && client.gui.screen() == null) {
                 long window = client.getWindow().handle();
                 MomentumConfig config = MomentumConfig.get();
                 var controller = Platform.get().controller();
@@ -168,7 +168,7 @@ public class MomentumClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             boolean cruisePressed = cruiseKey.consumeClick();
-            if (cruisePressed && client.screen == null && client.player != null) {
+            if (cruisePressed && client.gui.screen() == null && client.player != null) {
                 if (client.player.getVehicle() instanceof AutomobileEntity auto && auto.isDriving(client.player)) {
                     boolean active = MomentumCruiseControl.toggle(auto);
                     if (active) {
