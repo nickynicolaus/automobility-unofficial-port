@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Comparable<AutoMechanicTableRecipe> {
     public static final Identifier ID = Automobility.rl("auto_mechanic_table");
@@ -109,14 +108,19 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
     public void forMissingIngredients(ContainerRecipeInput inv, Consumer<Ingredient> action) {
         var invCopy = new ArrayList<ItemStack>();
         for (int i = 0; i < inv.size(); i++) {
-            invCopy.add(inv.getItem(i));
+            invCopy.add(inv.getItem(i).copy());
         }
 
         for (var ing : this.ingredients) {
-            if (invCopy.stream().noneMatch(ing)) {
+            var matchingStack = invCopy.stream().filter(ing).findFirst();
+            if (matchingStack.isEmpty()) {
                 action.accept(ing);
             } else {
-                invCopy.remove(invCopy.stream().filter(ing).collect(Collectors.toList()).get(0));
+                var stack = matchingStack.get();
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    invCopy.remove(stack);
+                }
             }
         }
     }

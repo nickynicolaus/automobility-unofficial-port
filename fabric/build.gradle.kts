@@ -19,6 +19,7 @@ dependencies {
 
     implementation("net.fabricmc:fabric-loader:${rootProject.properties["fabric_version"]}")
     implementation("net.fabricmc.fabric-api:fabric-api:${rootProject.properties["fabric_api_version"]}")
+    testImplementation("net.fabricmc:fabric-loader-junit:${rootProject.properties["fabric_version"]}")
 
     implementation("de.javagl:obj:0.4.0")
     include("de.javagl:obj:0.4.0")
@@ -71,10 +72,14 @@ loom {
 }
 
 tasks {
-    withType<JavaCompile> {
-        // include common code in compiled jar
+    named<JavaCompile>("compileJava") {
+        // Include common code in the compiled Fabric jar.
         source(project(":common").sourceSets.main.get().allSource)
         automobilityLiteClientExcludes.forEach { exclude(it) }
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
     }
 
     // put all artifacts in the right directory
@@ -95,11 +100,4 @@ tasks {
         }
     }
 
-    named("compileTestJava").configure {
-        enabled = false
-    }
-
-    named("test").configure {
-        enabled = false
-    }
 }

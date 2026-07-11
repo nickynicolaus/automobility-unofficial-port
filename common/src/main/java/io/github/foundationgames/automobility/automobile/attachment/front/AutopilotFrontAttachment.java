@@ -72,7 +72,9 @@ public class AutopilotFrontAttachment extends FrontAttachment {
             box = box.move(pos().add(dirHeading.scale(1 + 1.75 * width)));
 
             for (var e : world().getEntitiesOfClass(HitboxEntity.class, box)) {
-                if (!automobile.isOneOfMyHitboxes(e) && (!automobile.isInvulnerable() || e.automobile().isInvulnerable())) {
+                var otherAutomobile = e.automobile();
+                if (otherAutomobile != null && !automobile.isOneOfMyHitboxes(e)
+                        && (!automobile.isInvulnerable() || otherAutomobile.isInvulnerable())) {
                     somethingInTheWay = true;
                     break;
                 }
@@ -268,7 +270,7 @@ public class AutopilotFrontAttachment extends FrontAttachment {
     }
 
     public State getState() {
-        int anim = Math.clamp((int) animation(), 0, State.values().length);
+        int anim = Math.clamp((int) animation(), 0, State.values().length - 1);
         return State.values()[anim];
     }
 

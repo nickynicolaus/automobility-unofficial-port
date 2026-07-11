@@ -805,6 +805,9 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
     @Override
     public void tick() {
         boolean first = this.firstTick;
+        if (first) {
+            this.lastMeasuredPos = this.position();
+        }
 
         if (lastWheelAngle != wheelAngle) markDirty();
         lastWheelAngle = wheelAngle;
@@ -986,7 +989,7 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
         }
 
         // Get block below's friction
-        var blockBelow = new BlockPos((int) getX(), (int) (getY() - 0.05), (int) getZ());
+        var blockBelow = BlockPos.containing(getX(), getY() - 0.05, getZ());
         this.grip = 1 - ((Mth.clamp((level().getBlockState(blockBelow).getBlock().getFriction() - 0.6f) / 0.4f, 0, 1) * (1 - stats.getGrip() * 0.8f)));
         this.grip *= this.grip;
 
@@ -1048,12 +1051,12 @@ public class AutomobileEntity extends Entity implements RenderableAutomobile, En
 
         // Allows for the sticky slope effect to continue for a tick after not being on a slope
         // This prevents the automobile from randomly jumping if it's moving down a slope quickly
-        var below = new BlockPos((int) getX(), (int) (getY() - 0.51), (int) getZ());
+        var below = BlockPos.containing(getX(), getY() - 0.51, getZ());
         var state = level().getBlockState(below);
         if (state.is(Automobility.STICKY_SLOPES)) {
             slopeStickingTimer = 1;
         } else {
-            slopeStickingTimer = Math.max(0, slopeStickingTimer--);
+            slopeStickingTimer = Math.max(0, slopeStickingTimer - 1);
         }
 
         boolean wasOffRoad = this.offRoad && this.hSpeed > 0.01;
