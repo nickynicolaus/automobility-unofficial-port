@@ -214,9 +214,9 @@ public class AutopilotSignBlock extends BaseEntityBlock implements SimpleWaterlo
     public record Heading(Vec3 origin, Vec3 dir, Vec3 planeOrigin, Vec3 limitPlane, boolean stop) {
         public static final Codec<Heading> CODEC = RecordCodecBuilder.create(inst -> inst.group(
                 Vec3.CODEC.fieldOf("path_origin").forGetter(Heading::origin),
-                Vec3.CODEC.fieldOf("path_dir").forGetter(Heading::origin),
-                Vec3.CODEC.fieldOf("plane_origin").forGetter(Heading::origin),
-                Vec3.CODEC.fieldOf("plane_normal").forGetter(Heading::origin),
+                Vec3.CODEC.fieldOf("path_dir").forGetter(Heading::dir),
+                Vec3.CODEC.fieldOf("plane_origin").forGetter(Heading::planeOrigin),
+                Vec3.CODEC.fieldOf("plane_normal").forGetter(Heading::limitPlane),
                 Codec.BOOL.fieldOf("stop").forGetter(Heading::stop)
         ).apply(inst, Heading::new));
 
