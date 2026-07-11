@@ -26,6 +26,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.MenuProvider;
@@ -122,7 +123,9 @@ public class FabricPlatform implements Platform {
 
     @Override
     public void forEachTrackingPlayer(Entity entity, Consumer<ServerPlayer> action) {
-        PlayerLookup.tracking(entity).forEach(action);
+        if (entity.level() instanceof ServerLevel) {
+            PlayerLookup.tracking(entity).forEach(action);
+        }
     }
 
     @Override
