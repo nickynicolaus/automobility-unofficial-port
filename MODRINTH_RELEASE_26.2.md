@@ -27,8 +27,8 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 ## Upload File
 
 - Local JAR: `dist\release-candidate-0.5.0-unofficial.27\automobility-0.5.0-unofficial.27+26.2-fabric.jar`
-- Size: `TBD` bytes
-- SHA-256: `TBD`
+- Size: `1356894` bytes
+- SHA-256: `A345D6566131ECAE89A2C0F6C0526D568546DC62E2F2CBC222E19697E4D94868`
 
 ## Version Changelog
 
