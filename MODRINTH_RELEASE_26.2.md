@@ -1,4 +1,4 @@
-# Modrinth Release - Automobility 0.5.0-unofficial.26 for 26.2
+# Modrinth Release - Automobility 0.5.0-unofficial.27 for 26.2
 
 Use this file for the 26.2 upload after the release candidate passes the in-game smoke test.
 
@@ -10,7 +10,7 @@ Use this file for the 26.2 upload after the release candidate passes the in-game
 ## Version Form
 
 - Version type: `beta`
-- Version number: `0.5.0-unofficial.26+26.2`
+- Version number: `0.5.0-unofficial.27+26.2`
 - Version subtitle: `for Minecraft 26.2`
 - Loaders: `Fabric`
 - Game versions: `26.2`
@@ -26,16 +26,16 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 
 ## Upload File
 
-- Local JAR: `dist\release-candidate-0.5.0-unofficial.26\automobility-0.5.0-unofficial.26+26.2-fabric.jar`
-- Size: `1324940` bytes
-- SHA-256: `77D1510D13F19AC32E2C11A1F6C8E9B73BB8EA4C99BE53CFA7960044AD7A48A2`
+- Local JAR: `dist\release-candidate-0.5.0-unofficial.27\automobility-0.5.0-unofficial.27+26.2-fabric.jar`
+- Size: `TBD` bytes
+- SHA-256: `TBD`
 
 ## Version Changelog
 
 Use the changelog from `MODRINTH_RELEASE_26.1.2.md`, replacing the opening sentence with:
 
 ```markdown
-Patch release for the unofficial Minecraft Java 26.2 Fabric port.
+Translation update for the unofficial Minecraft Java 26.2 Fabric port.
 ```
 
 ## Before Upload
