@@ -13,7 +13,7 @@
   "controlify.binding.automobility.drift_automobile": "Lướt (Drift)",
 
   "item.automobility.automobile": "Xe ô tô",
-  "item.automobility.crowbar": "Xà xà",
+  "item.automobility.crowbar": "Xà beng",
   "item.automobility.rear_attachment": "Phụ kiện phía sau",
   "item.automobility.front_attachment": "Phụ kiện phía trước",
   "item.automobility.automobile_frame": "Khung xe ô tô",
@@ -59,7 +59,7 @@
   "subtitles.automobility.landing": "Xe ô tô đáp đất",
   "subtitles.automobility.skid": "Xe ô tô trượt bánh",
 
-  "dialog.automobility.use_crowbar": "Sử dụng xà xà để tháo dỡ các phụ tùng.",
+  "dialog.automobility.use_crowbar": "Sử dụng xà beng để tháo dỡ các phụ tùng.",
   "dialog.automobility.incomplete_automobile": "Xe ô tô chưa hoàn chỉnh!",
 
   "automobile_control.accelerate": "Tăng tốc",
