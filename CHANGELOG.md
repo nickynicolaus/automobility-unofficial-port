@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0-unofficial.27 - 2026-08-13
+
+Translation update for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
+
+### Added
+- Added German, Spanish, French, Hindi, Italian, Japanese, Brazilian Portuguese, Russian, Urdu (Pakistan), Vietnamese, and Traditional Chinese translations contributed through pull request #8.
+- Added a complete Ukrainian translation using current Automobility keys and official Minecraft terminology for vanilla content.
+- Added automated validation for translation JSON, known keys, and formatting placeholders.
+
+### Fixed
+- Restored numeric placeholders and the speed unit in the Hindi translation.
+- Corrected wording in the German, Vietnamese, and Traditional Chinese translations.
+
 ## 0.5.0-unofficial.26 - 2026-07-11
 
 Patch release for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
