@@ -1,14 +1,16 @@
 {
   "entity.automobility.automobile": "机动车",
+  "entity.automobility.hitbox": "机动车碰撞箱",
 
   "itemGroup.automobility.automobility": "飞车奇匠",
-  "itemGroup.automobility.automobility_course_elements": "飞车奇匠: 赛道优选",
   "itemGroup.automobility.automobility_prefabs": "飞车奇匠: 先人佳作",
 
   "automobility.automobility": "飞车奇匠",
-  "midnightcontrols.action.automobility.accelerate_automobile": "加速",
-  "midnightcontrols.action.automobility.brake_automobile": "刹/倒车",
-  "midnightcontrols.action.automobility.drift_automobile": "漂移",
+
+  "controlify.binding_category.driving": "飞车奇匠",
+  "controlify.binding.automobility.accelerate_automobile": "加速",
+  "controlify.binding.automobility.brake_automobile": "刹车/倒车",
+  "controlify.binding.automobility.drift_automobile": "漂移",
 
   "item.automobility.automobile": "机动车",
   "item.automobility.crowbar": "撬棍",
@@ -20,8 +22,10 @@
 
   "tooltip.item.automobility.crowbar": "对机动车使用以移除机动车",
   "tooltip.block.automobility.allow": "使处于冒险模式下的驾驶者获得收获/耕种的能力",
+  "tooltip.block.automobility.dash_panel": "可放置在斜坡上",
 
   "container.automobility.auto_mechanic_table": "机动车部件",
+  "container.automobility.banner_post": "旗帜",
 
   "part_category.automobility.frames": "外壳",
   "part_category.automobility.engines": "引擎",
@@ -38,6 +42,8 @@
   "block.automobility.steep_sloped_dash_panel": "冲刺板陡坡",
   "block.automobility.auto_mechanic_table": "机动车部件制造台",
   "block.automobility.automobile_assembler": "机动车加工台",
+  "block.automobility.autopilot_sign": "自动驾驶标志",
+  "block.automobility.automobile_pressure_plate": "机动车压力板",
   "block.automobility.allow": "允许",
 
   "block.automobility.slope": "斜坡",
@@ -47,6 +53,8 @@
   "death.attack.automobile.player": "%1$s在逃离%2$s时被撞飞了",
 
   "subtitles.automobility.automobile_engine": "引擎：轰鸣",
+  "subtitles.automobility.horn_honks": "喇叭：鸣响",
+  "subtitles.automobility.horn_blares": "喇叭：长鸣",
   "subtitles.automobility.collision": "机动车：撞击",
   "subtitles.automobility.landing": "机动车：着陆",
   "subtitles.automobility.skid": "机动车：打滑",
@@ -59,6 +67,7 @@
   "automobile_control.steer_left": "左转",
   "automobile_control.steer_right": "右转",
   "automobile_control.drift": "漂移",
+  "automobile_control.honk": "鸣笛",
 
   "prefab.automobility.wooden_motorcar": "木质汽车",
   "prefab.automobility.copper_motorcar": "铜质汽车",
@@ -81,6 +90,10 @@
   "prefab.automobility.standard_green": "绿色标准车",
   "prefab.automobility.standard_red": "红色标准车",
   "prefab.automobility.standard_black": "黑色标准车",
+  "prefab.automobility.amethyst_rickshaw": "紫水晶人力车",
+  "prefab.automobility.quartz_rickshaw": "石英人力车",
+  "prefab.automobility.prismarine_rickshaw": "海晶石人力车",
+  "prefab.automobility.echo_rickshaw": "回响人力车",
   "prefab.automobility.red_tractor": "红色拖拉机",
   "prefab.automobility.yellow_tractor": "黄色拖拉机",
   "prefab.automobility.green_tractor": "绿色拖拉机",
@@ -136,6 +149,10 @@
   "frame.automobility.standard_green": "绿色标准车",
   "frame.automobility.standard_red": "红色标准车",
   "frame.automobility.standard_black": "黑色标准车",
+  "frame.automobility.amethyst_rickshaw": "紫水晶人力车",
+  "frame.automobility.quartz_rickshaw": "石英人力车",
+  "frame.automobility.prismarine_rickshaw": "海晶石人力车",
+  "frame.automobility.echo_rickshaw": "回响人力车",
   "frame.automobility.red_tractor": "红色拖拉机",
   "frame.automobility.yellow_tractor": "黄色拖拉机",
   "frame.automobility.green_tractor": "绿色拖拉机",
@@ -173,8 +190,13 @@
   "attachment.rear.automobility.auto_mechanic_table": "机动车部件制造台",
   "attachment.rear.automobility.chest": "箱子",
   "attachment.rear.automobility.ender_chest": "末影箱",
+  "attachment.rear.automobility.saddled_barrel": "带鞍木桶",
+  "attachment.rear.automobility.banner_post": "旗帜架",
+  "attachment.rear.automobility.backhoe": "反铲",
+  "attachment.rear.automobility.paver": "铺路机",
 
   "attachment.front.automobility.mob_controller": "生物控制器",
+  "attachment.front.automobility.autopilot": "自动驾驶仪",
   "attachment.front.automobility.crop_harvester": "作物收割器",
   "attachment.front.automobility.grass_cutter": "除草机"
 }

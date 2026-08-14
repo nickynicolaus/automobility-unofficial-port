@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,7 +21,7 @@ class TranslationResourcesTest {
     private static final Pattern FORMAT_TOKEN = Pattern.compile("%(?:\\d+\\$)?[A-Za-z%]");
 
     @Test
-    void translationsPreserveFormatTokensForKnownKeys() throws IOException {
+    void translationsMatchEnglishKeysAndPreserveFormatTokens() throws IOException {
         var langDir = findLanguageDirectory();
         var english = readJson(langDir.resolve("en_us.json"));
 
@@ -29,16 +30,17 @@ class TranslationResourcesTest {
                 var translation = readJson(file);
                 var locale = file.getFileName().toString();
 
-                assertTrue(translation.keySet().stream().anyMatch(english::has),
-                        locale + " must contain at least one known translation key");
+                var missing = new TreeSet<>(english.keySet());
+                missing.removeAll(translation.keySet());
+                var unexpected = new TreeSet<>(translation.keySet());
+                unexpected.removeAll(english.keySet());
+                assertTrue(missing.isEmpty() && unexpected.isEmpty(),
+                        locale + " must match en_us.json keys; missing=" + missing + ", unexpected=" + unexpected);
+
                 for (var key : translation.keySet()) {
                     var translated = translation.get(key).getAsString();
                     assertFalse(FORMAT_TOKEN.matcher(translated).replaceAll("").contains("%"),
                             locale + " contains an invalid format token for " + key);
-                    if (!english.has(key)) {
-                        continue;
-                    }
-
                     var source = english.get(key).getAsString();
                     assertEquals(formatTokens(source), formatTokens(translated),
                             locale + " must preserve format tokens for " + key);

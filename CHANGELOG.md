@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0-unofficial.28 - 2026-08-14
+
+Translation update for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
+
+### Added
+- Added complete Czech, Polish, and Korean translations using current Automobility keys and official Minecraft terminology for vanilla content.
+
+### Fixed
+- Completed the Simplified Chinese translation and replaced obsolete MidnightControls keys with the current Controlify bindings.
+- Made translation validation require every locale to match the complete English key set while preserving formatting placeholders.
+
 ## 0.5.0-unofficial.27 - 2026-08-13
 
 Translation update for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
