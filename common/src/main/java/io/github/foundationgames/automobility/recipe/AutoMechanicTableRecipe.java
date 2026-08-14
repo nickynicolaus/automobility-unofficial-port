@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -24,20 +25,33 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
 
     protected final Identifier category;
     protected final List<Ingredient> ingredients;
+    protected final List<AutoMechanicIngredient> autoMechanicIngredients;
     protected final AutoMechanicTableRecipeSerializer.AutoComponentResult result;
     protected final int sortNum;
 
     public @Nullable Identifier sortId;
 
     public AutoMechanicTableRecipe(Identifier category, List<Ingredient> ingredients, AutoMechanicTableRecipeSerializer.AutoComponentResult result, int sortNum) {
+        this(category, ingredients.stream().map(AutoMechanicIngredient::vanilla).toList(), result, sortNum);
+    }
+
+    private AutoMechanicTableRecipe(Identifier category, Collection<AutoMechanicIngredient> ingredients,
+            AutoMechanicTableRecipeSerializer.AutoComponentResult result, int sortNum) {
         this.category = category;
-        this.ingredients = ingredients;
+        this.autoMechanicIngredients = List.copyOf(ingredients);
+        this.ingredients = ingredients.stream().map(AutoMechanicIngredient::ingredient).toList();
         this.result = result;
         this.sortNum = sortNum;
     }
 
     public AutoMechanicTableRecipe(Identifier category, List<Ingredient> ingredients, ItemStack result, int sortNum) {
         this(category, ingredients, AutoMechanicTableRecipeSerializer.AutoComponentResult.fromStack(result), sortNum);
+    }
+
+    static AutoMechanicTableRecipe fromComponentIngredients(Identifier category,
+            List<AutoMechanicIngredient> ingredients,
+            AutoMechanicTableRecipeSerializer.AutoComponentResult result, int sortNum) {
+        return new AutoMechanicTableRecipe(category, ingredients, result, sortNum);
     }
 
     public Identifier getCategory() {
@@ -47,14 +61,14 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
     @Override
     public boolean matches(ContainerRecipeInput inv, Level lvl) {
         boolean[] result = {true};
-        this.forMissingIngredients(inv, ing -> result[0] = false);
+        this.forMissingAutoMechanicIngredients(inv, ingredient -> result[0] = false);
 
         return result[0];
     }
 
     @Override
     public ItemStack assemble(ContainerRecipeInput inv) {
-        for (var ing : this.ingredients) {
+        for (var ing : this.autoMechanicIngredients) {
             for (int i = 0; i < inv.size(); i++) {
                 var stack = inv.getItem(i);
                 if (ing.test(stack)) {
@@ -106,12 +120,16 @@ public class AutoMechanicTableRecipe implements Recipe<ContainerRecipeInput>, Co
     }
 
     public void forMissingIngredients(ContainerRecipeInput inv, Consumer<Ingredient> action) {
+        this.forMissingAutoMechanicIngredients(inv, ingredient -> action.accept(ingredient.ingredient()));
+    }
+
+    public void forMissingAutoMechanicIngredients(ContainerRecipeInput inv, Consumer<AutoMechanicIngredient> action) {
         var invCopy = new ArrayList<ItemStack>();
         for (int i = 0; i < inv.size(); i++) {
             invCopy.add(inv.getItem(i).copy());
         }
 
-        for (var ing : this.ingredients) {
+        for (var ing : this.autoMechanicIngredients) {
             var matchingStack = invCopy.stream().filter(ing).findFirst();
             if (matchingStack.isEmpty()) {
                 action.accept(ing);
