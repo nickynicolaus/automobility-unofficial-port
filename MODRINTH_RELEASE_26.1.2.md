@@ -1,4 +1,4 @@
-# Modrinth Release - Automobility 0.5.0-unofficial.27 for 26.1.x
+# Modrinth Release - Automobility 0.5.0-unofficial.28 for 26.1.x
 
 Use this file for the 26.1.x upload after the release candidate passes the in-game smoke test.
 
@@ -13,7 +13,7 @@ Use this file for the 26.1.x upload after the release candidate passes the in-ga
 ## Version Form
 
 - Version type: `beta`
-- Version number: `0.5.0-unofficial.27+26.1.2`
+- Version number: `0.5.0-unofficial.28+26.1.2`
 - Version subtitle: `for Minecraft 26.1.x`
 - Loaders: `Fabric`
 - Game versions: `26.1`, `26.1.1`, `26.1.2`
@@ -29,9 +29,9 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 
 ## Upload File
 
-- Local JAR: `dist\release-candidate-0.5.0-unofficial.27\automobility-0.5.0-unofficial.27+26.1.2-fabric.jar`
-- Size: `1356999` bytes
-- SHA-256: `427D73F1C77805E0F49BD7621CB53601BF2BC4DC47C55C3339CFAE35C6E007DB`
+- Local JAR: `dist\release-candidate-0.5.0-unofficial.28\automobility-0.5.0-unofficial.28+26.1.2-fabric.jar`
+- Size: `1365101` bytes
+- SHA-256: `CCD31AFB6FED0E2FD4A78C2A4B2273B84940AB5680284F3CDA548C6A147B3089`
 
 ## Version Changelog
 
@@ -39,13 +39,11 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 Translation update for the unofficial Minecraft Java 26.1.x Fabric port.
 
 ### Added
-- Added German, Spanish, French, Hindi, Italian, Japanese, Brazilian Portuguese, Russian, Urdu (Pakistan), Vietnamese, and Traditional Chinese translations contributed through pull request #8.
-- Added a complete Ukrainian translation using current Automobility keys and official Minecraft terminology for vanilla content.
-- Added automated validation for translation JSON, known keys, and formatting placeholders.
+- Added complete Czech, Polish, and Korean translations using current Automobility keys and official Minecraft terminology for vanilla content.
 
 ### Fixed
-- Restored numeric placeholders and the speed unit in the Hindi translation.
-- Corrected wording in the German, Vietnamese, and Traditional Chinese translations.
+- Completed the Simplified Chinese translation and replaced obsolete MidnightControls keys with the current Controlify bindings.
+- Made translation validation require every locale to match the complete English key set while preserving formatting placeholders.
 ```
 
 ## Before Upload
