@@ -2,6 +2,7 @@ package io.github.foundationgames.automobility.screen;
 
 import io.github.foundationgames.automobility.Automobility;
 import io.github.foundationgames.automobility.block.AutomobilityBlocks;
+import io.github.foundationgames.automobility.recipe.AutoMechanicIngredient;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipe;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipeSerializer;
 import io.github.foundationgames.automobility.recipe.ContainerRecipeInput;
@@ -18,7 +19,6 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 
@@ -35,7 +35,7 @@ public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
 
     public List<AutoMechanicTableRecipe> recipes;
 
-    public final List<Ingredient> missingIngredients = new ArrayList<>();
+    public final List<AutoMechanicIngredient> missingIngredients = new ArrayList<>();
     public final SimpleContainer inputInv;
     public final Slot outputSlot;
 
@@ -97,7 +97,8 @@ public class AutoMechanicTableScreenHandler extends AbstractContainerMenu {
         this.missingIngredients.clear();
 
         var ctr = new ContainerRecipeInput(this.inputInv);
-        this.getSelectedRecipe().ifPresent(recipe -> recipe.forMissingIngredients(ctr, this.missingIngredients::add));
+        this.getSelectedRecipe().ifPresent(recipe ->
+                recipe.forMissingAutoMechanicIngredients(ctr, this.missingIngredients::add));
     }
 
     private void updateRecipeState() {

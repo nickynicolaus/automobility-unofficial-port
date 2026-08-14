@@ -1,6 +1,7 @@
 package io.github.foundationgames.automobility.screen;
 
 import io.github.foundationgames.automobility.Automobility;
+import io.github.foundationgames.automobility.recipe.AutoMechanicIngredient;
 import io.github.foundationgames.automobility.recipe.AutoMechanicTableRecipe;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,7 +17,6 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayDeque;
@@ -205,14 +205,14 @@ public class AutoMechanicTableScreen extends AbstractContainerScreen<AutoMechani
         return false;
     }
 
-    protected final void drawMissingIngredient(GuiGraphicsExtractor graphics, Ingredient ing, int x, int y, boolean hovered) {
+    protected final void drawMissingIngredient(GuiGraphicsExtractor graphics, AutoMechanicIngredient ing, int x, int y, boolean hovered) {
         graphics.fill(x, y, x + 16, y + 16, 0x45FF0000);
 
-        var stacks = ing.items().map(ItemStack::new).toArray(ItemStack[]::new);
-        if (stacks.length <= 0) {
+        var stacks = ing.displayStacks();
+        if (stacks.isEmpty()) {
             return;
         }
-        var stack = stacks[Mth.floor((float)this.time / 30) % stacks.length];
+        var stack = stacks.get(Mth.floor((float)this.time / 30) % stacks.size());
         graphics.fakeItem(stack, x, y);
 
         graphics.fill(x, y, x + 16, y + 16, 0x30FFFFFF);
