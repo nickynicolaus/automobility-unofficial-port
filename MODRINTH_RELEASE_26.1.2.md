@@ -30,20 +30,22 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 ## Upload File
 
 - Local JAR: `dist\release-candidate-0.5.0-unofficial.28\automobility-0.5.0-unofficial.28+26.1.2-fabric.jar`
-- Size: `1365101` bytes
-- SHA-256: `CCD31AFB6FED0E2FD4A78C2A4B2273B84940AB5680284F3CDA548C6A147B3089`
+- Size: `1369695` bytes
+- SHA-256: `DC8DA1C773AC8FF2D9AC700C5EEB81C8CB04515752A5D9D731E36DF4C0883D3F`
 
 ## Version Changelog
 
 ```markdown
-Translation update for the unofficial Minecraft Java 26.1.x Fabric port.
+Compatibility and translation update for the unofficial Minecraft Java 26.1.x Fabric port.
 
 ### Added
 - Added complete Czech, Polish, and Korean translations using current Automobility keys and official Minecraft terminology for vanilla content.
+- Added component-specific Auto Mechanic Table input ingredients for addons that require an exact vehicle component variant.
 
 ### Fixed
 - Completed the Simplified Chinese translation and replaced obsolete MidnightControls keys with the current Controlify bindings.
 - Made translation validation require every locale to match the complete English key set while preserving formatting placeholders.
+- Preserved component-specific recipe requirements in the mechanic table UI, shift-click matching, and client-server recipe sync.
 ```
 
 ## Before Upload

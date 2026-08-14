@@ -2,14 +2,16 @@
 
 ## 0.5.0-unofficial.28 - 2026-08-14
 
-Translation update for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
+Compatibility and translation update for the unofficial Minecraft Java 26.1.x and 26.2 Fabric ports.
 
 ### Added
 - Added complete Czech, Polish, and Korean translations using current Automobility keys and official Minecraft terminology for vanilla content.
+- Added component-specific Auto Mechanic Table input ingredients so addons can require an exact frame, wheel, engine, or attachment variant.
 
 ### Fixed
 - Completed the Simplified Chinese translation and replaced obsolete MidnightControls keys with the current Controlify bindings.
 - Made translation validation require every locale to match the complete English key set while preserving formatting placeholders.
+- Preserved component-specific recipe requirements in the mechanic table UI, shift-click matching, and client-server recipe sync.
 
 ## 0.5.0-unofficial.27 - 2026-08-13
 
