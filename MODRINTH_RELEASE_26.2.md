@@ -27,15 +27,15 @@ Do not add Fabric Loader as a project dependency. The JAR metadata already requi
 ## Upload File
 
 - Local JAR: `dist\release-candidate-0.5.0-unofficial.28\automobility-0.5.0-unofficial.28+26.2-fabric.jar`
-- Size: `1364980` bytes
-- SHA-256: `0C8A4B8AFAD4751DDC37F07AC07B95CB9142BCC813E5EB4D12EA7FDE238F5892`
+- Size: `1369574` bytes
+- SHA-256: `E4077618E3F08A850279E09EDD477B9DE984D96D3D189CF77242B5D75D6AE455`
 
 ## Version Changelog
 
 Use the changelog from `MODRINTH_RELEASE_26.1.2.md`, replacing the opening sentence with:
 
 ```markdown
-Translation update for the unofficial Minecraft Java 26.2 Fabric port.
+Compatibility and translation update for the unofficial Minecraft Java 26.2 Fabric port.
 ```
 
 ## Before Upload
